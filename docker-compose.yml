@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # 1. BASE DE DATOS (PostgreSQL)
+  db:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=secreta
+      - POSTGRES_DB=escuela_db
+    volumes:
+      - db_data:/var/lib/postgresql/data # Persistencia de datos
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql # Autocreación de tablas
+
+
+  # 2. GESTOR GRÁFICO DE BD (pgAdmin4)
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - "5050:80" # Podrás entrar a pgAdmin desde http://localhost:5050
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@escuela.com
+      - PGADMIN_DEFAULT_PASSWORD=secreta
+    depends_on:
+      - db
+
+
+  # 3. BACKEND (Express)
+  backend:
+    build: ./server
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    environment:
+      - DB_HOST=db
+      - DB_USER=admin
+      - DB_PASSWORD=secreta
+      - DB_NAME=escuela_db
+      - DB_PORT=5432
+    depends_on:
+      - db
+
+  # 4. FRONTEND (React)
+  frontend:
+    build: ./client
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+# Declarar el volumen seguro para la base de datos
+volumes:
+  db_data:

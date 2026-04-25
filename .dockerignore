@@ -1,0 +1,28 @@
+# Dependencias (Se instalan dentro del contenedor, no se copian)
+**/node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# Archivos de construcción/compilación
+**/dist
+**/build
+
+# Git
+.git
+.gitignore
+
+# Variables de entorno (Seguridad)
+.env
+.env.local
+.env.development.local
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Otros
+.vscode
+.DS_Store
+Thumbs.db
