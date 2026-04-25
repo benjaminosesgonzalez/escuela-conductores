@@ -21,11 +21,13 @@ Antes de escribir la primera línea de código, asegúrense de tener esto instal
 Abran una terminal en su computadora (Símbolo del sistema, PowerShell) y diriganse a la dirección donde desean guardar el proyecto, en este caso pongo un ejemplo de dirección en el escritorio (deben cambiar el nombre de usuario según su equipo) y sigan estos pasos:
 
 2.1. **Clonar el repositorio:**
+
     cd C:\Users\benja\Desktop\
     git clone https://github.com/benjaminosesgonzalez/escuela-conductores.git
     
 
 2.2 **Levantar el entorno:** (Debe ser dentro de la carpeta descargada)
+
     cd C:\Users\benja\Desktop\escuela-conductores
     docker-compose up -d --build
 
