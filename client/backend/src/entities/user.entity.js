@@ -20,6 +20,11 @@ export const User = new EntitySchema({
       length: 255,
       nullable: false,
     },
+    rol: {
+      type: "varchar",
+      length: 50,
+      default: "alumno", // "user", "admin", "secretaria", etc.
+    },
     created_at: {
       type: "timestamp",
       createDate: true,
@@ -29,6 +34,20 @@ export const User = new EntitySchema({
       type: "timestamp",
       updateDate: true,
       default: () => "CURRENT_TIMESTAMP",
+    },
+    relations: {
+      alumnoProfile: {
+        type: "one-to-one",
+        target: "alumno",
+        mappedBy: "user",
+        cascade: true,
+      },
+      administracionProfile: {
+        type: "one-to-one",
+        target: "Administracion",
+        mappedBy: "user",
+        cascade: true,
+      },
     },
   },
 });
