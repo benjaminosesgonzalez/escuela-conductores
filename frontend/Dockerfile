@@ -19,4 +19,4 @@ COPY . .
 EXPOSE 5173
 
 # 7. Iniciamos el servidor. El "-- --host" es crucial para que Vite permita que tu navegador físico vea la web.
-CMD ["npm", "run", "dev", "--", "--host"]
+CMD ["npm", "run", "dev"]
