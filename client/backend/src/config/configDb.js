@@ -5,6 +5,7 @@ import { DATABASE, DB_USERNAME, HOST, PASSWORD, DB_PORT } from "./configEnv.js";
 // IMPORTANTE: Verifica que estos nombres coincidan con tus archivos .entity.js
 import { User } from "../entities/user.entity.js";
 import { Administracion } from "../entities/administracion.entity.js";
+import { Plan } from "../entities/plan.entity.js";
 import bcrypt from "bcrypt";
 
 export const AppDataSource = new DataSource({
