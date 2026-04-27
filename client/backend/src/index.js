@@ -8,6 +8,7 @@ const app = express();
 app.use(express.json());
 app.use(morgan("dev"));
 // Ruta principal de bienvenida
+routerApi(app);
 app.get("/", (req, res) => {
   res.send("¡Bienvenido a mi API REST con TypeORM!");
 });
