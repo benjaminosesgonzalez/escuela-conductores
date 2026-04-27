@@ -34,8 +34,6 @@ export function authMiddleware(req, res, next) {
 
 export function isAdmin(req, res, next) {
   try {
-    console.log("Datos del usuario en el token:", req.user);
-
     if (req.user && req.user.rol === "administracion") {
       next();
     } else {
