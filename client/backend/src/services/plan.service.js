@@ -5,7 +5,8 @@ import { Plan } from "../entities/plan.entity.js";
 export async function getPlansService() {
   try {
     const planRepository = AppDataSource.getRepository(Plan);
-    return await planRepository.find();
+    const newPlan = planRepository.create(planData);
+    return await planRepository.save(newPlan);
   } catch (error) {
     console.error("Error al obtener los planes:", error);
     return null;

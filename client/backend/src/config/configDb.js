@@ -1,11 +1,11 @@
 "use strict";
 import { DataSource } from "typeorm";
 import { DATABASE, DB_USERNAME, HOST, PASSWORD, DB_PORT } from "./configEnv.js";
-
-// IMPORTANTE: Verifica que estos nombres coincidan con tus archivos .entity.js
 import { User } from "../entities/user.entity.js";
 import { Administracion } from "../entities/administracion.entity.js";
 import { Plan } from "../entities/plan.entity.js";
+import { Alumno } from "../entities/alumno.entity.js"; // ¡Añade esta!
+import { Profesor } from "../entities/profesor.entity.js";
 import bcrypt from "bcrypt";
 
 export const AppDataSource = new DataSource({
@@ -15,13 +15,12 @@ export const AppDataSource = new DataSource({
   username: `${DB_USERNAME}`,
   password: `${PASSWORD}`,
   database: `${DATABASE}`,
-  entities: ["src/entities/**/*.js"],
+  entities: ["src/entities/**/*.js"], // Agrega aquí tus entidades
   synchronize: true,
   logging: false,
 });
 
 async function seedAdmin() {
-  // Ahora que están importados arriba, ya no darán ReferenceError
   const userRepository = AppDataSource.getRepository(User);
   const adminProfileRepo = AppDataSource.getRepository(Administracion);
 
