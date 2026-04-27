@@ -1,5 +1,5 @@
 "use strict";
-import { AppDataSource } from "./config/configDb.js";
+import { AppDataSource } from "../config/configDb.js";
 import { Plan } from "../entities/plan.entity.js";
 
 export async function getPlansService() {
