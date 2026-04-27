@@ -2,7 +2,7 @@ import { AppDataSource } from "../config/configDB.js";
 import { User } from "../entities/user.entity.js";
 import { Alumno } from "../entities/alumno.entity.js";
 import { Profesor } from "../entities/profesor.entity.js";
-import { Funcionario } from "../entities/funcionario.entity.js";
+import { Administracion } from "../entities/administracion.entity.js";
 import bcrypt from "bcrypt";
 
 const userRepository = AppDataSource.getRepository(User);
@@ -38,7 +38,7 @@ export async function createUser(data) {
       }),
     );
   } else if (savedUser.rol === "administracion") {
-    const repo = AppDataSource.getRepository(Funcionario);
+    const repo = AppDataSource.getRepository(Administracion);
     await repo.save(
       repo.create({
         nombre: data.nombre,
