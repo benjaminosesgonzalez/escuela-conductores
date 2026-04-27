@@ -25,7 +25,7 @@ export async function createUser(data) {
         nombre: data.nombre,
         rut: data.rut,
         telefono: data.telefono,
-        id_usuario: savedUser.id,
+        id_user: savedUser.id,
       }),
     );
   } else if (savedUser.rol === "profesor") {
@@ -34,7 +34,7 @@ export async function createUser(data) {
       repo.create({
         nombre: data.nombre,
         telefono: data.telefono,
-        id_usuario: savedUser.id,
+        id_user: savedUser.id,
       }),
     );
   } else if (savedUser.rol === "administracion") {
@@ -42,7 +42,7 @@ export async function createUser(data) {
     await repo.save(
       repo.create({
         nombre: data.nombre,
-        id_usuario: savedUser.id,
+        id_user: savedUser.id,
       }),
     );
   }
