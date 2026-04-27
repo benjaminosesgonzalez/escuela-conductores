@@ -2,6 +2,11 @@
 import { DataSource } from "typeorm";
 import { DATABASE, DB_USERNAME, HOST, PASSWORD, DB_PORT } from "./configEnv.js";
 
+// IMPORTANTE: Verifica que estos nombres coincidan con tus archivos .entity.js
+import { User } from "../entities/user.entity.js";
+import { Administracion } from "../entities/administracion.entity.js";
+import bcrypt from "bcrypt";
+
 export const AppDataSource = new DataSource({
   type: "postgres",
   host: `${HOST}`,
@@ -15,10 +20,10 @@ export const AppDataSource = new DataSource({
 });
 
 async function seedAdmin() {
+  // Ahora que están importados arriba, ya no darán ReferenceError
   const userRepository = AppDataSource.getRepository(User);
-  const funcRepository = AppDataSource.getRepository(Funcionario);
+  const adminProfileRepo = AppDataSource.getRepository(Administracion);
 
-  // Buscamos si existe algún usuario con el rol 'administracion'
   const adminExists = await userRepository.findOneBy({ rol: "administracion" });
 
   if (!adminExists) {
@@ -26,7 +31,6 @@ async function seedAdmin() {
 
     const hashedPassword = await bcrypt.hash("admin123", 10);
 
-    // 1. Creamos el usuario base
     const newUser = userRepository.create({
       email: "admin@escuela.com",
       password: hashedPassword,
@@ -34,21 +38,23 @@ async function seedAdmin() {
     });
     const savedUser = await userRepository.save(newUser);
 
-    // 2. Creamos su perfil de funcionario
-    const newFunc = funcRepository.create({
+    // Usamos el repositorio de Administracion
+    const newAdminProfile = adminProfileRepo.create({
       nombre: "Administrador Sistema",
-      id_usuario: savedUser.id,
+      id_user: savedUser.id,
     });
-    await funcRepository.save(newFunc);
+    await adminProfileRepo.save(newAdminProfile);
 
     console.log("=> Admin inicial creado: admin@escuela.com / admin123");
   }
 }
+
 export async function connectDB() {
   try {
     await AppDataSource.initialize();
     console.log("=> Conexión exitosa a la base de datos PostgreSQL!");
-    await seedAdmin();
+
+    await seedAdmin(); // Ejecuta la creación del admin
   } catch (error) {
     console.error("Error al conectar con la base de datos:", error);
     process.exit(1);
