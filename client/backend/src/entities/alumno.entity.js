@@ -26,9 +26,19 @@ export const Alumno = new EntitySchema({
     userId: {
       type: "int",
     },
-    planId: {
+    id_plan_interes: {
       type: "int",
       nullable: true,
+    },
+
+    id_plan_matriculado: {
+      type: "int",
+      nullable: true,
+    },
+    estado_matricula: {
+      type: "varchar",
+      length: 20,
+      default: "pendiente", // "pendiente", "matriculado", "finalizado"
     },
   },
   relations: {
@@ -38,10 +48,15 @@ export const Alumno = new EntitySchema({
       joinColumn: { name: "userId" },
       onDelete: "CASCADE",
     },
-    plan: {
-      type: "many-to-one",
+    planInteres: {
       target: "Plan",
-      joinColumn: { name: "planId" },
+      type: "many-to-one",
+      joinColumn: { name: "id_plan_interes" },
+    },
+    planMatriculado: {
+      target: "Plan",
+      type: "many-to-one",
+      joinColumn: { name: "id_plan_matriculado" },
     },
   },
 });
