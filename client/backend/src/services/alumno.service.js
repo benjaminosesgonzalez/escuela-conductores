@@ -2,10 +2,10 @@
 import { AppDataSource } from "../config/configDb.js";
 import { Alumno } from "../entities/alumno.entity.js";
 
-export async function seleccionarPlanInteresService(idUsuario, idPlan) {
+export async function seleccionarPlanInteresService(idUser, idPlan) {
   try {
     const alumnoRepository = AppDataSource.getRepository(Alumno);
-    const alumno = await alumnoRepository.findOneBy({ id_usuario: idUsuario });
+    const alumno = await alumnoRepository.findOneBy({ id_user: idUser });
 
     if (!alumno) return null;
 

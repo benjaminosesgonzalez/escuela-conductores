@@ -2,14 +2,14 @@ import { EntitySchema } from "typeorm";
 
 export const Alumno = new EntitySchema({
   name: "Alumno",
-  tableName: "Alumnos",
+  tableName: "alumnos",
   columns: {
     id: {
       primary: true,
       type: "int",
       generated: "increment",
     },
-    name: {
+    nombre: {
       type: "varchar",
       length: 100,
       nullable: false,
@@ -19,11 +19,11 @@ export const Alumno = new EntitySchema({
       length: 12,
       unique: true,
     },
-    phone: {
+    telefono: {
       type: "varchar",
       length: 15,
     },
-    userId: {
+    id_user: {
       type: "int",
     },
     id_plan_interes: {

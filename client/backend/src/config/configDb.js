@@ -3,10 +3,9 @@ import { DataSource } from "typeorm";
 import { DATABASE, DB_USERNAME, HOST, PASSWORD, DB_PORT } from "./configEnv.js";
 import { User } from "../entities/user.entity.js";
 import { Administracion } from "../entities/administracion.entity.js";
-import { Plan } from "../entities/plan.entity.js";
-import { Alumno } from "../entities/alumno.entity.js"; // ¡Añade esta!
-import { Profesor } from "../entities/profesor.entity.js";
+
 import bcrypt from "bcrypt";
+console.log("--- CARGANDO INSTANCIA DE DATASOURCE ---");
 
 export const AppDataSource = new DataSource({
   type: "postgres",
