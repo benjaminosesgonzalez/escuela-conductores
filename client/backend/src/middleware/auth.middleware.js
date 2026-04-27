@@ -34,13 +34,16 @@ export function authMiddleware(req, res, next) {
 
 export function isAdmin(req, res, next) {
   try {
+    console.log("Datos del usuario en el token:", req.user);
+
     if (req.user && req.user.rol === "administracion") {
       next();
     } else {
+      const rolEncontrado = req.user ? req.user.rol : "Ninguno";
       return handleErrorClient(
         res,
         403,
-        "Acceso restringido. Se requiere rol de administración.",
+        `Acceso restringido. Rol actual: ${rolEncontrado}`,
       );
     }
   } catch (error) {
