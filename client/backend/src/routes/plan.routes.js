@@ -4,17 +4,34 @@ import {
   getPlans,
   getPlanById,
   createPlan,
+  updatePlan,
+  deletePlan,
 } from "../controllers/plan.controller.js";
-import { authMiddleware, isAdmin } from "../middleware/auth.middleware.js";
+import {
+  authMiddleware,
+  isAdmin,
+  isAdminOrSecretaria,
+} from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-// obtener todos los planes: GET /api/plans
+// ─── Rutas públicas ────────────────────────────────────────────────────────────
+
+// GET /api/plans — cualquier usuario puede consultar los planes disponibles
 router.get("/", getPlans);
 
-// obtener un plan por su ID: GET /api/plans/:id
+// GET /api/plans/:id — cualquier usuario puede ver el detalle de un plan
 router.get("/:id", getPlanById);
-// crear plan: POST /api/plans
-router.post("/", authMiddleware, isAdmin, createPlan);
+
+// ─── Rutas protegidas ──────────────────────────────────────────────────────────
+
+// POST /api/plans — crear un nuevo plan (admin o secretaria)
+router.post("/", authMiddleware, isAdminOrSecretaria, createPlan);
+
+// PUT /api/plans/:id — actualizar precio, nombre, horas, etc. (admin o secretaria)
+router.put("/:id", authMiddleware, isAdminOrSecretaria, updatePlan);
+
+// DELETE /api/plans/:id — eliminar un plan (solo administracion)
+router.delete("/:id", authMiddleware, isAdmin, deletePlan);
 
 export default router;
