@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
+import Login from './Login.jsx';
 
 const EscuelaLandingPage = () => {
   const [selectedPlan, setSelectedPlan] = useState('intermedio');
   const [hoveredPlan, setHoveredPlan] = useState(null);
+  const [currentPage, setCurrentPage] = useState('landing');
+
+  if (currentPage === 'login') {
+    return <Login onBack={() => setCurrentPage('landing')} />;
+  }
 
   const plans = [
     {
@@ -44,8 +50,16 @@ const EscuelaLandingPage = () => {
     textAlign: 'center',
     cursor: 'pointer',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    transform: selectedPlan === planId ? 'scale(1.03)' : hoveredPlan === planId ? 'translateY(-4px)' : 'scale(1)',
-    boxShadow: selectedPlan === planId ? '0 8px 24px rgba(255, 107, 53, 0.3)' : hoveredPlan === planId ? '0 4px 16px rgba(0,0,0,0.15)' : 'none',
+    transform: selectedPlan === planId
+      ? 'scale(1.03)'
+      : hoveredPlan === planId
+        ? 'translateY(-4px)'
+        : 'scale(1)',
+    boxShadow: selectedPlan === planId
+      ? '0 8px 24px rgba(255, 107, 53, 0.3)'
+      : hoveredPlan === planId
+        ? '0 4px 16px rgba(0,0,0,0.15)'
+        : 'none',
     border: selectedPlan === planId ? '2px solid rgba(255,255,255,0.3)' : 'none'
   });
 
@@ -102,9 +116,11 @@ const EscuelaLandingPage = () => {
         }}>
           ESCUELA DE CONDUCTORES
         </div>
+
         <div style={{ display: 'flex', gap: '16px' }}>
           <button
             className="action-btn"
+            onClick={() => setCurrentPage('login')}
             style={{
               backgroundColor: '#5a68d8',
               color: 'white',
@@ -117,6 +133,7 @@ const EscuelaLandingPage = () => {
           >
             Iniciar sesión
           </button>
+
           <button
             className="action-btn"
             style={{
@@ -149,7 +166,6 @@ const EscuelaLandingPage = () => {
         }}>
           {/* Sección izquierda */}
           <div>
-            {/* Sección de bienvenida */}
             <section style={{ marginBottom: '30px' }}>
               <h1 style={{
                 color: '#2c3e8f',
@@ -161,6 +177,7 @@ const EscuelaLandingPage = () => {
               }}>
                 ¡Bienvenido a nuestra Escuela de Conductores!
               </h1>
+
               <h2 style={{
                 color: '#2c3e8f',
                 fontSize: '22px',
@@ -169,6 +186,7 @@ const EscuelaLandingPage = () => {
               }}>
                 ¿Por qué elegirnos?
               </h2>
+
               <p style={{
                 color: '#2c3e8f',
                 fontSize: '22px',
@@ -179,7 +197,6 @@ const EscuelaLandingPage = () => {
               </p>
             </section>
 
-            {/* Imagen del instructor */}
             <div style={{
               borderRadius: '12px',
               overflow: 'hidden',
@@ -194,7 +211,6 @@ const EscuelaLandingPage = () => {
               />
             </div>
 
-            {/* Sección Quiénes somos */}
             <section style={{ marginBottom: '0px' }}>
               <h3 style={{
                 color: '#2c3e8f',
@@ -204,6 +220,7 @@ const EscuelaLandingPage = () => {
               }}>
                 Quiénes somos
               </h3>
+
               <p style={{
                 color: '#2c3e8f',
                 fontSize: '22px',
@@ -214,13 +231,10 @@ const EscuelaLandingPage = () => {
                 Somos una escuela de conductores con <strong> años de experiencia</strong> formando conductores responsables y seguros. Contamos con instructores certificados, vehículos modernos y flexibilidad de horarios para adaptarnos a tus necesidades. Aprende a conducir con nosotros y obtén tu licencia de conducir con confianza.
               </p>
             </section>
-
           </div>
 
           {/* Sección derecha - Planes */}
-          
           <div>
-            
             <div style={{
               backgroundColor: '#7d88d1',
               margin: '16px 0 0 0',
@@ -240,7 +254,6 @@ const EscuelaLandingPage = () => {
                 Elige tu plan de conducción
               </h2>
 
-              {/* Cards de planes */}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
@@ -265,7 +278,9 @@ const EscuelaLandingPage = () => {
                     }}>
                       {plan.nombre}
                     </h3>
+
                     <div style={{ fontSize: '32px', marginBottom: '18px' }}>🚗</div>
+
                     <div style={{
                       backgroundColor: selectedPlan === plan.id ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.2)',
                       padding: '12px',
@@ -281,6 +296,7 @@ const EscuelaLandingPage = () => {
                         {plan.precio}
                       </p>
                     </div>
+
                     <ul style={{
                       textAlign: 'left',
                       fontSize: '14px',
@@ -300,7 +316,6 @@ const EscuelaLandingPage = () => {
                 ))}
               </div>
 
-              {/* Botones de selección */}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
@@ -328,9 +343,7 @@ const EscuelaLandingPage = () => {
               </div>
             </div>
           </div>
-          
         </div>
-        
       </div>
 
       {/* Footer */}
@@ -358,6 +371,7 @@ const EscuelaLandingPage = () => {
               <span>✓</span>
               <span>Clases prácticas y teóricas</span>
             </div>
+
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -370,6 +384,7 @@ const EscuelaLandingPage = () => {
               <span>Horarios flexibles y certificados</span>
             </div>
           </div>
+
           <div style={{ textAlign: 'right' }}>
             <p style={{
               color: '#2c3e8f',
@@ -379,6 +394,7 @@ const EscuelaLandingPage = () => {
             }}>
               ¿Tienes preguntas? Habla con nosotros por
             </p>
+
             <p style={{
               color: '#2c3e8f',
               fontWeight: '700',
