@@ -18,7 +18,7 @@ const EscuelaLandingPage = () => {
     {
       id: 'intermedio',
       nombre: 'Plan\nintermedio',
-      precio: '$90.000',
+      precio: '$100.000',
       caracteristicas: [
         '✓ 8 clases totales',
         '✓ Curso teórico intermedio',
@@ -155,7 +155,7 @@ const EscuelaLandingPage = () => {
                 color: '#2c3e8f',
                 fontSize: '50px',
                 fontWeight: '700',
-                margin: '0 0 20px 0',
+                margin: '0 0 10px 0',
                 lineHeight: '1.2',
                 letterSpacing: '-0.5px'
               }}>
@@ -223,7 +223,7 @@ const EscuelaLandingPage = () => {
             
             <div style={{
               backgroundColor: '#7d88d1',
-              margin: '16px 0 0 0',
+              margin: '40px 0 0 0',
               padding: '60px 36px',
               borderRadius: '30px',
               color: 'white',
@@ -336,7 +336,7 @@ const EscuelaLandingPage = () => {
       {/* Footer */}
       <div style={{
         backgroundColor: '#d5dce8',
-        padding: '28px 60px',
+        padding: '12px 60px',
         borderTop: '1px solid rgba(0,0,0,0.08)',
         width: '100%'
       }}>
