@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './Login.jsx';
+import Dashboard from './Dashboard.jsx';
 
 const EscuelaLandingPage = () => {
   const [selectedPlan, setSelectedPlan] = useState('intermedio');
   const [hoveredPlan, setHoveredPlan] = useState(null);
-  const [currentPage, setCurrentPage] = useState('landing');
-
-  if (currentPage === 'login') {
-    return <Login onBack={() => setCurrentPage('landing')} />;
-  }
 
   const plans = [
     {
@@ -118,9 +115,9 @@ const EscuelaLandingPage = () => {
         </div>
 
         <div style={{ display: 'flex', gap: '16px' }}>
-          <button
+          <a
+            href="/login"
             className="action-btn"
-            onClick={() => setCurrentPage('login')}
             style={{
               backgroundColor: '#5a68d8',
               color: 'white',
@@ -128,11 +125,14 @@ const EscuelaLandingPage = () => {
               padding: '12px 28px',
               borderRadius: '8px',
               fontWeight: '600',
-              fontSize: '14px'
+              fontSize: '14px',
+              textDecoration: 'none',
+              display: 'inline-block',
+              cursor: 'pointer'
             }}
           >
             Iniciar sesión
-          </button>
+          </a>
 
           <button
             className="action-btn"
@@ -143,7 +143,8 @@ const EscuelaLandingPage = () => {
               padding: '12px 28px',
               borderRadius: '8px',
               fontWeight: '600',
-              fontSize: '14px'
+              fontSize: '14px',
+              cursor: 'pointer'
             }}
           >
             Registrarse
@@ -228,7 +229,7 @@ const EscuelaLandingPage = () => {
                 margin: '0',
                 textAlign: 'justify'
               }}>
-                Somos una escuela de conductores con <strong> años de experiencia</strong> formando conductores responsables y seguros. Contamos con instructores certificados, vehículos modernos y flexibilidad de horarios para adaptarnos a tus necesidades. Aprende a conducir con nosotros y obtén tu licencia de conducir con confianza.
+                Somos una escuela de conductores con <strong>años de experiencia</strong> formando conductores responsables y seguros. Contamos con instructores certificados, vehículos modernos y flexibilidad de horarios para adaptarnos a tus necesidades. Aprende a conducir con nosotros y obtén tu licencia de conducir con confianza.
               </p>
             </section>
           </div>
@@ -410,4 +411,18 @@ const EscuelaLandingPage = () => {
   );
 };
 
-export default EscuelaLandingPage;
+// Componente principal con Router
+const App = () => {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<EscuelaLandingPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
+  );
+};
+
+export default App;
