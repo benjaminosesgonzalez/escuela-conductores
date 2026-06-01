@@ -64,6 +64,24 @@ export async function matricularNuevoAlumnoService(datosGenerales) {
     await queryRunner.release();
   }
 }
+
+export async function editarAlumnoService(idAlumno, datosAEditar){
+  try{
+    const alumnoRepository = AppDataSource.getRepository(Alumno);
+    const alumno = await alumnoRepository.findOneBy({ id: idAlumno });
+
+    if(!alumno) return null;
+
+    //Se mezclan los datos actuales del alumno con los nuevos datos a editar
+    Object.assign(alumno, datosAEditar);
+
+    return await alumnoRepository.save(alumno);
+  }catch(error){
+    console.error("Error al editar alumno:", error);
+    throw error;
+  }
+}
+
 export async function seleccionarPlanInteresService(idUser, idPlan) {
   try {
     const alumnoRepository = AppDataSource.getRepository(Alumno);
