@@ -26,7 +26,7 @@ export const Alumno = new EntitySchema({
     sexo: {
       type: "varchar",
       length: 20,
-      unique: true
+      unique: false
     },
     comuna: {
       type: "varchar",

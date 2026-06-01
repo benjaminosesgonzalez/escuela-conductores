@@ -167,7 +167,7 @@ export const registerStaff = async (req, res) => {
     }
 
     // Validar que el rol sea válido
-    const rolesValidos = ["alumno", "profesor", "administrador"];
+    const rolesValidos = ["alumno", "profesor", "administrador", "secretaria"];
     if (!rolesValidos.includes(rol)) {
       return res.status(400).json({
         success: false,

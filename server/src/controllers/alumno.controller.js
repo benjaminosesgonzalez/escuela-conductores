@@ -3,7 +3,41 @@ import {
   seleccionarPlanInteresService,
   matricularAlumnoService,
   matricularNuevoAlumnoService,
+  editarAlumnoService
 } from "../services/alumno.service.js";
+
+export async function editarAlumno(req, res) {
+  try {
+    const { id } = req.params; //se rescata el id de la url
+    const datosAEditar = req.body;
+
+    //seguridad: evitar que alguien cambie a que User pertenece este alumno
+    delete datosAEditar.id_user;
+
+    const alumnoActualizado = await editarAlumnoService(parseInt(id), datosAEditar);
+
+    if(!alumnoActualizado) {
+      return res.status(404).json({ message: "No se encontro un alumno con ese ID." });
+    }
+
+    res.status(200).json({
+      message: "Datos del alumno actualizados correctamente.",
+      data: alumnoActualizado
+    });
+
+  } catch(error) {
+    if (error.code === '23505') { // Código de error de duplicidad en PostgreSQL
+      return res.status(409).json({
+        message: "El RUT ya se encuentra registrado en el sistema."
+      });
+    }
+
+    res.status(500).json({
+      message: "Error interno al actualizar los datos del alumno.",
+      error: error.message
+    });
+  } 
+}
 
 export async function matricularNuevoAlumno(req, res){
   try {
