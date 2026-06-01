@@ -2,7 +2,67 @@
 import {
   seleccionarPlanInteresService,
   matricularAlumnoService,
+  matricularNuevoAlumnoService,
 } from "../services/alumno.service.js";
+
+export async function matricularNuevoAlumno(req, res){
+  try {
+    const {
+      nombre,
+      rut,
+      sexo,
+      comuna,
+      telefono,
+      email,
+      sede,
+      id_plan_matriculado
+    } = req.body;
+
+    // Validación básica
+    if (!nombre || !rut || !email || !id_plan_matriculado) {
+      return res.status(400).json({ 
+        message: "Faltan campos obligatorios (nombre, rut, email, plan)." 
+      });
+    }
+
+    // Generamos una contraseña por defecto usando los primeros 4 dígitos del RUT
+    // Ejemplo: Si el rut es 19234567-8, la clave será "1923"
+    const defaultPassword = rut.substring(0, 4);
+
+    const payload = {
+      email,
+      password: defaultPassword,
+      nombre,
+      rut,
+      telefono,
+      sexo,
+      comuna,
+      sede,
+      id_plan_matriculado
+    };
+
+    const nuevoAlumno = await matricularNuevoAlumnoService(payload);
+
+    res.status(201).json({
+      message: "Alumno registrado y matriculado exitosamente.",
+      data: nuevoAlumno,
+      nota: `El usuario del alumno fue creado. Su contraseña temporal son los primeros 4 dígitos del RUT.`
+    });
+
+  } catch (error) {
+    // Manejo de errores comunes como duplicidad de Unique Keys
+    if (error.code === '23505') { // Código de error de duplicidad en PostgreSQL
+      return res.status(409).json({
+        message: "El RUT o Correo Electrónico ya se encuentra registrado en el sistema."
+      });
+    }
+
+    res.status(500).json({
+      message: "Error interno al registrar el alumno.",
+      error: error.message
+    });
+  }
+}
 
 export async function elegirPlanPreferencia(req, res) {
   try {
