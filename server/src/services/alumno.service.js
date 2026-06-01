@@ -68,13 +68,28 @@ export async function matricularNuevoAlumnoService(datosGenerales) {
 export async function editarAlumnoService(idAlumno, datosAEditar){
   try{
     const alumnoRepository = AppDataSource.getRepository(Alumno);
-    const alumno = await alumnoRepository.findOneBy({ id: idAlumno });
+    const userRepository = AppDataSource.getRepository(User);
+
+    //1. buscamos a alumno incluyendo su relacion con el user
+    const alumno = await alumnoRepository.findOne({
+       where: { id: idAlumno },
+       relations: ["user"] //trae los datos de la tabla users 
+    });
 
     if(!alumno) return null;
 
+    //2. si viene un email en los datos, lo separamos y lo actualizamos con la tabla User
+    if (datosAEditar.email) {
+      alumno.user.email = datosAEditar.email;
+      await userRepository.save(alumno.user); //guardamos los cambios en la tabla User
+      delete datosAEditar.email;  // Eliminamos el email de los datos a editar del alumno para no generar conflicto con la entidad Alumno
+    }
+
+    //3. actualizamos el resto de datos en la tabla Alumno
     //Se mezclan los datos actuales del alumno con los nuevos datos a editar
     Object.assign(alumno, datosAEditar);
 
+    //4. al hacer save, se guardan los cambios tanto en Alumno como en User gracias a la relación establecida entre ambas entidades
     return await alumnoRepository.save(alumno);
   }catch(error){
     console.error("Error al editar alumno:", error);
