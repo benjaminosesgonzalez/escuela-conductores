@@ -128,3 +128,60 @@ export async function matricularAlumnoService(idAlumno, idPlanDefinitivo) {
     return null;
   }
 }
+
+export async function autoRegistroAlumnoService(datosRegistro) {
+  const queryRunner = AppDataSource.createQueryRunner();
+
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
+
+  try {
+    const { 
+      email, 
+      password, //la contraseña la define el alumno
+      nombre, 
+      rut, 
+      telefono, 
+      sexo,
+      comuna,
+      sede,
+      id_plan_interes // Opcional, por si selecciona un plan en la web
+    } = datosRegistro;
+
+    // 1. Encriptar la contraseña elegida por el alumno
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // 2. Crear credenciales (User)
+    const newUser = queryRunner.manager.create(User, {
+      email,
+      password: hashedPassword,
+      rol: "alumno" // Forzamos el rol para que no puedan inyectar "administrador"
+    });
+    const savedUser = await queryRunner.manager.save(User, newUser);
+
+    // 3. Crear ficha académica (Alumno)
+    const newAlumno = queryRunner.manager.create(Alumno, {
+      nombre,
+      rut,
+      telefono,
+      sexo,
+      comuna,
+      sede,
+      id_user: savedUser.id,
+      id_plan_interes: id_plan_interes || null, 
+      estado_matricula: "pendiente" // Entra en estado pendiente
+    });
+    const savedAlumno = await queryRunner.manager.save(Alumno, newAlumno);
+
+    await queryRunner.commitTransaction();
+    return savedAlumno;
+    
+  } catch (error) {
+    await queryRunner.rollbackTransaction();
+    console.error("Error en el auto-registro:", error);
+    throw error;
+  } finally {
+    await queryRunner.release();
+  }
+}
