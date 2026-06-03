@@ -53,47 +53,23 @@ export function isAdmin(req, res, next) {
     );
   }
 }
-
-export function isSecretaria(req, res, next) {
-  try {
-    if (req.user && req.user.rol === "secretaria") {
-      next();
-    } else {
-      const rolEncontrado = req.user ? req.user.rol : "Ninguno";
-      return handleErrorClient(
-        res,
-        403,
-        `Acceso restringido. Rol actual: ${rolEncontrado}`,
-      );
-    }
-  } catch (error) {
-    return handleErrorClient(
-      res,
-      500,
-      "Error al verificar permisos de secretaria.",
-      error.message,
-    );
+export const isSecretaria = (req, res, next) => {
+  if (req.user && req.user.rol === "secretaria") {
+    next();
+  } else {
+    return res
+      .status(403)
+      .json({ success: false, message: "Requiere rol de Secretaria" });
   }
-}
+};
 
-export function isSecretariaOrAdmin(req, res, next) {
-  try {
-    if (req.user && (req.user.rol === "secretaria" || req.user.rol === "administrador")) {
-      next();
-    } else {
-      const rolEncontrado = req.user ? req.user.rol : "Ninguno";
-      return handleErrorClient(
-        res,
-        403,
-        `Acceso restringido. Se requiere nivel de Secretaria o Administrador. Rol actual: ${rolEncontrado}`
-      );
-    }
-  } catch (error) {
-    return handleErrorClient(
-      res,
-      500,
-      "Error al verificar permisos compartidos.",
-      error.message,
-    );
+export const isAdminOrSecretaria = (req, res, next) => {
+  const rolesPermitidos = ["administracion", "secretaria"];
+  if (req.user && rolesPermitidos.includes(req.user.rol)) {
+    next();
+  } else {
+    return res
+      .status(403)
+      .json({ success: false, message: "Acceso restringido a Staff" });
   }
-}
+};

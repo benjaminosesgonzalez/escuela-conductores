@@ -2,6 +2,10 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { AppDataSource } from "../config/configDb.js";
 import { User } from "../entities/user.entity.js";
+import { Alumno } from "../entities/alumno.entity.js";
+import { Profesor } from "../entities/profesor.entity.js";
+import { Administracion } from "../entities/administracion.entity.js";
+import { Secretaria } from "../entities/secretaria.entity.js";
 
 const userRepository = AppDataSource.getRepository(User);
 
@@ -14,7 +18,7 @@ const generateToken = (user) => {
       rol: user.rol,
     },
     process.env.JWT_SECRET || "tu_clave_secreta_super_segura",
-    { expiresIn: "24h" }
+    { expiresIn: "24h" },
   );
 };
 
@@ -81,14 +85,14 @@ export const login = async (req, res) => {
 // REGISTER
 export const register = async (req, res) => {
   try {
-    const { email, password, confirmPassword } = req.body;
+    const { email, password, confirmPassword, nombre, rut, telefono } =
+      req.body;
 
-    // Validaciones
-    if (!email || !password || !confirmPassword) {
-      return res.status(400).json({
-        success: false,
-        message: "Email y contraseña son requeridos",
-      });
+    // Validaciones extendidas
+    if (!email || !password || !nombre || !rut) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Faltan datos obligatorios" });
     }
 
     if (password !== confirmPassword) {
@@ -106,15 +110,11 @@ export const register = async (req, res) => {
     }
 
     // Verificar si el email ya existe
-    const existingUser = await userRepository.findOne({
-      where: { email: email },
-    });
-
+    const existingUser = await userRepository.findOne({ where: { email } });
     if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: "El email ya está registrado",
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: "El email ya está registrado" });
     }
 
     // Hashear contraseña
@@ -126,28 +126,31 @@ export const register = async (req, res) => {
       password: hashedPassword,
       rol: "alumno",
     });
-
-    await userRepository.save(newUser);
+    const savedUser = await userRepository.save(newUser);
+    const alumnoRepo = AppDataSource.getRepository("Alumno"); // O importa la entidad Alumno
+    await alumnoRepo.save(
+      alumnoRepo.create({
+        nombre,
+        rut,
+        telefono,
+        id_user: savedUser.id, // Vinculamos con el usuario recién creado
+      }),
+    );
 
     // Generar token
-    const token = generateToken(newUser);
+    const token = generateToken(savedUser);
 
     return res.status(201).json({
       success: true,
-      message: "Usuario registrado exitosamente",
+      message: "Usuario y perfil de alumno registrados exitosamente",
       token,
-      user: {
-        id: newUser.id,
-        email: newUser.email,
-        rol: newUser.rol,
-        created_at: newUser.created_at,
-      },
+      user: { id: savedUser.id, email: savedUser.email, rol: savedUser.rol },
     });
   } catch (error) {
     console.error("❌ Error en registro:", error);
     return res.status(500).json({
       success: false,
-      message: "Error al procesar el registro",
+      message: "Error en el servidor",
       error: error.message,
     });
   }
@@ -156,18 +159,18 @@ export const register = async (req, res) => {
 // REGISTER STAFF (solo admin)
 export const registerStaff = async (req, res) => {
   try {
-    const { email, password, rol } = req.body;
+    const { email, password, rol, nombre, telefono, id_sedes } = req.body;
 
     // Validaciones
-    if (!email || !password || !rol) {
+    if (!email || !password || !rol || !nombre || !telefono) {
       return res.status(400).json({
         success: false,
-        message: "Email, contraseña y rol son requeridos",
+        message: "Email, contraseña, rol, nombre y teléfono son requeridos",
       });
     }
 
     // Validar que el rol sea válido
-    const rolesValidos = ["alumno", "profesor", "administrador", "secretaria"];
+    const rolesValidos = ["profesor", "administracion", "secretaria"];
     if (!rolesValidos.includes(rol)) {
       return res.status(400).json({
         success: false,
@@ -197,7 +200,7 @@ export const registerStaff = async (req, res) => {
       rol,
     });
 
-    await userRepository.save(newStaff);
+    const savedUser = await userRepository.save(newStaff);
 
     return res.status(201).json({
       success: true,
