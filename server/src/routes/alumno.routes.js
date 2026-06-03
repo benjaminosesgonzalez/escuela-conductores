@@ -4,11 +4,15 @@ import {
   elegirPlanPreferencia,
   oficializarMatricula,
   matricularNuevoAlumno,
-  editarAlumno
+  editarAlumno,
+  editarMiPerfil
 } from "../controllers/alumno.controller.js";
 import { authMiddleware, isAdmin, isSecretariaOrAdmin } from "../middleware/auth.middleware.js";
 
 const router = Router();
+
+//ruta alumno editando sus datos
+router.put("/mi-perfil", authMiddleware, editarMiPerfil);
 
 // El alumno elige su preferencia POST /api/alumnos/preferencia
 router.post("/preferencia", authMiddleware, elegirPlanPreferencia);
