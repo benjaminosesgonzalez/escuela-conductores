@@ -3,7 +3,7 @@ import authRoutes from "./auth.routes.js";
 import profileRoutes from "./profile.routes.js";
 import planRoutes from "./plan.routes.js";
 import alumnoRoutes from "./alumno.routes.js";
-import sedeRoutes from "./sede.routes.js";
+//import sedeRoutes from "./sede.routes.js";
 
 export function routerApi(app) {
   const router = Router();
@@ -13,5 +13,5 @@ export function routerApi(app) {
   router.use("/profile", profileRoutes);
   router.use("/plans", planRoutes);
   router.use("/alumnos", alumnoRoutes);
-  router.use("/sedes", sedeRoutes);
+  //router.use("/sedes", sedeRoutes);
 }
