@@ -53,3 +53,23 @@ export function isAdmin(req, res, next) {
     );
   }
 }
+export const isSecretaria = (req, res, next) => {
+  if (req.user && req.user.rol === "secretaria") {
+    next();
+  } else {
+    return res
+      .status(403)
+      .json({ success: false, message: "Requiere rol de Secretaria" });
+  }
+};
+
+export const isAdminOrSecretaria = (req, res, next) => {
+  const rolesPermitidos = ["administracion", "secretaria"];
+  if (req.user && rolesPermitidos.includes(req.user.rol)) {
+    next();
+  } else {
+    return res
+      .status(403)
+      .json({ success: false, message: "Acceso restringido a Staff" });
+  }
+};

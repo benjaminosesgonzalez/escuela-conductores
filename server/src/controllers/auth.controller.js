@@ -2,6 +2,10 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { AppDataSource } from "../config/configDb.js";
 import { User } from "../entities/user.entity.js";
+import { Alumno } from "../entities/alumno.entity.js";
+import { Profesor } from "../entities/profesor.entity.js";
+import { Administracion } from "../entities/administracion.entity.js";
+import { Secretaria } from "../entities/secretaria.entity.js";
 
 const userRepository = AppDataSource.getRepository(User);
 
@@ -144,31 +148,29 @@ export const register = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error en registro:", error);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error en el servidor",
-        error: error.message,
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Error en el servidor",
+      error: error.message,
+    });
   }
 };
 
 // REGISTER STAFF (solo admin)
 export const registerStaff = async (req, res) => {
   try {
-    const { email, password, rol } = req.body;
+    const { email, password, rol, nombre, telefono, id_sedes } = req.body;
 
     // Validaciones
-    if (!email || !password || !rol) {
+    if (!email || !password || !rol || !nombre || !telefono) {
       return res.status(400).json({
         success: false,
-        message: "Email, contraseña y rol son requeridos",
+        message: "Email, contraseña, rol, nombre y teléfono son requeridos",
       });
     }
 
     // Validar que el rol sea válido
-    const rolesValidos = ["profesor", "administrador"];
+    const rolesValidos = ["profesor", "administracion", "secretaria"];
     if (!rolesValidos.includes(rol)) {
       return res.status(400).json({
         success: false,
@@ -198,7 +200,7 @@ export const registerStaff = async (req, res) => {
       rol,
     });
 
-    await userRepository.save(newStaff);
+    const savedUser = await userRepository.save(newStaff);
 
     return res.status(201).json({
       success: true,

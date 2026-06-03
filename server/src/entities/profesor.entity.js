@@ -28,5 +28,15 @@ export const Profesor = new EntitySchema({
       joinColumn: { name: "id_user" },
       onDelete: "CASCADE",
     },
+    sedes: {
+      target: "Sede",
+      type: "many-to-many",
+      joinTable: {
+        name: "profesor_sedes", // Tabla intermedia: id_profesor | id_sede
+        joinColumn: { name: "id_profesor", referencedColumnName: "id" },
+        inverseJoinColumn: { name: "id_sede", referencedColumnName: "id" },
+      },
+      cascade: true,
+    },
   },
 });
