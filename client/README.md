@@ -1,44 +1,16 @@
-#  Proyecto Escuela de Conductores 
-Proyecto semestral ISW 2026-1
+# React + Vite
 
-¡Hola equipo! Bienvenidos al repositorio oficial del proyecto. 
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Para asegurar que todos trabajemos con las mismas versiones, sin conflictos en nuestros equipos y sin perder horas instalando cosas, hemos estandarizado el entorno de desarrollo utilizando **Docker**. No necesitan instalar Node.js ni PostgreSQL físicamente.
+Currently, two official plugins are available:
 
----
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## 1. Requisitos Previos
+## React Compiler
 
-Antes de escribir la primera línea de código, asegúrense de tener esto instalado:
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-1. **GitHub Desktop:** Para descargar el código. ([Descargar aquí](https://desktop.github.com/download/))
-2. **Docker Desktop:** El motor de contenedores. ([Descargar aquí](https://www.docker.com/products/docker-desktop/))
+## Expanding the ESLint configuration
 
----
-
-## 2. Inicializar el Entorno (Primera vez)
-
-Abran una terminal en su computadora (Símbolo del sistema, PowerShell) y diriganse a la dirección donde desean guardar el proyecto, en este caso pongo un ejemplo de dirección en el escritorio (deben cambiar el nombre de usuario según su equipo) y sigan estos pasos:
-
-2.1. **Clonar el repositorio:**
-
-    cd C:\Users\benja\Desktop\
-    git clone https://github.com/benjaminosesgonzalez/escuela-conductores.git
-    
-
-2.2 **Levantar el entorno:** (Debe ser dentro de la carpeta descargada)
-
-    cd C:\Users\benja\Desktop\escuela-conductores
-    docker-compose up -d --build
-
----
-
-## 3. Accesos y Puertos
-
-Una vez que la terminal termine, tendrán los siguientes servicios corriendo en su equipo. Accedan desde su navegador:
-
-     Frontend (React + Vite): http://localhost:5173
-
-     Backend (API Express): http://localhost:3000
-
-     Base de Datos (pgAdmin4): http://localhost:5050
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
