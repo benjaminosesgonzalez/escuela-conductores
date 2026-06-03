@@ -7,7 +7,7 @@ import {
   editarAlumno,
   editarMiPerfil
 } from "../controllers/alumno.controller.js";
-import { authMiddleware, isAdmin, isSecretariaOrAdmin } from "../middleware/auth.middleware.js";
+import { authMiddleware, isAdmin, isAdminOrSecretaria } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
@@ -18,12 +18,12 @@ router.put("/mi-perfil", authMiddleware, editarMiPerfil);
 router.post("/preferencia", authMiddleware, elegirPlanPreferencia);
 
 // La secretaría oficializa la matrícula POST /api/alumnos/matricular
-router.post("/matricular", authMiddleware, isSecretariaOrAdmin, oficializarMatricula);
+router.post("/matricular", authMiddleware, isAdminOrSecretaria, oficializarMatricula);
 
 //Admin y secretaria pueden registrar y matricular altiro un nuevo alumno POST /api/alumnos/registrar
-router.post("/registrar", authMiddleware, isSecretariaOrAdmin, matricularNuevoAlumno);
+router.post("/registrar", authMiddleware, isAdminOrSecretaria, matricularNuevoAlumno);
 
 //admin y secretaria pueden editar datos del alumno PUT /api/alumnos/editar
-router.put("/editar/:id", authMiddleware, isSecretariaOrAdmin, editarAlumno);
+router.put("/editar/:id", authMiddleware, isAdminOrSecretaria, editarAlumno);
 
 export default router;

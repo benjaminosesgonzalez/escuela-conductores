@@ -33,11 +33,6 @@ export const Alumno = new EntitySchema({
       length: 50,
       nullable: true
     },
-    sede: {
-      type: "varchar",
-      length: 50,
-      nullable: true
-    },
     id_user: {
       type: "int",
     },

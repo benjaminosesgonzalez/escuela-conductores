@@ -90,7 +90,6 @@ export async function matricularNuevoAlumno(req, res){
       comuna,
       telefono,
       email,
-      sede,
       id_plan_matriculado
     } = req.body;
 
@@ -113,7 +112,6 @@ export async function matricularNuevoAlumno(req, res){
       telefono,
       sexo,
       comuna,
-      sede,
       id_plan_matriculado
     };
 
@@ -204,12 +202,11 @@ export async function autoRegistroAlumno(req, res) {
       telefono,
       sexo,
       comuna,
-      sede,
       id_plan_interes
     } = req.body;
 
     //contraseña obligatoria
-    if (!email || !password || !confirmPassword || !nombre || !rut || !telefono || !sexo || !comuna || !sede ) {
+    if (!email || !password || !confirmPassword || !nombre || !rut || !telefono || !sexo || !comuna ) {
       return res.status(400).json({
         message: "Todos los campos son obligatorios y deben ser completados!"
       });
@@ -235,7 +232,6 @@ export async function autoRegistroAlumno(req, res) {
       telefono,
       sexo,
       comuna,
-      sede,
       id_plan_interes
     };
 

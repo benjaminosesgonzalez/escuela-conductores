@@ -144,7 +144,6 @@ export async function autoRegistroAlumnoService(datosRegistro) {
       telefono, 
       sexo,
       comuna,
-      sede,
       id_plan_interes // Opcional, por si selecciona un plan en la web
     } = datosRegistro;
 
@@ -167,7 +166,6 @@ export async function autoRegistroAlumnoService(datosRegistro) {
       telefono,
       sexo,
       comuna,
-      sede,
       id_user: savedUser.id,
       id_plan_interes: id_plan_interes || null, 
       estado_matricula: "pendiente" // Entra en estado pendiente
