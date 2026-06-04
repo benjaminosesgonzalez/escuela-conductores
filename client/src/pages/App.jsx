@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './Login.jsx';
 import Dashboard from './Dashboard.jsx';
+import EscuelaDeConuctoresProfesor from './EscuelaDeConuctoresProfesor.jsx';
+
+import ProtectedRoute from '../routes/ProtectedRoute.jsx';
 
 const EscuelaLandingPage = () => {
   const [selectedPlan, setSelectedPlan] = useState('intermedio');
@@ -411,14 +414,38 @@ const EscuelaLandingPage = () => {
   );
 };
 
-// Componente principal con Router
+// 🔴 CAMBIO 2: Componente principal con Router y rutas protegidas
 const App = () => {
   return (
     <Router>
       <Routes>
+        {/* Ruta pública: Landing Page */}
         <Route path="/" element={<EscuelaLandingPage />} />
+
+        {/* Ruta pública: Login */}
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+
+        {/* 🔴 CAMBIO 3: Dashboard para administradores (ruta protegida) */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute allowedRoles={["administracion"]}>
+              <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* 🔴 CAMBIO 4: Dashboard para profesores (ruta protegida) */}
+        <Route 
+          path="/escuela-profesor" 
+          element={
+            <ProtectedRoute allowedRoles={["profesor"]}>
+              <EscuelaDeConuctoresProfesor />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Ruta por defecto */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
