@@ -160,17 +160,26 @@ export const register = async (req, res) => {
 export const registerStaff = async (req, res) => {
   try {
     const { email, password, rol, nombre, telefono, id_sedes } = req.body;
+    const requesterRol = req.user.rol;
 
     // Validaciones
-    if (!email || !password || !rol || !nombre || !telefono) {
+    if (!email || !password || !rol || !nombre) {
       return res.status(400).json({
         success: false,
-        message: "Email, contraseña, rol, nombre y teléfono son requeridos",
+        message: "Email, contraseña, rol y nombre son requeridos",
+      });
+    }
+
+    if (requesterRol === "secretaria" && rol !== "profesor") {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Las secretarias solo pueden registrar perfiles de tipo 'profesor'.",
       });
     }
 
     // Validar que el rol sea válido
-    const rolesValidos = ["profesor", "administracion", "secretaria"];
+    const rolesValidos = ["profesor", "secretaria"];
     if (!rolesValidos.includes(rol)) {
       return res.status(400).json({
         success: false,
@@ -202,14 +211,37 @@ export const registerStaff = async (req, res) => {
 
     const savedUser = await userRepository.save(newStaff);
 
+    if (rol === "profesor") {
+      const profRepo = AppDataSource.getRepository(Profesor);
+      const sedesCargadas = id_sedes ? id_sedes.map((id) => ({ id })) : [];
+
+      await profRepo.save(
+        profRepo.create({
+          nombre,
+          telefono: telefono || "Sin teléfono",
+          id_user: savedUser.id,
+          sedes: sedesCargadas,
+        }),
+      );
+    } else if (rol === "secretaria") {
+      const secretariaRepo = AppDataSource.getRepository(Secretaria);
+      await secretariaRepo.save(
+        secretariaRepo.create({
+          nombre,
+          id_user: savedUser.id,
+          telefono: telefono || "Sin teléfono",
+        }),
+      );
+    }
+
     return res.status(201).json({
       success: true,
       message: "Staff registrado exitosamente",
       user: {
-        id: newStaff.id,
-        email: newStaff.email,
-        rol: newStaff.rol,
-        created_at: newStaff.created_at,
+        id: savedUser.id,
+        email: savedUser.email,
+        rol: savedUser.rol,
+        created_at: savedUser.created_at,
       },
     });
   } catch (error) {
