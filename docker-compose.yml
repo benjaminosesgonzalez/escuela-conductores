@@ -12,7 +12,7 @@ services:
       - POSTGRES_DB=escuela_db
     volumes:
       - db_data:/var/lib/postgresql/data # Persistencia de datos
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql # Autocreación de tablas
+      #- ./database/init.sql:/docker-entrypoint-initdb.d/init.sql # Autocreación de tablas
 
 
   # 2. GESTOR GRÁFICO DE BD (pgAdmin4)
@@ -31,16 +31,19 @@ services:
   backend:
     build: ./server
     ports:
-      - "3000:3000"
+      - "5000:5000"
     volumes:
       - ./server:/app
       - /app/node_modules
+      - ./server/uploads:/app/uploads
     environment:
+      - PORT=5000
       - DB_HOST=db
-      - DB_USER=admin
+      - DB_USERNAME=admin
       - DB_PASSWORD=secreta
-      - DB_NAME=escuela_db
+      - DATABASE=escuela_db
       - DB_PORT=5432
+      - JWT_SECRET=tu_clave_secreta_super_larga_minimo_32_caracteres
     depends_on:
       - db
 

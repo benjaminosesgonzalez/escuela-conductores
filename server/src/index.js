@@ -2,19 +2,22 @@ import "dotenv/config";
 import express from "express";
 import morgan from "morgan";
 import cors from "cors";
-import { AppDataSource, connectDB } from "./config/configDb.js";
+
+import { connectDB } from "./config/configDb.js";
 import { routerApi } from "./routes/index.routes.js";
-import profesorRoutes from './routes/profesor.js';
+import profesorRoutes from "./routes/profesor.js";
+import repositorioRoutes from "./routes/repositorioRoutes.js";
 
 const app = express();
 
 // Middlewares
 app.use(express.json());
+app.use("/uploads", express.static("uploads"));
 app.use(morgan("dev"));
 
 // CORS - Esto es importante para que el frontend pueda conectarse
 app.use(cors({
-  origin: "http://localhost:5173", // Tu puerto del frontend (ajusta si es diferente)
+  origin: "http://localhost:5173",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
@@ -25,18 +28,20 @@ app.get("/", (req, res) => {
   res.send("¡Bienvenido a mi API REST con TypeORM!");
 });
 
-app.use('/api/profesor', profesorRoutes);
+// Rutas específicas
+app.use("/api/profesor", profesorRoutes);
+app.use("/api/repositorio", repositorioRoutes);
 
-// Cargar todas las rutas
+// Cargar todas las rutas generales del proyecto
 routerApi(app);
 
 // Inicializa la conexión a la base de datos
 connectDB()
   .then(() => {
     console.log("✅ Conexión exitosa a la base de datos PostgreSQL!");
-    
-    // Levanta el servidor Express
-    const PORT = process.env.PORT || 5000; // Cambié a 5000 como en tu frontend
+
+    const PORT = process.env.PORT || 5000;
+
     app.listen(PORT, () => {
       console.log(`Servidor iniciado en http://localhost:${PORT}`);
     });
