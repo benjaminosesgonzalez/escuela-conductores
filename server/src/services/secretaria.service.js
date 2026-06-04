@@ -5,7 +5,7 @@ const secretariaRepo = AppDataSource.getRepository(Secretaria);
 
 export const getSecretariasService = async () => {
   return await secretariaRepo.find({
-    relations: ["user"], // Para ver su email y fecha de creación
+    relations: ["user"],
   });
 };
 

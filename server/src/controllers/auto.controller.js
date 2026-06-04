@@ -28,7 +28,6 @@ export const getDisponibilidadSede = async (req, res) => {
   }
 };
 
-// Actualizar datos de un auto (Marca, modelo, sede, estado, etc.)
 export const updateAuto = async (req, res) => {
   try {
     const { id } = req.params;
@@ -56,13 +55,11 @@ export const updateAuto = async (req, res) => {
   }
 };
 
-// Eliminar un auto del sistema
 export const deleteAuto = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await autoService.deleteAutoService(id);
 
-    // TypeORM delete retorna un objeto con 'affected' indicando filas borradas
     if (result.affected === 0) {
       return res.status(404).json({
         success: false,
