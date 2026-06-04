@@ -31,11 +31,20 @@ export const responderSolicitud = async (req, res) => {
     const { id } = req.params;
     const { estado } = req.body; // "aceptado" o "rechazado"
 
+    // 1. Buscamos la solicitud primero para tener sus datos (fecha, hora, sede)
+    const solicitud = await solicitudService.getSolicitudByIdService(id);
+
+    if (!solicitud) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Solicitud no encontrada" });
+    }
+
+    // 2. Si la secretaria quiere ACEPTAR, validamos disponibilidad real
     if (estado === "aceptado") {
-      const solicitud = await solicitudService.getSolicitudById(id);
       const disponibilidad =
         await solicitudService.verificarDisponibilidadBloque(
-          solicitud.id_sede,
+          solicitud.sede.id, // Sacamos el ID de la relación que cargamos
           solicitud.fecha_uso,
           solicitud.hora_uso,
           solicitud.hora_termino,
@@ -44,15 +53,51 @@ export const responderSolicitud = async (req, res) => {
       if (!disponibilidad.hayCupo) {
         return res.status(400).json({
           success: false,
-          message:
-            "No hay autos disponibles para este bloque horario. Debes rechazar o pedir cambio de hora.",
+          message: `No hay autos disponibles. Ocupados: ${disponibilidad.ocupados}/${disponibilidad.total}`,
         });
       }
     }
 
+    // 3. Si todo está bien o es un rechazo, actualizamos
     const result = await solicitudService.responderSolicitudService(id, estado);
     res.json({ success: true, data: result });
   } catch (error) {
+    console.error("❌ Error al responder solicitud:", error);
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const listarMisSolicitudes = async (req, res) => {
+  try {
+    const idUser = req.user.id; // Extraído del token
+    const solicitudes =
+      await solicitudService.getSolicitudesByUserService(idUser);
+
+    res.json({
+      success: true,
+      count: solicitudes.length,
+      data: solicitudes,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const cancelarSolicitud = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const idUser = req.user.id; // Del token, para asegurar que sea su propia solicitud
+
+    await solicitudService.cancelarSolicitudService(id, idUser);
+
+    res.json({
+      success: true,
+      message: "Solicitud cancelada y eliminada exitosamente.",
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
