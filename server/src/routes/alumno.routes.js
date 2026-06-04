@@ -4,7 +4,10 @@ import {
   elegirPlanPreferencia,
   oficializarMatricula,
 } from "../controllers/alumno.controller.js";
-import { authMiddleware, isAdmin } from "../middleware/auth.middleware.js";
+import {
+  authMiddleware,
+  isAdminOrSecretaria,
+} from "../middleware/auth.middleware.js";
 
 const router = Router();
 
@@ -12,6 +15,11 @@ const router = Router();
 router.post("/preferencia", authMiddleware, elegirPlanPreferencia);
 
 // La secretaría oficializa la matrícula POST /api/alumnos/matricular
-router.post("/matricular", authMiddleware, isAdmin, oficializarMatricula);
+router.post(
+  "/matricular",
+  authMiddleware,
+  isAdminOrSecretaria,
+  oficializarMatricula,
+);
 
 export default router;

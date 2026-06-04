@@ -8,7 +8,8 @@ export const Secretaria = new EntitySchema({
     nombre: { type: "varchar", length: 100 },
     telefono: {
       type: "varchar",
-      length: 15,
+      length: 12,
+      nullable: true,
     },
     id_user: { type: "int" },
   },
