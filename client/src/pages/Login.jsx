@@ -45,7 +45,18 @@ const Login = () => {
         console.log("Login exitoso:", data);
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
-        navigate("/dashboard");
+        
+        // ENRUTAMIENTO BASADO EN ROLES
+        const userRole = data.user.rol; 
+
+        if (userRole === "secretaria" || userRole === "administrador") {
+          navigate("/secretaria"); // Envia al dashboard que creamos recién
+        } else if (userRole === "profesor") {
+          navigate("/profesor"); // Por si a futuro creas el de profesor
+        } else {
+          navigate("/dashboard"); // Por defecto asume que es alumno
+        }
+
       } else {
         setError(data.message || "Email o contraseña incorrectos");
       }
