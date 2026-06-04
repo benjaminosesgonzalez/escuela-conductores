@@ -4,7 +4,15 @@ import { Auto } from "../entities/auto.entity.js";
 const autoRepo = AppDataSource.getRepository(Auto);
 
 export const createAutoService = async (data) => {
-  const nuevoAuto = autoRepo.create(data);
+  // Extraemos id_sede del body
+  const { id_sede, ...datosAuto } = data;
+
+  const nuevoAuto = autoRepo.create({
+    ...datosAuto,
+    // Asignamos el objeto sede con su ID para que TypeORM cree la relación
+    sede: id_sede ? { id: id_sede } : null,
+  });
+
   return await autoRepo.save(nuevoAuto);
 };
 

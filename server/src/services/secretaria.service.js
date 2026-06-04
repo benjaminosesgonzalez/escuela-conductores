@@ -25,15 +25,17 @@ export const updateSecretariaService = async (id, data) => {
 };
 
 export const deleteSecretariaService = async (id) => {
-  // Buscamos la secretaria con su usuario para que la eliminación sea completa
+  const idNumerico = parseInt(id);
+
   const secretaria = await secretariaRepo.findOne({
-    where: { id },
+    where: { id: idNumerico },
     relations: ["user"],
   });
 
-  if (!secretaria) return null;
+  if (!secretaria) {
+    console.log(`❌ No se encontró secretaria con ID: ${idNumerico}`);
+    return null;
+  }
 
-  // Al eliminar la entidad secretaria, TypeORM se encarga del User si está configurado en CASCADE
-  // o podemos hacerlo manualmente para asegurar integridad
   return await secretariaRepo.remove(secretaria);
 };
