@@ -212,7 +212,7 @@ export const registerStaff = async (req, res) => {
     const savedUser = await userRepository.save(newStaff);
 
     if (rol === "profesor") {
-      const profRepo = AppDataSource.getRepository("Profesor");
+      const profRepo = AppDataSource.getRepository(Profesor);
       const sedesCargadas = id_sedes ? id_sedes.map((id) => ({ id })) : [];
 
       await profRepo.save(
@@ -224,11 +224,12 @@ export const registerStaff = async (req, res) => {
         }),
       );
     } else if (rol === "secretaria") {
-      const secretariaRepo = AppDataSource.getRepository("Secretaria");
+      const secretariaRepo = AppDataSource.getRepository(Secretaria);
       await secretariaRepo.save(
         secretariaRepo.create({
           nombre,
           id_user: savedUser.id,
+          telefono: telefono || "Sin teléfono",
         }),
       );
     }
