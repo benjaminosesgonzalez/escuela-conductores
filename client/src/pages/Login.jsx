@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+// 🔴 CAMBIO 1: Importar authService centralizado
+import { authService } from "../services/authService";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -7,8 +9,6 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const API_URL = "http://localhost:5000/api";
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -28,30 +28,29 @@ const Login = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        }),
-      });
+      // 🔴 CAMBIO 2: Usar authService.login() en lugar de fetch directo
+      const result = await authService.login(email, password);
 
-      const data = await response.json();
-
-      if (response.ok && data.token) {
-        console.log("Login exitoso:", data);
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        navigate("/dashboard");
+      if (result.success) {
+        console.log("✅ Login exitoso:", result.user);
+        
+        // 🔴 CAMBIO 3: Redirigir según el rol del usuario
+        const rol = result.user.rol;
+        console.log(`Rol detectado: ${rol}`);
+        
+        if (rol === "administracion") {
+          navigate("/dashboard");
+        } else if (rol === "profesor") {
+          navigate("/escuela-profesor");
+        } else {
+          navigate("/"); // Landing por defecto
+        }
       } else {
-        setError(data.message || "Email o contraseña incorrectos");
+        setError(result.error || "Email o contraseña incorrectos");
       }
     } catch (err) {
-      console.error("Error de conexión:", err);
-      setError("Error al conectar con el servidor. Verifica que el backend esté corriendo en puerto 5000");
+      console.error("❌ Error:", err);
+      setError("Error al conectar con el servidor");
     } finally {
       setLoading(false);
     }
@@ -126,10 +125,11 @@ const Login = () => {
             </button>
           </form>
 
+          {/* 🔴 CAMBIO 4: Actualizar credenciales de prueba */}
           <div style={styles.testCredentials}>
             <p style={styles.smallText}>Prueba con:</p>
-            <p style={styles.smallText}>Email: admin@escuela.com</p>
-            <p style={styles.smallText}>Contraseña: admin123</p>
+            <p style={styles.smallText}>👤 Admin - admin@escuela.com / admin123</p>
+            <p style={styles.smallText}>👨‍🏫 Profesor - profesor@escuela.com / profesor123</p>
           </div>
         </section>
       </main>
