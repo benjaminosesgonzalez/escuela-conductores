@@ -40,7 +40,7 @@ export async function obtenerDisponibilidadSala(req, res) {
 export async function agendarBloque(req, res) {
     try {
         const { fecha, hora_inicio } = req.body;
-        const idAlumno = req.user.sub; // Obtener el ID del alumno desde el token
+        const idAlumno = req.user.id; // Obtener el ID del alumno desde el token
 
         if (!fecha || !hora_inicio) {
             return res.status(400).json({ message: "Fecha y hora de inicio son requeridos" });

@@ -39,11 +39,18 @@ export async function obtenerDisponibilidadSalaService(fechaStr) {
     const diaSemana = fecha.getDay();
 
     //2. Obtener reglas de apertura configurado para ese dia
-    const reglasConfig = await horarioRepository.findOneBy({ where: { dia_semana: diaSemana, activo: true } });
-    if (!reglasConfig) return []; // Si no hay reglas, no hay horarios disponibles
+    const reglasConfig = await horarioRepository.createQueryBuilder("horario")
+    .where("horario.dia_semana = :dia", { dia: diaSemana })
+    .andWhere("horario.activo = :activo", { activo: true })
+    .getOne();
 
+    if (!reglasConfig) return []; // Si no hay regla o está inactivo, retorna vacío (sala cerrada)
+    
     //3. obtener reservas ya existentes para esa fecha
-    const reservasExistentes = await reservaRepository.find({ where: { fecha: fechaStr, estado: 'agendada' } });
+    const reservasExistentes = await reservaRepository.createQueryBuilder("reserva")
+    .where("reserva.fecha = :fecha", { fecha: fechaStr })
+    .andWhere("reserva.estado = :estado", { estado: 'agendado' })
+    .getMany();
 
     //4. fragmentar el rango en bloques de 15mins
     const inicioMinutos = timeToMinutes(reglasConfig.hora_inicio);
@@ -72,6 +79,15 @@ export async function obtenerDisponibilidadSalaService(fechaStr) {
 
 export async function agendarBloqueService(idAlumno, fechaStr, horaInicio){
     const reservaRepository = AppDataSource.getRepository(ReservaPsicotecnico);
+    const alumnoRepository = AppDataSource.getRepository("Alumno");
+
+    // Verificar que el alumno exista
+    const perfilAlumno = await alumnoRepository.findOne({ where: { id_user: idAlumno } });
+    if (!perfilAlumno) {
+        throw new Error("Alumno no encontrado");
+    }
+
+    const idUser = perfilAlumno.id; // Obtener el ID del alumno a partir del perfil
 
     // calcular hora fin sumando 15 mins a hora inicio
     const minInicio = timeToMinutes(horaInicio);
@@ -79,14 +95,14 @@ export async function agendarBloqueService(idAlumno, fechaStr, horaInicio){
     const horaInicioFormateada = minutesToTimeStr(minInicio);
 
     //Maximo 2 reservas por alumno por dia
-    const reservasDelDia = await reservaRepository.count({ where: { id_alumno: idAlumno, fecha: fechaStr, estado: 'agendada' } });
+    const reservasDelDia = await reservaRepository.count({ where: { id_alumno: idUser, fecha: fechaStr, estado: 'agendada' } });
 
     if (reservasDelDia >= 2) {
         throw new Error("No puedes agendar más de 2 bloques psicotécnicos por día.");
     }
 
     const nuevaReserva = reservaRepository.create({
-        id_alumno: idAlumno,
+        id_alumno: idUser,
         fecha: fechaStr,
         hora_inicio: horaInicioFormateada,
         hora_fin: horaFin,
