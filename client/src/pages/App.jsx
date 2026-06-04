@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './Login.jsx';
 import Dashboard from './Dashboard.jsx';
+import SecretariaDashboard from './SecretariaDashboard.jsx';
 
 const EscuelaLandingPage = () => {
   const [selectedPlan, setSelectedPlan] = useState('intermedio');
@@ -419,6 +420,7 @@ const App = () => {
         <Route path="/" element={<EscuelaLandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/secretaria" element={<SecretariaDashboard />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
