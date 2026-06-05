@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from "react";
 
 const ReservarVehiculo = () => {
-  // Estados para el formulario
   const [fechaUso, setFechaUso] = useState("");
   const [horaInicio, setHoraInicio] = useState("");
   const [horaFin, setHoraFin] = useState("");
   const [idSede, setIdSede] = useState("");
   const [detalles, setDetalles] = useState("");
 
-  // Estados para la data del backend
   const [sedes, setSedes] = useState([]);
   const [misSolicitudes, setMisSolicitudes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Cargar Sedes y Solicitudes al montar el componente
   useEffect(() => {
     fetchSedes();
     fetchMisSolicitudes();
@@ -74,7 +71,6 @@ const ReservarVehiculo = () => {
       const data = await response.json();
 
       if (data.success) {
-        // Limpiar formulario y recargar la lista de la derecha
         setFechaUso("");
         setHoraInicio("");
         setHoraFin("");
@@ -91,7 +87,6 @@ const ReservarVehiculo = () => {
     }
   };
 
-  // Función auxiliar para los colores de las etiquetas
   const getBadgeStyle = (estado) => {
     switch (estado) {
       case "aceptado":
