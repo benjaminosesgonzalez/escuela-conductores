@@ -49,7 +49,7 @@ export async function obtenerDisponibilidadSalaService(fechaStr) {
     //3. obtener reservas ya existentes para esa fecha
     const reservasExistentes = await reservaRepository.createQueryBuilder("reserva")
     .where("reserva.fecha = :fecha", { fecha: fechaStr })
-    .andWhere("reserva.estado = :estado", { estado: 'agendado' })
+    .andWhere("reserva.estado = :estado", { estado: 'agendada' })
     .getMany();
 
     //4. fragmentar el rango en bloques de 15mins
