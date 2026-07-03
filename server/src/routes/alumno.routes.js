@@ -7,7 +7,10 @@ import {
   editarAlumno,
   editarMiPerfil
 } from "../controllers/alumno.controller.js";
-import { authMiddleware, isAdmin, isAdminOrSecretaria } from "../middleware/auth.middleware.js";
+import {
+  authMiddleware,
+  isAdminOrSecretaria,
+} from "../middleware/auth.middleware.js";
 
 const router = Router();
 
