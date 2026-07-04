@@ -2,7 +2,11 @@
 import { AppDataSource } from "../config/configDb.js";
 import { Alumno } from "../entities/alumno.entity.js";
 import { User } from "../entities/user.entity.js";
+import { Sede } from "../entities/sede.entity.js";
 import bcrypt from "bcrypt";
+import { In } from "typeorm";
+
+const alumnoRepo = AppDataSource.getRepository(Alumno);
 
 export async function matricularNuevoAlumnoService(datosGenerales) {
   const queryRunner = AppDataSource.createQueryRunner();
@@ -182,4 +186,32 @@ export async function autoRegistroAlumnoService(datosRegistro) {
   } finally {
     await queryRunner.release();
   }
+}
+
+export async function asignarSedeAlumnoService(idAlumno, idSede) {
+  const alumnoRepository = AppDataSource.getRepository(Alumno);
+  const sedeRepository = AppDataSource.getRepository(Sede);
+
+  //validar sede
+  const sedeExiste = await sedeRepository.findOneBy({ id: idSede });
+  if (!sedeExiste) throw new Error("La sede especificada no existe.");
+
+  //validar alumno
+  const alumno = await alumnoRepository.findOneBy({ id: idAlumno });
+  if (!alumno) throw new Error("El alumno especificado no existe.");
+
+  //asignar sede
+  alumno.id_sede = idSede;
+  return await alumnoRepository.save(alumno);
+}
+
+export const asignarSedeMasivaPorIdsService = async (alumnosIdsArray, idSede) => {
+  //usamos el metodo uptade() nativo de In()
+  const resultado = await alumnoRepo.update(
+    { id: In(alumnosIdsArray) }, // Condición: actualizar todos los alumnos cuyos IDs estén en el arreglo
+    { id_sede: idSede } // Nuevo valor para la columna id_sede
+  );
+
+  //affected nos devuelve el numero exacto de filas que la bdd reporta como nodificadas
+  return resultado.affected;
 }

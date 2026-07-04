@@ -11,6 +11,9 @@ import {
   authMiddleware,
   isAdminOrSecretaria,
 } from "../middleware/auth.middleware.js";
+import { validateSchema } from "../middleware/validation.middleware.js";
+import { asignarSedeAlumno } from "../controllers/secretaria.controller.js";
+import { asignarSedeAlumnoSchema } from "../validations/secretaria.validation.js";
 
 const router = Router();
 
@@ -28,5 +31,8 @@ router.post("/registrar", authMiddleware, isAdminOrSecretaria, matricularNuevoAl
 
 //admin y secretaria pueden editar datos del alumno PUT /api/alumnos/editar
 router.put("/editar/:id", authMiddleware, isAdminOrSecretaria, editarAlumno);
+
+//asignar sede a un alumno (admin o secretaria) PUT /api/alumnos/:id/sede
+router.put("/:id/sede", authMiddleware, isAdminOrSecretaria, validateSchema(asignarSedeAlumnoSchema), asignarSedeAlumno);
 
 export default router;

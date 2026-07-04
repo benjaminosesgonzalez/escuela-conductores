@@ -50,6 +50,10 @@ export const Alumno = new EntitySchema({
       length: 20,
       default: "pendiente", // "pendiente", "matriculado", "finalizado"
     },
+    id_sede: {
+      type: "int",
+      nullable: true,
+    },
   },
   relations: {
     user: {
@@ -67,6 +71,12 @@ export const Alumno = new EntitySchema({
       target: "Plan",
       type: "many-to-one",
       joinColumn: { name: "id_plan_matriculado" },
+    },
+    sede: {
+      target: "Sede",
+      type: "many-to-one",
+      joinColumn: { name: "id_sede" },
+      onDelete: "SET NULL",
     },
   },
 });
