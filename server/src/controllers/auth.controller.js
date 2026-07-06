@@ -22,12 +22,11 @@ const generateToken = (user) => {
   );
 };
 
-// LOGIN
+// LOGIN - Busca en users y profesores
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validaciones
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -35,10 +34,25 @@ export const login = async (req, res) => {
       });
     }
 
-    // Buscar usuario por email
-    const user = await userRepository.findOne({
+    // 🔴 Buscar en tabla users
+    let user = await userRepository.findOne({
       where: { email: email },
     });
+
+    // 🔴 Si no está, buscar en tabla profesores usando AppDataSource
+    if (!user) {
+      const result = await AppDataSource.query(
+        "SELECT * FROM profesores WHERE email = $1",
+        [email]
+      );
+
+      if (result.length > 0) {
+        user = result[0];
+        if (!user.rol) {
+          user.rol = "profesor";
+        }
+      }
+    }
 
     if (!user) {
       return res.status(401).json({
@@ -60,7 +74,6 @@ export const login = async (req, res) => {
     // Generar token
     const token = generateToken(user);
 
-    // Responder
     return res.status(200).json({
       success: true,
       message: "Login exitoso",
