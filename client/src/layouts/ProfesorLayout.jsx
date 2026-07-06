@@ -17,9 +17,8 @@ const ProfesorLayout = ({ children, activeTab, onTabChange }) => {
 
   const menuItems = [
     { id: 'inicio', label: 'Inicio', icon: Home },
-    { id: 'alumnos', label: 'Alumnos', icon: Users },
-    { id: 'clases', label: 'Mis clases', icon: Calendar },
-    { id: 'evaluacion', label: 'Evaluación', icon: Car },
+    { id: 'disponibilidad', label: 'Disponibilidad', icon: Calendar },
+    { id: 'misclases', label: 'Mis clases', icon: Car },
     { id: 'repositorio', label: 'Repositorio', icon: FolderOpen }
   ];
 

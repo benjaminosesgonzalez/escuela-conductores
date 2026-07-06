@@ -2,6 +2,7 @@ import {
   obtenerAlumnosConDisponibilidades,
   crearClaseService,
   obtenerClasesAlumnoService,
+  obtenerClasesProfesorService,
 } from "../services/clase.service.js";
 import { obtenerProfesoresDisponibles } from "../services/disponibilidad.service.js";
 
@@ -104,6 +105,27 @@ export const obtenerClasesAlumno = async (req, res) => {
     });
   } catch (error) {
     console.error("Error en obtenerClasesAlumno:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Error al obtener clases",
+    });
+  }
+};
+
+// Obtener clases de un profesor
+export const obtenerClasesProfesor = async (req, res) => {
+  try {
+    const { profesorId } = req.params;
+
+    const clases = await obtenerClasesProfesorService(parseInt(profesorId));
+
+    res.status(200).json({
+      success: true,
+      message: "Clases obtenidas",
+      data: clases,
+    });
+  } catch (error) {
+    console.error("Error en obtenerClasesProfesor:", error);
     res.status(500).json({
       success: false,
       message: error.message || "Error al obtener clases",
