@@ -1,40 +1,49 @@
 import { EntitySchema } from "typeorm";
 
-export const Profesor = new EntitySchema({
+export const ProfesorSchema = new EntitySchema({
   name: "Profesor",
   tableName: "profesores",
   columns: {
     id: {
       primary: true,
       type: "int",
-      generated: "increment",
+      generated: true,
+    },
+    email: {
+      type: "varchar",
+      length: 100,
+      unique: true,
+    },
+    password: {
+      type: "varchar",
+      length: 255,
     },
     nombre: {
       type: "varchar",
       length: 100,
+      nullable: true,
     },
     telefono: {
       type: "varchar",
       length: 15,
+      nullable: true,
     },
-    id_user: {
-      type: "int",
-    },
-  },
+     },
+
   relations: {
-    user: {
-      target: "User",
-      type: "one-to-one",
-      joinColumn: { name: "id_user" },
-      onDelete: "CASCADE",
-    },
     sedes: {
       target: "Sede",
       type: "many-to-many",
       joinTable: {
-        name: "profesor_sedes", // Tabla intermedia: id_profesor | id_sede
-        joinColumn: { name: "id_profesor", referencedColumnName: "id" },
-        inverseJoinColumn: { name: "id_sede", referencedColumnName: "id" },
+        name: "profesor_sedes",
+        joinColumn: {
+          name: "id_profesor",
+          referencedColumnName: "id",
+        },
+        inverseJoinColumn: {
+          name: "id_sede",
+          referencedColumnName: "id",
+        },
       },
       cascade: true,
     },

@@ -13,11 +13,9 @@ import {
 
 const router = Router();
 
-// Ver disponibilidad (Cualquier usuario logueado)
 router.get("/", authMiddleware, getAutos);
 router.get("/disponibilidad/:idSede", authMiddleware, getDisponibilidadSede);
 
-// Gestión (Solo Staff)
 router.post("/", authMiddleware, isAdminOrSecretaria, createAuto);
 router.put("/:id", authMiddleware, isAdminOrSecretaria, updateAuto);
 router.delete("/:id", authMiddleware, isAdminOrSecretaria, deleteAuto);

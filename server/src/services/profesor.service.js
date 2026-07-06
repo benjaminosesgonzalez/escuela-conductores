@@ -1,11 +1,10 @@
 import { AppDataSource } from "../config/configDb.js";
-import { Profesor } from "../entities/profesor.entity.js";
+import { ProfesorSchema } from "../entities/profesor.entity.js";
 import { In } from "typeorm";
 
-const profRepo = AppDataSource.getRepository(Profesor);
+const profRepo = AppDataSource.getRepository(ProfesorSchema);
 
 export const getProfesoresService = async () => {
-  // Usamos 'relations' para traer también la info de sus sedes y su email
   return await profRepo.find({
     relations: ["sedes", "user"],
   });
@@ -22,7 +21,6 @@ export const updateProfesorService = async (id, data) => {
   const profesor = await profRepo.findOneBy({ id });
   if (!profesor) return null;
 
-  // Si vienen sedes, las mapeamos para actualizar la tabla intermedia
   if (data.id_sedes) {
     profesor.sedes = data.id_sedes.map((idSede) => ({ id: idSede }));
   }
@@ -38,7 +36,6 @@ export const deleteProfesorService = async (id) => {
   });
   if (!profesor) return null;
 
-  // Al eliminar al profesor, también eliminamos su usuario (CASCADE)
   return await profRepo.remove(profesor);
 };
 

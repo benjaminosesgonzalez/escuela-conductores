@@ -24,3 +24,11 @@ export const handleErrorServer = (res, statusCode, message, errorDetails = null)
     status: "Server error",
   });
 };
+
+export const sendResponse = (res, statusCode, success, message, data = null) => {
+  res.status(statusCode).json({
+    success,
+    message,
+    data,
+  });
+};

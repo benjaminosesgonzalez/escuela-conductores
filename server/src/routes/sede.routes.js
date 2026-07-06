@@ -13,7 +13,6 @@ const router = Router();
 // GET /api/sedes
 router.get("/", authMiddleware, getSedes);
 
-// Solo Administrador
 router.post("/", authMiddleware, isAdmin, createSede);
 router.put("/:id", authMiddleware, isAdmin, updateSede);
 router.delete("/:id", authMiddleware, isAdmin, deleteSede);

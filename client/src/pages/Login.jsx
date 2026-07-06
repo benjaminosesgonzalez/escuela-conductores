@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+// 🔴 CAMBIO 1: Importar authService centralizado
+import { authService } from "../services/authService";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -7,8 +9,6 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const API_URL = "http://localhost:5000/api";
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -28,41 +28,30 @@ const Login = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        }),
-      });
+      const result = await authService.login(email, password);
 
-      const data = await response.json();
+      if (result.success) {
+        console.log("✅ Login exitoso:", result.user);
 
-      if (response.ok && data.token) {
-        console.log("Login exitoso:", data);
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        
-        // ENRUTAMIENTO BASADO EN ROLES
-        const userRole = data.user.rol; 
+        const rol = result.user.rol;
+        console.log(`Rol detectado: ${rol}`);
 
-        if (userRole === "secretaria" || userRole === "administrador") {
-          navigate("/secretaria"); // Envia al dashboard que creamos recién
-        } else if (userRole === "profesor") {
-          navigate("/profesor"); // Por si a futuro creas el de profesor
-        } else {
-          navigate("/dashboard"); // Por defecto asume que es alumno
-        }
+        // Mapear roles a rutas
+        const rutasPorRol = {
+          profesor: "/profesor",
+          alumno: "/alumno",
+          secretaria: "/secretaria",
+          administracion: "/secretaria" // Administradores ven secretaria
+        };
 
+        const ruta = rutasPorRol[rol] || "/";
+        navigate(ruta);
       } else {
-        setError(data.message || "Email o contraseña incorrectos");
+        setError(result.error || "Email o contraseña incorrectos");
       }
     } catch (err) {
-      console.error("Error de conexión:", err);
-      setError("Error al conectar con el servidor. Verifica que el backend esté corriendo en puerto 5000");
+      console.error("❌ Error:", err);
+      setError("Error al conectar con el servidor");
     } finally {
       setLoading(false);
     }
@@ -138,9 +127,10 @@ const Login = () => {
           </form>
 
           <div style={styles.testCredentials}>
-            <p style={styles.smallText}>Prueba con:</p>
-            <p style={styles.smallText}>Email: admin@escuela.com</p>
-            <p style={styles.smallText}>Contraseña: admin123</p>
+            <p style={styles.smallText}>Credenciales de prueba:</p>
+            <p style={styles.smallText}>👨‍🏫 Profesor - profesor@escuela.com / profesor123</p>
+            <p style={styles.smallText}>👨‍🎓 Alumno - alumno@escuela.com / alumno123</p>
+            <p style={styles.smallText}>📋 Secretaria - secretaria@escuela.com / secretaria123</p>
           </div>
         </section>
       </main>
