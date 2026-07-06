@@ -33,3 +33,18 @@ export async function matricularAlumnoService(idAlumno, idPlanDefinitivo) {
     return null;
   }
 }
+
+export async function obtenerEstadoMatriculaService(idUser) {
+  try {
+    const alumnoRepository = AppDataSource.getRepository(Alumno);
+    const alumno = await alumnoRepository.findOneBy({ id_user: idUser });
+
+    // Si no es alumno o no existe, retornamos null
+    if (!alumno) return null;
+
+    return alumno.estado_matricula; // Retorna "matriculado", "finalizado", etc.
+  } catch (error) {
+    console.error("Error al obtener estado de matrícula:", error);
+    return null;
+  }
+}
