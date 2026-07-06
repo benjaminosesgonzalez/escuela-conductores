@@ -22,7 +22,7 @@ export const Alumno = new EntitySchema({
     },
     nombre: {
       type: "varchar",
-      length: 100,
+      length: 150,
       nullable: false,
     },
     rut: {
@@ -48,6 +48,16 @@ export const Alumno = new EntitySchema({
     sede: {
       type: "int",
       nullable: true,
+    },
+    sexo: {
+      type: "varchar",
+      length: 20,
+      unique: false
+    },
+    comuna: {
+      type: "varchar",
+      length: 50,
+      nullable: true
     },
     id_user: {
       type: "int",
