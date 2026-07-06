@@ -28,23 +28,24 @@ const Login = () => {
     }
 
     try {
-      // 🔴 CAMBIO 2: Usar authService.login() en lugar de fetch directo
       const result = await authService.login(email, password);
 
       if (result.success) {
         console.log("✅ Login exitoso:", result.user);
-        
-        // 🔴 CAMBIO 3: Redirigir según el rol del usuario
+
         const rol = result.user.rol;
         console.log(`Rol detectado: ${rol}`);
-        
-        if (rol === "administracion") {
-          navigate("/dashboard");
-        } else if (rol === "profesor") {
-          navigate("/escuela-profesor");
-        } else {
-          navigate("/"); // Landing por defecto
-        }
+
+        // Mapear roles a rutas
+        const rutasPorRol = {
+          profesor: "/profesor",
+          alumno: "/alumno",
+          secretaria: "/secretaria",
+          administracion: "/secretaria" // Administradores ven secretaria
+        };
+
+        const ruta = rutasPorRol[rol] || "/";
+        navigate(ruta);
       } else {
         setError(result.error || "Email o contraseña incorrectos");
       }
@@ -125,11 +126,11 @@ const Login = () => {
             </button>
           </form>
 
-          {/* 🔴 CAMBIO 4: Actualizar credenciales de prueba */}
           <div style={styles.testCredentials}>
-            <p style={styles.smallText}>Prueba con:</p>
-            <p style={styles.smallText}>👤 Admin - admin@escuela.com / admin123</p>
+            <p style={styles.smallText}>Credenciales de prueba:</p>
             <p style={styles.smallText}>👨‍🏫 Profesor - profesor@escuela.com / profesor123</p>
+            <p style={styles.smallText}>👨‍🎓 Alumno - alumno@escuela.com / alumno123</p>
+            <p style={styles.smallText}>📋 Secretaria - secretaria@escuela.com / secretaria123</p>
           </div>
         </section>
       </main>
