@@ -1,16 +1,20 @@
 import { Router } from "express";
 import {
   login,
-  register,
   registerStaff,
 } from "../controllers/auth.controller.js";
-import { authMiddleware, isAdmin } from "../middleware/auth.middleware.js";
- 
+import { authMiddleware, isAdminOrSecretaria } from "../middleware/auth.middleware.js";
+import { autoRegistroAlumno } from "../controllers/alumno.controller.js"; 
+
 const router = Router();
- 
+
 router.post("/login", login);
-router.post("/register", register);
-router.post("/register-staff", authMiddleware, isAdmin, registerStaff);
- 
+router.post("/register", autoRegistroAlumno);
+router.post(
+  "/register-staff",
+  authMiddleware,
+  isAdminOrSecretaria,
+  registerStaff,
+);
+
 export default router;
- 
