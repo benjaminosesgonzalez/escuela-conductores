@@ -6,37 +6,42 @@ const router = express.Router();
 
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, nombre, telefono } = req.body;
+    const { email, password, nombre, telefono, tipo_contrato = 'full_time' } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ 
-        error: 'Email y password son requeridos' 
+      return res.status(400).json({
+        error: 'Email y password son requeridos'
       });
     }
 
-    // 🔴 CAMBIO 2: Usar AppDataSource.query() en lugar de pool.query()
+    // Validar tipo_contrato
+    const tiposValidos = ['full_time', 'part_time_morning', 'part_time_afternoon'];
+    if (!tiposValidos.includes(tipo_contrato)) {
+      return res.status(400).json({
+        error: `tipo_contrato inválido. Debe ser: ${tiposValidos.join(', ')}`
+      });
+    }
+
     const checkEmail = await AppDataSource.query(
       'SELECT * FROM profesores WHERE email = $1',
       [email]
     );
 
     if (checkEmail.length > 0) {
-      return res.status(400).json({ 
-        error: 'El email ya está registrado' 
+      return res.status(400).json({
+        error: 'El email ya está registrado'
       });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 🔴 CAMBIO 3: INSERT con AppDataSource
     await AppDataSource.query(
-      'INSERT INTO profesores (email, password, nombre, telefono) VALUES ($1, $2, $3, $4)',
-      [email, hashedPassword, nombre || null, telefono || null]
+      'INSERT INTO profesores (email, password, nombre, telefono, tipo_contrato) VALUES ($1, $2, $3, $4, $5)',
+      [email, hashedPassword, nombre || null, telefono || null, tipo_contrato]
     );
 
-    // 🔴 CAMBIO 4: Obtener el profesor recién creado
     const newProfesor = await AppDataSource.query(
-      'SELECT id, email, nombre FROM profesores WHERE email = $1',
+      'SELECT id, email, nombre, tipo_contrato FROM profesores WHERE email = $1',
       [email]
     );
 
@@ -51,9 +56,9 @@ router.post('/register', async (req, res) => {
 
   } catch (error) {
     console.error('Error al registrar profesor:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Error al registrar profesor',
-      details: error.message 
+      details: error.message
     });
   }
 });

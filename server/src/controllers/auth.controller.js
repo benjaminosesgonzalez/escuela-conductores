@@ -2,6 +2,11 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { AppDataSource } from "../config/configDb.js";
 import { User } from "../entities/user.entity.js";
+import { generarBloquesDisponibilidad } from "../services/disponibilidad.service.js";
+import { generarBloquesDisponibilidadAlumnoService } from "../services/disponibilidad-alumno.service.js";
+import { DisponibilidadSchema } from "../entities/disponibilidad.entity.js";
+import { DisponibilidadAlumno } from "../entities/disponibilidad-alumno.entity.js";
+import { Alumno } from "../entities/alumno.entity.js";
 
 const userRepository = AppDataSource.getRepository(User);
 
@@ -70,6 +75,83 @@ export const login = async (req, res) => {
     // Generar token
     const token = generateToken(user);
 
+    // Si es profesor, generar bloques automáticamente si no existen
+    if (user.rol === "profesor" && user.id) {
+      try {
+        const disponibilidadRepository = AppDataSource.getRepository(DisponibilidadSchema);
+        const bloquesExistentes = await disponibilidadRepository.findOne({
+          where: { profesorId: user.id }
+        });
+
+        if (!bloquesExistentes) {
+          const tipoContrato = user.tipo_contrato || "full_time";
+          console.log(`📅 Generando bloques automáticos para profesor ${user.id} (${tipoContrato})`);
+          await generarBloquesDisponibilidad(user.id, tipoContrato);
+        }
+      } catch (blockGenError) {
+        console.error("⚠️ Error generando bloques automáticos:", blockGenError.message);
+        // No fallar el login si hay error generando bloques
+      }
+    }
+
+    // Si es alumno, generar bloques automáticamente basado en su plan
+    let alumnoId = null;
+    let planInfo = null;
+    if (user.rol === "alumno" && user.id) {
+      try {
+        console.log(`🔍 Buscando alumno para user.id: ${user.id}`);
+        const alumnoRepository = AppDataSource.getRepository(Alumno);
+        const alumno = await alumnoRepository.findOneBy({ id_user: user.id });
+
+        if (!alumno) {
+          console.log(`⚠️ No se encontró registro de alumno para user.id: ${user.id}`);
+        } else {
+          alumnoId = alumno.id; // Guardar para devolverlo en la respuesta
+          console.log(`✅ Alumno encontrado: id=${alumno.id}, id_plan_matriculado=${alumno.id_plan_matriculado}`);
+
+          if (alumno.id_plan_matriculado) {
+            const DisponibilidadAlumnoRepository = AppDataSource.getRepository(DisponibilidadAlumno);
+
+            // Verificar si tiene bloques completos (todos los 5 días)
+            const bloquesActuales = await DisponibilidadAlumnoRepository.find({
+              where: { alumnoId: alumno.id }
+            });
+
+            const diasConBloques = new Set(bloquesActuales.map(b => b.diaSemana));
+            const diasEsperados = new Set(["lunes", "martes", "miércoles", "jueves", "viernes"]);
+            const tieneBloquesCompletos = diasConBloques.size === 5 &&
+                                           [...diasEsperados].every(dia => diasConBloques.has(dia));
+
+            // Obtener información del plan
+            const planResponse = await AppDataSource.query(
+              "SELECT * FROM plans WHERE id = $1",
+              [alumno.id_plan_matriculado]
+            );
+
+            if (planResponse.length > 0) {
+              planInfo = planResponse[0];
+              const totalClases = planInfo.total_classes;
+
+              if (tieneBloquesCompletos) {
+                console.log(`ℹ️ Bloques completos ya existen para alumno ${alumno.id}`);
+              } else {
+                console.log(`📅 Generando/actualizando bloques para alumno ${alumno.id} (${totalClases} clases)`);
+                await generarBloquesDisponibilidadAlumnoService(alumno.id, totalClases);
+                console.log(`✅ Bloques generados exitosamente para alumno ${alumno.id}`);
+              }
+            } else {
+              console.log(`⚠️ No se encontró plan para id: ${alumno.id_plan_matriculado}`);
+            }
+          } else {
+            console.log(`⚠️ Alumno ${alumno.id} no tiene plan matriculado`);
+          }
+        }
+      } catch (blockGenError) {
+        console.error("⚠️ Error generando bloques automáticos para alumno:", blockGenError);
+        console.error("Stack:", blockGenError.stack);
+      }
+    }
+
     return res.status(200).json({
       success: true,
       message: "Login exitoso",
@@ -78,7 +160,10 @@ export const login = async (req, res) => {
         id: user.id,
         email: user.email,
         rol: user.rol,
+        nombre: user.nombre || user.email.split('@')[0],
         created_at: user.created_at,
+        alumnoId: alumnoId, // Incluir alumnoId para alumnos
+        planInfo: planInfo // Incluir planInfo para alumnos
       },
     });
   } catch (error) {
