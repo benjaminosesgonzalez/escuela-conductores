@@ -17,28 +17,18 @@ const horaAMinutos = (hora) => {
 };
 
 /**
- * Generar bloques de disponibilidad automáticos para un profesor
-<<<<<<< Updated upstream
+ * Generar bloques de disponibilidad automáticos para un profesor según tipo de contrato
+ * Full time: 9:00 AM - 7:45 PM (19:45)
+ * Part time mañana: 9:00 AM - 2:00 PM (14:00)
+ * Part time tarde: 2:00 PM - 8:00 PM (20:00)
+ * Duración de clase: 45 minutos, Break: 15 minutos
  * @param {number} profesorId - ID del profesor
- * @param {number} horaInicio - Hora inicio (ej: 9 para 09:00)
- * @param {number} horaFin - Hora fin (ej: 17 para 17:00)
- * @param {number} intervaloMinutos - Intervalo entre bloques (ej: 90 para 1.5 horas)
-=======
- * Horario fijo: 9:00 AM - 7:45 PM (19:45)
- * Duración de clase: 45 minutos
- * Break entre clases: 15 minutos
- * @param {number} profesorId - ID del profesor
->>>>>>> Stashed changes
- * @param {array} diasLaboral - Días a generar (ej: ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'])
+ * @param {string} tipoContrato - Tipo de contrato (full_time, part_time_morning, part_time_afternoon)
+ * @param {array} diasLaboral - Días a generar
  */
 export const generarBloquesDisponibilidad = async (
   profesorId,
-<<<<<<< Updated upstream
-  horaInicio = 9,
-  horaFin = 17,
-  intervaloMinutos = 90,
-=======
->>>>>>> Stashed changes
+  tipoContrato = "full_time",
   diasLaboral = ["lunes", "martes", "miércoles", "jueves", "viernes"]
 ) => {
   try {
@@ -46,32 +36,34 @@ export const generarBloquesDisponibilidad = async (
     await disponibilidadRepository.delete({ profesorId });
 
     const bloques = [];
-<<<<<<< Updated upstream
-    let horaActual = horaInicio * 60; // Convertir a minutos
-    const hoaFinMinutos = horaFin * 60;
-
-    // Generar bloques para cada día laboral
-    for (const dia of diasLaboral) {
-      horaActual = horaInicio * 60;
-
-      while (horaActual + intervaloMinutos <= hoaFinMinutos) {
-        const inicio = minutosAHora(horaActual);
-        const fin = minutosAHora(horaActual + intervaloMinutos);
-=======
-    const horaInicioMinutos = 9 * 60; // 9:00 AM en minutos
-    const horaFinMinutos = 19 * 60 + 45; // 7:45 PM en minutos
     const duracionClaseMinutos = 45;
     const breakMinutos = 15;
+
+    // Definir horarios según tipo de contrato
+    let horaInicioMinutos, horaFinMinutos;
+
+    switch (tipoContrato) {
+      case "part_time_morning":
+        horaInicioMinutos = 9 * 60; // 9:00 AM
+        horaFinMinutos = 14 * 60; // 2:00 PM
+        break;
+      case "part_time_afternoon":
+        horaInicioMinutos = 14 * 60; // 2:00 PM
+        horaFinMinutos = 20 * 60; // 8:00 PM
+        break;
+      case "full_time":
+      default:
+        horaInicioMinutos = 9 * 60; // 9:00 AM
+        horaFinMinutos = 19 * 60 + 45; // 7:45 PM
+    }
 
     // Generar bloques para cada día laboral
     for (const dia of diasLaboral) {
       let horaActual = horaInicioMinutos;
 
-      // Generar bloques de 45 minutos hasta las 7:45 PM
       while (horaActual + duracionClaseMinutos <= horaFinMinutos) {
         const inicio = minutosAHora(horaActual);
         const fin = minutosAHora(horaActual + duracionClaseMinutos);
->>>>>>> Stashed changes
 
         const disponibilidad = disponibilidadRepository.create({
           profesorId,
@@ -82,13 +74,7 @@ export const generarBloquesDisponibilidad = async (
         });
 
         bloques.push(disponibilidad);
-<<<<<<< Updated upstream
-        horaActual += intervaloMinutos;
-=======
-
-        // Avanzar por la duración de la clase + el break (45 + 15 = 60 minutos)
         horaActual += duracionClaseMinutos + breakMinutos;
->>>>>>> Stashed changes
       }
     }
 

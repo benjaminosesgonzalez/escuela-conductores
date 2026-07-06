@@ -4,16 +4,9 @@ import profileRoutes from "./profile.routes.js";
 import planRoutes from "./plan.routes.js";
 import alumnoRoutes from "./alumno.routes.js";
 import disponibilidadRoutes from "./disponibilidad.routes.js";
-<<<<<<< Updated upstream
-import { authMiddleware, isAdminOrSecretaria } from "../middleware/auth.middleware.js";
-import agendamientoRoutes from "./agendamiento.routes.js";
-import sedeRoutes from "./sede.routes.js";
-import profesorRoutes from "./profesor.routes.js";
+import disponibilidadAlumnoRoutes from "./disponibilidad-alumno.routes.js";
 import secretariaRoutes from "./secretaria.routes.js";
-import autoRoutes from "./auto.routes.js";
-import solicitudAutoRoutes from "./solicitudAuto.routes.js";
-=======
->>>>>>> Stashed changes
+import claseRoutes from "./clase.routes.js";
 
 export function routerApi(app) {
   const router = Router();
@@ -21,16 +14,10 @@ export function routerApi(app) {
 
   router.use("/auth", authRoutes);
   router.use("/profile", profileRoutes);
-  router.use("/autos", autoRoutes);
   router.use("/plans", planRoutes);
   router.use("/alumnos", alumnoRoutes);
-  router.use("/disponibilidades", disponibilidadRoutes);
-<<<<<<< Updated upstream
-  router.use("/psicotecnica", agendamientoRoutes);
-  router.use("/sedes", sedeRoutes);
-  router.use("/profesores", profesorRoutes);
   router.use("/secretarias", secretariaRoutes);
-  router.use("/solicitudes-auto", solicitudAutoRoutes);
-=======
->>>>>>> Stashed changes
+  router.use("/disponibilidades", disponibilidadRoutes);
+  router.use("/disponibilidades-alumnos", disponibilidadAlumnoRoutes);
+  router.use("/clases", claseRoutes);
 }

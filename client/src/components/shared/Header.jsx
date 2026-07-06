@@ -9,12 +9,8 @@ const Header = ({
   onLogout,
   title = 'ESCUELA DE CONDUCTORES'
 }) => {
-<<<<<<< Updated upstream
-  const userName = userEmail?.split('@')[0] || 'Usuario';
-=======
   // Si userEmail contiene @, es un email, si no, es un nombre
   const userName = userEmail?.includes('@') ? userEmail?.split('@')[0] : (userEmail || 'Usuario');
->>>>>>> Stashed changes
   const userInitial = userEmail?.charAt(0).toUpperCase() || 'U';
 
   return (
