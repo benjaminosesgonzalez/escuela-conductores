@@ -82,13 +82,11 @@ export const login = async (req, res) => {
   }
 };
 
-// REGISTER
 export const register = async (req, res) => {
   try {
     const { email, password, confirmPassword, nombre, rut, telefono } =
       req.body;
 
-    // Validaciones extendidas
     if (!email || !password || !nombre || !rut) {
       return res
         .status(400)
@@ -109,7 +107,6 @@ export const register = async (req, res) => {
       });
     }
 
-    // Verificar si el email ya existe
     const existingUser = await userRepository.findOne({ where: { email } });
     if (existingUser) {
       return res
@@ -117,27 +114,24 @@ export const register = async (req, res) => {
         .json({ success: false, message: "El email ya está registrado" });
     }
 
-    // Hashear contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Crear nuevo usuario
     const newUser = userRepository.create({
       email,
       password: hashedPassword,
       rol: "alumno",
     });
     const savedUser = await userRepository.save(newUser);
-    const alumnoRepo = AppDataSource.getRepository("Alumno"); // O importa la entidad Alumno
+    const alumnoRepo = AppDataSource.getRepository("Alumno");
     await alumnoRepo.save(
       alumnoRepo.create({
         nombre,
         rut,
         telefono,
-        id_user: savedUser.id, // Vinculamos con el usuario recién creado
+        id_user: savedUser.id,
       }),
     );
 
-    // Generar token
     const token = generateToken(savedUser);
 
     return res.status(201).json({
@@ -156,13 +150,11 @@ export const register = async (req, res) => {
   }
 };
 
-// REGISTER STAFF (solo admin)
 export const registerStaff = async (req, res) => {
   try {
     const { email, password, rol, nombre, telefono, id_sedes } = req.body;
     const requesterRol = req.user.rol;
 
-    // Validaciones
     if (!email || !password || !rol || !nombre) {
       return res.status(400).json({
         success: false,
@@ -178,7 +170,6 @@ export const registerStaff = async (req, res) => {
       });
     }
 
-    // Validar que el rol sea válido
     const rolesValidos = ["profesor", "secretaria"];
     if (!rolesValidos.includes(rol)) {
       return res.status(400).json({
@@ -187,7 +178,6 @@ export const registerStaff = async (req, res) => {
       });
     }
 
-    // Verificar si el email ya existe
     const existingUser = await userRepository.findOne({
       where: { email: email },
     });
@@ -199,10 +189,8 @@ export const registerStaff = async (req, res) => {
       });
     }
 
-    // Hashear contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Crear nuevo usuario staff
     const newStaff = userRepository.create({
       email,
       password: hashedPassword,

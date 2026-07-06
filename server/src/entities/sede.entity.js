@@ -13,7 +13,12 @@ export const Sede = new EntitySchema({
     profesores: {
       target: "Profesor",
       type: "many-to-many",
-      mappedBy: "sedes", // Nombre del campo en la entidad Profesor
+      mappedBy: "sedes",
+    },
+    autos: {
+      target: "Auto",
+      type: "one-to-many",
+      mappedBy: "sede",
     },
   },
 });

@@ -29,9 +29,8 @@ export const listarPorSede = async (req, res) => {
 export const responderSolicitud = async (req, res) => {
   try {
     const { id } = req.params;
-    const { estado } = req.body; // "aceptado" o "rechazado"
+    const { estado } = req.body;
 
-    // 1. Buscamos la solicitud primero para tener sus datos (fecha, hora, sede)
     const solicitud = await solicitudService.getSolicitudByIdService(id);
 
     if (!solicitud) {
@@ -40,11 +39,10 @@ export const responderSolicitud = async (req, res) => {
         .json({ success: false, message: "Solicitud no encontrada" });
     }
 
-    // 2. Si la secretaria quiere ACEPTAR, validamos disponibilidad real
     if (estado === "aceptado") {
       const disponibilidad =
         await solicitudService.verificarDisponibilidadBloque(
-          solicitud.sede.id, // Sacamos el ID de la relación que cargamos
+          solicitud.sede.id,
           solicitud.fecha_uso,
           solicitud.hora_uso,
           solicitud.hora_termino,
@@ -58,7 +56,6 @@ export const responderSolicitud = async (req, res) => {
       }
     }
 
-    // 3. Si todo está bien o es un rechazo, actualizamos
     const result = await solicitudService.responderSolicitudService(id, estado);
     res.json({ success: true, data: result });
   } catch (error) {
@@ -69,7 +66,7 @@ export const responderSolicitud = async (req, res) => {
 
 export const listarMisSolicitudes = async (req, res) => {
   try {
-    const idUser = req.user.id; // Extraído del token
+    const idUser = req.user.id;
     const solicitudes =
       await solicitudService.getSolicitudesByUserService(idUser);
 
@@ -86,7 +83,7 @@ export const listarMisSolicitudes = async (req, res) => {
 export const cancelarSolicitud = async (req, res) => {
   try {
     const { id } = req.params;
-    const idUser = req.user.id; // Del token, para asegurar que sea su propia solicitud
+    const idUser = req.user.id;
 
     await solicitudService.cancelarSolicitudService(id, idUser);
 
