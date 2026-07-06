@@ -42,25 +42,6 @@ export const deleteProfesorService = async (id) => {
   return await profRepo.remove(profesor);
 };
 
-export const asignarSedesProfesorService = async (idProfesor, sedesIdsArray) => {
-  const profesorRepository = AppDataSource.getRepository(Profesor);
-
-  //buscar profesor
-  const profesor = await profesorRepository.findOne({
-    where: { id: idProfesor },
-    relations: ["sedes"],
-  });
-
-  if (!profesor) throw new Error("Profesor no encontrado");
-
-  //transformar array de ids a formato entidades
-  const nuevasSedes = sedesIdsArray.map((id) => ({ id }));
-
-  profesor.sedes = nuevasSedes;
-
-  return await profesorRepository.save(profesor);
-};
-
 export const asignarSedesMasivaProfesoresService = async (profesoresIdsArray, sedesIdsArray) => {
   const profesores = await profRepo.find({
     where: { id: In(profesoresIdsArray) },

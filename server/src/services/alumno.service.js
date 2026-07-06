@@ -188,23 +188,6 @@ export async function autoRegistroAlumnoService(datosRegistro) {
   }
 }
 
-export async function asignarSedeAlumnoService(idAlumno, idSede) {
-  const alumnoRepository = AppDataSource.getRepository(Alumno);
-  const sedeRepository = AppDataSource.getRepository(Sede);
-
-  //validar sede
-  const sedeExiste = await sedeRepository.findOneBy({ id: idSede });
-  if (!sedeExiste) throw new Error("La sede especificada no existe.");
-
-  //validar alumno
-  const alumno = await alumnoRepository.findOneBy({ id: idAlumno });
-  if (!alumno) throw new Error("El alumno especificado no existe.");
-
-  //asignar sede
-  alumno.id_sede = idSede;
-  return await alumnoRepository.save(alumno);
-}
-
 export const asignarSedeMasivaPorIdsService = async (alumnosIdsArray, idSede) => {
   //usamos el metodo uptade() nativo de In()
   const resultado = await alumnoRepo.update(

@@ -42,27 +42,3 @@ export const asignarSedeMasivaProfesoresSchema = z.object({
     }).min(1, "Debe seleccionar al menos una sede."),
   }).strict(), //bloquea cualquier otro dato basura que envie el front
 });
-
-
-export const asignarSedeAlumnoSchema = z.object({
-  params: z.object({
-    id: z.coerce.number().int().positive(),
-  }),
-  body: z.object({
-    id_sede: z.number({
-      required_error: "Debe proporcionar el id_sede",
-      invalid_type_error: "El id_sede debe ser un número",
-    }).int().positive(),
-  }),
-});
-
-export const asignarSedesProfesorSchema = z.object({
-  params: z.object({
-    id: z.coerce.number().int().positive(),
-  }),
-  body: z.object({
-    sedes_ids: z.array(z.number().int().positive(), {
-      required_error: "Debe proporcionar un array de sedes_ids",
-    }).min(1, "El array de sedes no puede estar vacío"),
-  }),
-});
