@@ -11,7 +11,7 @@ export const Alumno = new EntitySchema({
     },
     nombre: {
       type: "varchar",
-      length: 100,
+      length: 150,
       nullable: false,
     },
     rut: {
@@ -22,6 +22,16 @@ export const Alumno = new EntitySchema({
     telefono: {
       type: "varchar",
       length: 15,
+    },
+    sexo: {
+      type: "varchar",
+      length: 20,
+      unique: false
+    },
+    comuna: {
+      type: "varchar",
+      length: 50,
+      nullable: true
     },
     id_user: {
       type: "int",
@@ -45,7 +55,7 @@ export const Alumno = new EntitySchema({
     user: {
       type: "one-to-one",
       target: "User",
-      joinColumn: { name: "userId" },
+      joinColumn: { name: "id_user" },
       onDelete: "CASCADE",
     },
     planInteres: {
