@@ -11,10 +11,15 @@ import { sendResponse } from "../Handlers/responseHandlers.js";
 
 /**
  * Generar bloques de disponibilidad para un profesor
+<<<<<<< Updated upstream
+=======
+ * Horario fijo: 9:00 AM - 7:45 PM, clases de 45 min + 15 min break
+>>>>>>> Stashed changes
  */
 export const generarBloques = async (req, res) => {
   try {
     const { profesorId } = req.params;
+<<<<<<< Updated upstream
     const { horaInicio = 9, horaFin = 17, intervaloMinutos = 90, diasLaboral } = req.body;
 
     const resultado = await generarBloquesDisponibilidad(
@@ -22,6 +27,12 @@ export const generarBloques = async (req, res) => {
       horaInicio,
       horaFin,
       intervaloMinutos,
+=======
+    const { diasLaboral = ["lunes", "martes", "miércoles", "jueves", "viernes"] } = req.body;
+
+    const resultado = await generarBloquesDisponibilidad(
+      parseInt(profesorId),
+>>>>>>> Stashed changes
       diasLaboral
     );
 
@@ -98,6 +109,7 @@ export const actualizarDisponibilidadBloque = async (req, res) => {
 
 /**
  * Actualizar múltiples disponibilidades
+<<<<<<< Updated upstream
  */
 export const actualizarMultiples = async (req, res) => {
   try {
@@ -105,6 +117,31 @@ export const actualizarMultiples = async (req, res) => {
 
     if (!Array.isArray(ids) || ids.length === 0) {
       return sendResponse(res, 400, false, "Se requiere un array de ids no vacío");
+=======
+ * Soporta dos formatos:
+ * 1. { ids: [1,2,3], disponible: true } - actualiza todos con el mismo estado
+ * 2. { bloques: [{id: 1, disponible: true}, {id: 2, disponible: false}] } - estados individuales
+ */
+export const actualizarMultiples = async (req, res) => {
+  try {
+    const { ids, disponible, bloques } = req.body;
+
+    // Formato 2: bloques con estados individuales
+    if (bloques && Array.isArray(bloques) && bloques.length > 0) {
+      const bloqueIds = bloques.map(b => b.id);
+
+      // Actualizar cada bloque con su estado correspondiente
+      for (const bloque of bloques) {
+        await actualizarDisponibilidad(bloque.id, bloque.disponible);
+      }
+
+      return sendResponse(res, 200, true, "Disponibilidades actualizadas", { cantidad: bloques.length });
+    }
+
+    // Formato 1: ids con un único estado
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return sendResponse(res, 400, false, "Se requiere un array de ids o bloques no vacío");
+>>>>>>> Stashed changes
     }
 
     if (typeof disponible !== "boolean") {
