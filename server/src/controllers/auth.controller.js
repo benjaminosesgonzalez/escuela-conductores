@@ -82,6 +82,7 @@ export const login = async (req, res) => {
         id: user.id,
         email: user.email,
         rol: user.rol,
+        nombre: user.nombre || user.email.split('@')[0],
         created_at: user.created_at,
       },
     });

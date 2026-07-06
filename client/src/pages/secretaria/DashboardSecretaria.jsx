@@ -3,9 +3,18 @@ import { Users, FileText, TrendingUp } from 'lucide-react';
 import SecretariaLayout from '../../layouts/SecretariaLayout.jsx';
 import { Card, Button } from '../../components/shared/index.js';
 import { colors, spacing } from '../../theme/index.js';
+<<<<<<< Updated upstream
 
 const DashboardSecretaria = () => {
   const [activeTab, setActiveTab] = useState('inicio');
+=======
+import { authService } from '../../services/authService.js';
+
+const DashboardSecretaria = () => {
+  const [activeTab, setActiveTab] = useState('inicio');
+  const currentUser = authService.getCurrentUser();
+  const secretariaNombre = currentUser?.nombre || 'Secretaria';
+>>>>>>> Stashed changes
 
   const stats = [
     { icon: Users, label: 'Alumnos registrados', value: '145', color: '#3b82f6' },
@@ -33,7 +42,11 @@ const DashboardSecretaria = () => {
               color: colors.textPrimary,
               margin: '0 0 8px 0'
             }}>
+<<<<<<< Updated upstream
               Panel de Control
+=======
+              Panel de Control - {secretariaNombre}
+>>>>>>> Stashed changes
             </h2>
             <p style={{
               color: colors.textTertiary,
