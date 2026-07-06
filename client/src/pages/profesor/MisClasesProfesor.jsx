@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, CheckCircle, Circle, Save, Settings, AlertCircle, Loader } from 'lucide-react';
 import { Card, Button } from '../../components/shared/index.js';
 import { colors, spacing } from '../../theme/index.js';
+<<<<<<< Updated upstream
 
 const MisClasesProfesor = () => {
   const [disponibilidades, setDisponibilidades] = useState({});
@@ -17,12 +18,29 @@ const MisClasesProfesor = () => {
     horaFin: 17,
     intervaloMinutos: 90,
   });
+=======
+import { authService } from '../../services/authService.js';
+
+const MisClasesProfesor = () => {
+  const currentUser = authService.getCurrentUser();
+  const profesorId = currentUser?.id;
+
+  const [disponibilidades, setDisponibilidades] = useState({});
+  const [originalDisponibilidades, setOriginalDisponibilidades] = useState({});
+  const [selectedDay, setSelectedDay] = useState('lunes');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [diasConCambios, setDiasConCambios] = useState([]);
+>>>>>>> Stashed changes
 
   const diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
 
   const cargarDisponibilidades = async () => {
     try {
       setLoading(true);
+<<<<<<< Updated upstream
       const datosSimulados = {
         lunes: [
           { id: 1, horaInicio: '09:00', horaFin: '10:30', disponible: true },
@@ -62,6 +80,33 @@ const MisClasesProfesor = () => {
       };
       setDisponibilidades(datosSimulados);
       setError(null);
+=======
+      if (!profesorId) {
+        setError('No se pudo identificar al profesor');
+        return;
+      }
+
+      const token = authService.getToken();
+      const response = await fetch(
+        `http://localhost:5000/api/disponibilidades/${profesorId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        setDisponibilidades(data.data || {});
+        setOriginalDisponibilidades(JSON.parse(JSON.stringify(data.data || {})));
+        setError(null);
+        setDiasConCambios([]);
+      } else {
+        setError(data.message || 'Error al cargar disponibilidades');
+      }
+>>>>>>> Stashed changes
     } catch (err) {
       setError('No se pudieron cargar las disponibilidades');
       console.error(err);
@@ -73,11 +118,82 @@ const MisClasesProfesor = () => {
   const guardarCambios = async () => {
     try {
       setSaving(true);
+<<<<<<< Updated upstream
       setSuccess('¡Disponibilidades guardadas correctamente!');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError('Error al guardar los cambios');
       console.error(err);
+=======
+
+      if (!profesorId) {
+        setError('No se pudo identificar al profesor');
+        setSaving(false);
+        return;
+      }
+
+      // Obtener todos los bloques del día seleccionado
+      const bloquesDelDia = disponibilidades[selectedDay] || [];
+
+      if (bloquesDelDia.length === 0) {
+        setError('No hay bloques para guardar. Primero genera bloques con la configuración.');
+        setSaving(false);
+        return;
+      }
+
+      const idsYEstados = bloquesDelDia.map(b => ({
+        id: b.id,
+        disponible: b.disponible
+      }));
+
+      console.log('📝 Guardando cambios:', { profesorId, día: selectedDay, bloques: idsYEstados });
+
+      const token = authService.getToken();
+
+      if (!token) {
+        setError('No hay sesión activa. Por favor, inicia sesión de nuevo.');
+        setSaving(false);
+        return;
+      }
+
+      const response = await fetch(
+        'http://localhost:5000/api/disponibilidades/actualizar-multiples',
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            bloques: idsYEstados
+          })
+        }
+      );
+
+      console.log('📡 Respuesta del servidor:', response.status);
+      const data = await response.json();
+      console.log('📦 Datos recibidos:', data);
+
+      if (data.success) {
+        // Guardar la copia original del día para futuras comparaciones
+        setOriginalDisponibilidades(prev => ({
+          ...prev,
+          [selectedDay]: JSON.parse(JSON.stringify(disponibilidades[selectedDay]))
+        }));
+
+        // Remover el día de la lista de días con cambios
+        setDiasConCambios(prev => prev.filter(dia => dia !== selectedDay));
+
+        const nombreDia = selectedDay.charAt(0).toUpperCase() + selectedDay.slice(1);
+        setSuccess(`✓ Disponibilidad de ${nombreDia} guardada correctamente`);
+        setTimeout(() => setSuccess(null), 3000);
+      } else {
+        setError(data.message || 'Error al guardar los cambios');
+      }
+    } catch (err) {
+      setError('Error al guardar los cambios: ' + err.message);
+      console.error('❌ Error completo:', err);
+>>>>>>> Stashed changes
     } finally {
       setSaving(false);
     }
@@ -86,10 +202,43 @@ const MisClasesProfesor = () => {
   const generarBloques = async () => {
     try {
       setSaving(true);
+<<<<<<< Updated upstream
       await cargarDisponibilidades();
       setShowSettings(false);
       setSuccess('Bloques generados correctamente');
       setTimeout(() => setSuccess(null), 3000);
+=======
+      if (!profesorId) {
+        setError('No se pudo identificar al profesor');
+        return;
+      }
+
+      const token = authService.getToken();
+      const response = await fetch(
+        `http://localhost:5000/api/disponibilidades/${profesorId}/generar`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            diasLaboral: ['lunes', 'martes', 'miércoles', 'jueves', 'viernes']
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        await cargarDisponibilidades();
+        setShowSettings(false);
+        setSuccess('Bloques generados correctamente');
+        setTimeout(() => setSuccess(null), 3000);
+      } else {
+        setError(data.message || 'Error al generar bloques');
+      }
+>>>>>>> Stashed changes
     } catch (err) {
       setError('Error al generar bloques');
       console.error(err);
@@ -99,16 +248,38 @@ const MisClasesProfesor = () => {
   };
 
   const toggleBloque = (bloqueId) => {
+<<<<<<< Updated upstream
     setDisponibilidades(prev => ({
       ...prev,
       [selectedDay]: prev[selectedDay].map(bloque =>
         bloque.id === bloqueId ? { ...bloque, disponible: !bloque.disponible } : bloque
       )
     }));
+=======
+    setDisponibilidades(prev => {
+      const actualizado = {
+        ...prev,
+        [selectedDay]: prev[selectedDay].map(bloque =>
+          bloque.id === bloqueId ? { ...bloque, disponible: !bloque.disponible } : bloque
+        )
+      };
+
+      // Verificar si hay cambios en este día
+      const bloquesCambiaron = JSON.stringify(actualizado[selectedDay]) !==
+                               JSON.stringify(originalDisponibilidades[selectedDay]);
+
+      if (bloquesCambiaron && !diasConCambios.includes(selectedDay)) {
+        setDiasConCambios(prev => [...prev, selectedDay]);
+      }
+
+      return actualizado;
+    });
+>>>>>>> Stashed changes
   };
 
   const toggleTodosDelDia = () => {
     const todosDisponibles = disponibilidades[selectedDay]?.every(b => b.disponible);
+<<<<<<< Updated upstream
     setDisponibilidades(prev => ({
       ...prev,
       [selectedDay]: prev[selectedDay].map(bloque => ({
@@ -116,6 +287,27 @@ const MisClasesProfesor = () => {
         disponible: !todosDisponibles
       }))
     }));
+=======
+    setDisponibilidades(prev => {
+      const actualizado = {
+        ...prev,
+        [selectedDay]: prev[selectedDay].map(bloque => ({
+          ...bloque,
+          disponible: !todosDisponibles
+        }))
+      };
+
+      // Verificar si hay cambios en este día
+      const bloquesCambiaron = JSON.stringify(actualizado[selectedDay]) !==
+                               JSON.stringify(originalDisponibilidades[selectedDay]);
+
+      if (bloquesCambiaron && !diasConCambios.includes(selectedDay)) {
+        setDiasConCambios(prev => [...prev, selectedDay]);
+      }
+
+      return actualizado;
+    });
+>>>>>>> Stashed changes
   };
 
   useEffect(() => {
@@ -136,7 +328,11 @@ const MisClasesProfesor = () => {
         flexWrap: 'wrap',
         gap: spacing.gap.normal
       }}>
+<<<<<<< Updated upstream
         <div>
+=======
+        <div style={{ flex: 1 }}>
+>>>>>>> Stashed changes
           <h2 style={{
             fontSize: '32px',
             fontWeight: 'bold',
@@ -146,7 +342,11 @@ const MisClasesProfesor = () => {
             Mis clases - Disponibilidad
           </h2>
           <p style={{
+<<<<<<< Updated upstream
             fontSize: '14px',
+=======
+            fontSize: '20px',
+>>>>>>> Stashed changes
             color: colors.textSecondary,
             margin: 0
           }}>
@@ -154,6 +354,7 @@ const MisClasesProfesor = () => {
           </p>
         </div>
 
+<<<<<<< Updated upstream
         <Button
           variant="primary"
           onClick={() => setShowSettings(!showSettings)}
@@ -161,6 +362,18 @@ const MisClasesProfesor = () => {
         >
           Configurar
         </Button>
+=======
+        {Object.keys(disponibilidades).length === 0 && !loading && (
+          <Button
+            variant="primary"
+            onClick={generarBloques}
+            icon={Settings}
+            disabled={saving}
+          >
+            {saving ? 'Generando...' : 'Generar horarios'}
+          </Button>
+        )}
+>>>>>>> Stashed changes
       </div>
 
       {/* Alertas */}
@@ -200,6 +413,7 @@ const MisClasesProfesor = () => {
         </div>
       )}
 
+<<<<<<< Updated upstream
       {/* Modal de Configuración */}
       {showSettings && (
         <ModalConfiguracion
@@ -210,6 +424,8 @@ const MisClasesProfesor = () => {
           loading={saving}
         />
       )}
+=======
+>>>>>>> Stashed changes
 
       {/* Selector de días y resumen */}
       <div style={{
@@ -224,6 +440,7 @@ const MisClasesProfesor = () => {
             gridTemplateColumns: 'repeat(auto-fit, minmax(60px, 1fr))',
             gap: spacing.gap.tight
           }}>
+<<<<<<< Updated upstream
             {diasSemana.map((dia) => (
               <button
                 key={dia}
@@ -255,6 +472,56 @@ const MisClasesProfesor = () => {
                 {dia.slice(0, 3)}
               </button>
             ))}
+=======
+            {diasSemana.map((dia) => {
+              const tieneCambios = diasConCambios.includes(dia);
+              return (
+                <button
+                  key={dia}
+                  onClick={() => setSelectedDay(dia)}
+                  style={{
+                    padding: `${spacing.padding.md} ${spacing.padding.lg}`,
+                    backgroundColor: selectedDay === dia ? colors.primary : colors.borderLight,
+                    color: selectedDay === dia ? colors.white : colors.textPrimary,
+                    border: tieneCambios ? `2px solid ${colors.warning}` : 'none',
+                    borderRadius: spacing.radius.md,
+                    cursor: 'pointer',
+                    fontSize: '26px',
+                    fontWeight: '600',
+                    transition: 'all 0.2s ease',
+                    textTransform: 'capitalize',
+                    textAlign: 'center',
+                    position: 'relative'
+                  }}
+                  title={tieneCambios ? 'Cambios sin guardar' : ''}
+                  onMouseEnter={(e) => {
+                    if (selectedDay !== dia) {
+                      e.currentTarget.style.backgroundColor = colors.border;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (selectedDay !== dia) {
+                      e.currentTarget.style.backgroundColor = colors.borderLight;
+                    }
+                  }}
+                >
+                  {dia.slice(0, 3)}
+                  {tieneCambios && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '-6px',
+                      right: '-6px',
+                      width: '12px',
+                      height: '12px',
+                      backgroundColor: colors.warning,
+                      borderRadius: spacing.radius.full,
+                      border: `2px solid ${colors.white}`
+                    }}></span>
+                  )}
+                </button>
+              );
+            })}
+>>>>>>> Stashed changes
           </div>
         </Card>
 
@@ -287,7 +554,11 @@ const MisClasesProfesor = () => {
 
             <Button
               variant="secondary"
+<<<<<<< Updated upstream
               size="sm"
+=======
+              size="md"
+>>>>>>> Stashed changes
               fullWidth={true}
               onClick={toggleTodosDelDia}
             >
@@ -325,7 +596,11 @@ const MisClasesProfesor = () => {
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
               gap: spacing.gap.normal,
+<<<<<<< Updated upstream
               marginBottom: spacing.margin.lg
+=======
+              marginBottom: spacing.margin.xlarge
+>>>>>>> Stashed changes
             }}>
               {bloquesDelDia.map(bloque => (
                 <div
@@ -396,6 +671,11 @@ const MisClasesProfesor = () => {
               onClick={guardarCambios}
               disabled={saving || loading}
               icon={Save}
+<<<<<<< Updated upstream
+=======
+              size="lg"
+              style={{ marginTop: spacing.margin.lg }}
+>>>>>>> Stashed changes
             >
               {saving ? 'Guardando...' : 'Guardar cambios'}
             </Button>
@@ -413,6 +693,7 @@ const MisClasesProfesor = () => {
   );
 };
 
+<<<<<<< Updated upstream
 const ModalConfiguracion = ({ config, setConfig, onGenerate, onClose, loading }) => {
   return (
     <div style={{
@@ -579,4 +860,6 @@ const ModalConfiguracion = ({ config, setConfig, onGenerate, onClose, loading })
   );
 };
 
+=======
+>>>>>>> Stashed changes
 export default MisClasesProfesor;
