@@ -2,6 +2,10 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { AppDataSource } from "../config/configDb.js";
 import { User } from "../entities/user.entity.js";
+import { Alumno } from "../entities/alumno.entity.js";
+import { Profesor } from "../entities/profesor.entity.js";
+import { Administracion } from "../entities/administracion.entity.js";
+import { Secretaria } from "../entities/secretaria.entity.js";
 
 const userRepository = AppDataSource.getRepository(User);
 
@@ -91,7 +95,6 @@ export const login = async (req, res) => {
   }
 };
 
-// REGISTER
 export const register = async (req, res) => {
   try {
     const { email, password, confirmPassword, nombre, rut, telefono } =
@@ -152,29 +155,35 @@ export const register = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error en registro:", error);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error en el servidor",
-        error: error.message,
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Error en el servidor",
+      error: error.message,
+    });
   }
 };
 
-// REGISTER STAFF (solo admin)
 export const registerStaff = async (req, res) => {
   try {
-    const { email, password, rol } = req.body;
+    const { email, password, rol, nombre, telefono, id_sedes } = req.body;
+    const requesterRol = req.user.rol;
 
-    if (!email || !password || !rol) {
+    if (!email || !password || !rol || !nombre) {
       return res.status(400).json({
         success: false,
-        message: "Email, contraseña y rol son requeridos",
+        message: "Email, contraseña, rol y nombre son requeridos",
       });
     }
 
-    const rolesValidos = ["profesor", "administrador"];
+    if (requesterRol === "secretaria" && rol !== "profesor") {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Las secretarias solo pueden registrar perfiles de tipo 'profesor'.",
+      });
+    }
+
+    const rolesValidos = ["profesor", "secretaria"];
     if (!rolesValidos.includes(rol)) {
       return res.status(400).json({
         success: false,
@@ -201,16 +210,39 @@ export const registerStaff = async (req, res) => {
       rol,
     });
 
-    await userRepository.save(newStaff);
+    const savedUser = await userRepository.save(newStaff);
+
+    if (rol === "profesor") {
+      const profRepo = AppDataSource.getRepository(Profesor);
+      const sedesCargadas = id_sedes ? id_sedes.map((id) => ({ id })) : [];
+
+      await profRepo.save(
+        profRepo.create({
+          nombre,
+          telefono: telefono || "Sin teléfono",
+          id_user: savedUser.id,
+          sedes: sedesCargadas,
+        }),
+      );
+    } else if (rol === "secretaria") {
+      const secretariaRepo = AppDataSource.getRepository(Secretaria);
+      await secretariaRepo.save(
+        secretariaRepo.create({
+          nombre,
+          id_user: savedUser.id,
+          telefono: telefono || "Sin teléfono",
+        }),
+      );
+    }
 
     return res.status(201).json({
       success: true,
       message: "Staff registrado exitosamente",
       user: {
-        id: newStaff.id,
-        email: newStaff.email,
-        rol: newStaff.rol,
-        created_at: newStaff.created_at,
+        id: savedUser.id,
+        email: savedUser.email,
+        rol: savedUser.rol,
+        created_at: savedUser.created_at,
       },
     });
   } catch (error) {
