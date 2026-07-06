@@ -8,7 +8,6 @@ export const crearSolicitudService = async (idUser, rol, data) => {
   const alumnoRepo = AppDataSource.getRepository(Alumno);
   const solicitudRepo = AppDataSource.getRepository(SolicitudAuto);
 
-  // 1. Regla de negocio para alumnos
   if (rol === "alumno") {
     const alumno = await alumnoRepo.findOneBy({ id_user: idUser });
     if (!alumno || alumno.estado_matricula !== "finalizado") {
@@ -18,15 +17,12 @@ export const crearSolicitudService = async (idUser, rol, data) => {
     }
   }
 
-  // 2. Extraemos el id_sede del body
   const { id_sede, ...datosSolicitud } = data;
 
-  // 3. Creamos la solicitud vinculando los objetos de relación
   const nuevaSolicitud = solicitudRepo.create({
     ...datosSolicitud,
     tipo_solicitante: rol,
     estado: "pendiente",
-    // IMPORTANTE: Mapeamos los IDs a los objetos que espera la entidad
     user: { id: idUser },
     sede: id_sede ? { id: parseInt(id_sede) } : null,
   });
@@ -59,13 +55,10 @@ export const verificarDisponibilidadBloque = async (
   const autoRepo = AppDataSource.getRepository("Auto");
   const solicitudRepo = AppDataSource.getRepository("SolicitudAuto");
 
-  // 1. ¿Cuántos autos tiene la sede en total (que no estén en mantenimiento)?
   const totalAutosSede = await autoRepo.count({
     where: { sede: { id: idSede }, estado: "disponible" },
   });
 
-  // 2. ¿Cuántas solicitudes ACEPTADAS hay que se solapen con este horario?
-  // Usamos una consulta un poco más avanzada para ver solapamientos
   const solicitudesOcupadas = await solicitudRepo
     .createQueryBuilder("solicitud")
     .where("solicitud.id_sede = :idSede", { idSede })
@@ -98,8 +91,8 @@ export const getSolicitudByIdService = async (id) => {
 export const getSolicitudesByUserService = async (idUser) => {
   return await solicitudRepo.find({
     where: { user: { id: idUser } },
-    relations: ["sede"], // Para que el profe vea en qué sede pidió
-    order: { fecha_creacion: "DESC" }, // Las más recientes primero
+    relations: ["sede"],
+    order: { fecha_creacion: "DESC" },
   });
 };
 
@@ -114,7 +107,6 @@ export const cancelarSolicitudService = async (idSolicitud, idUser) => {
     );
   }
 
-  // Regla de oro: Si la secretaria ya la aceptó o rechazó, no se puede borrar así como así
   if (solicitud.estado !== "pendiente") {
     throw new Error(
       `No puedes cancelar una solicitud que ya ha sido ${solicitud.estado}.`,
