@@ -34,7 +34,7 @@ export function authMiddleware(req, res, next) {
 
 export function isAdmin(req, res, next) {
   try {
-    if (req.user && req.user.rol === "administracion") {
+    if (req.user && req.user.rol === "administrador") {
       next();
     } else {
       const rolEncontrado = req.user ? req.user.rol : "Ninguno";
