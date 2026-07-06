@@ -8,7 +8,11 @@ import { authService } from '../services/authService.js';
 const SecretariaLayout = ({ children, activeTab, onTabChange }) => {
   const navigate = useNavigate();
   const currentUser = authService.getCurrentUser();
+<<<<<<< Updated upstream
   const userEmail = currentUser?.email || 'Secretaria';
+=======
+  const userEmail = currentUser?.nombre || currentUser?.email || 'Secretaria';
+>>>>>>> Stashed changes
 
   const handleLogout = () => {
     authService.logout();
@@ -31,7 +35,11 @@ const SecretariaLayout = ({ children, activeTab, onTabChange }) => {
       onLogout={handleLogout}
       roleColor={colors.secretaria}
       roleIcon={FileText}
+<<<<<<< Updated upstream
       title="SECRETARIA - ESCUELA"
+=======
+      title={`${userEmail.toUpperCase()} - ESCUELA`}
+>>>>>>> Stashed changes
     >
       {children}
     </Layout>

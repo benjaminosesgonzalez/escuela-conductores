@@ -16,7 +16,7 @@ app.use(morgan("dev"));
 app.use(cors({
   origin: "http://localhost:5173", // Tu puerto del frontend (ajusta si es diferente)
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
