@@ -3,13 +3,12 @@ import { Clase } from "../entities/clase.entity.js";
 import { Alumno } from "../entities/alumno.entity.js";
 import { DisponibilidadAlumno } from "../entities/disponibilidad-alumno.entity.js";
 
-const claseRepository = AppDataSource.getRepository(Clase);
-const alumnoRepository = AppDataSource.getRepository(Alumno);
-const disponibilidadAlumnoRepository = AppDataSource.getRepository(DisponibilidadAlumno);
-
 // Obtener alumnos con disponibilidades seleccionadas (disponible: true)
 export const obtenerAlumnosConDisponibilidades = async () => {
   try {
+    const disponibilidadAlumnoRepository = AppDataSource.getRepository(DisponibilidadAlumno);
+    const alumnoRepository = AppDataSource.getRepository(Alumno);
+
     // Obtener todas las disponibilidades seleccionadas (true)
     const disponibilidades = await disponibilidadAlumnoRepository.find({
       where: { disponible: true },
@@ -43,6 +42,9 @@ export const obtenerAlumnosConDisponibilidades = async () => {
 // Crear una clase
 export const crearClaseService = async (alumnoId, profesorId, diaSemana, horaInicio, horaFin) => {
   try {
+    const claseRepository = AppDataSource.getRepository(Clase);
+    const disponibilidadAlumnoRepository = AppDataSource.getRepository(DisponibilidadAlumno);
+
     const clase = claseRepository.create({
       alumnoId,
       profesorId,
@@ -75,6 +77,7 @@ export const crearClaseService = async (alumnoId, profesorId, diaSemana, horaIni
 // Obtener clases de un alumno
 export const obtenerClasesAlumnoService = async (alumnoId) => {
   try {
+    const claseRepository = AppDataSource.getRepository(Clase);
     return await claseRepository.find({
       where: { alumnoId },
       relations: ["profesor"],
@@ -85,6 +88,24 @@ export const obtenerClasesAlumnoService = async (alumnoId) => {
     });
   } catch (error) {
     console.error("Error obtener clases del alumno:", error);
+    throw error;
+  }
+};
+
+// Obtener clases de un profesor
+export const obtenerClasesProfesorService = async (profesorId) => {
+  try {
+    const claseRepository = AppDataSource.getRepository(Clase);
+    return await claseRepository.find({
+      where: { profesorId },
+      relations: ["alumno"],
+      order: {
+        diaSemana: "ASC",
+        horaInicio: "ASC",
+      },
+    });
+  } catch (error) {
+    console.error("Error obtener clases del profesor:", error);
     throw error;
   }
 };
