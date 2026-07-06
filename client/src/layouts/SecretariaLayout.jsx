@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, FileText, Settings } from 'lucide-react';
+import { Home, Users, FileText, Settings, Calendar } from 'lucide-react';
 import { Layout } from '../components/shared/index.js';
 import { colors } from '../theme/index.js';
 import { authService } from '../services/authService.js';
@@ -8,11 +8,7 @@ import { authService } from '../services/authService.js';
 const SecretariaLayout = ({ children, activeTab, onTabChange }) => {
   const navigate = useNavigate();
   const currentUser = authService.getCurrentUser();
-<<<<<<< Updated upstream
-  const userEmail = currentUser?.email || 'Secretaria';
-=======
   const userEmail = currentUser?.nombre || currentUser?.email || 'Secretaria';
->>>>>>> Stashed changes
 
   const handleLogout = () => {
     authService.logout();
@@ -21,6 +17,7 @@ const SecretariaLayout = ({ children, activeTab, onTabChange }) => {
 
   const menuItems = [
     { id: 'inicio', label: 'Inicio', icon: Home },
+    { id: 'agendar-clases', label: 'Agendar clases', icon: Calendar },
     { id: 'alumnos', label: 'Gestión Alumnos', icon: Users },
     { id: 'reportes', label: 'Reportes', icon: FileText },
     { id: 'configuracion', label: 'Configuración', icon: Settings }
@@ -35,11 +32,7 @@ const SecretariaLayout = ({ children, activeTab, onTabChange }) => {
       onLogout={handleLogout}
       roleColor={colors.secretaria}
       roleIcon={FileText}
-<<<<<<< Updated upstream
-      title="SECRETARIA - ESCUELA"
-=======
       title={`${userEmail.toUpperCase()} - ESCUELA`}
->>>>>>> Stashed changes
     >
       {children}
     </Layout>

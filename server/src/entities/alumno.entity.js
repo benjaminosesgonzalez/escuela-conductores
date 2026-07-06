@@ -9,6 +9,17 @@ export const Alumno = new EntitySchema({
       type: "int",
       generated: "increment",
     },
+    email: {
+      type: "varchar",
+      length: 100,
+      unique: true,
+      nullable: false,
+    },
+    password: {
+      type: "varchar",
+      length: 255,
+      nullable: false,
+    },
     nombre: {
       type: "varchar",
       length: 150,
@@ -22,6 +33,21 @@ export const Alumno = new EntitySchema({
     telefono: {
       type: "varchar",
       length: 15,
+      nullable: true,
+    },
+    sexo: {
+      type: "varchar",
+      length: 1,
+      nullable: true,
+    },
+    comuna: {
+      type: "varchar",
+      length: 100,
+      nullable: true,
+    },
+    sede: {
+      type: "int",
+      nullable: true,
     },
     sexo: {
       type: "varchar",
@@ -35,12 +61,12 @@ export const Alumno = new EntitySchema({
     },
     id_user: {
       type: "int",
+      nullable: false,
     },
     id_plan_interes: {
       type: "int",
       nullable: true,
     },
-
     id_plan_matriculado: {
       type: "int",
       nullable: true,
@@ -48,7 +74,7 @@ export const Alumno = new EntitySchema({
     estado_matricula: {
       type: "varchar",
       length: 20,
-      default: "pendiente", // "pendiente", "matriculado", "finalizado"
+      default: "pendiente",
     },
   },
   relations: {

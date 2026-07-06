@@ -3,18 +3,14 @@ import { BookOpen, Calendar, CheckCircle, Clock } from 'lucide-react';
 import AlumnoLayout from '../../layouts/AlumnoLayout.jsx';
 import { Card, Button } from '../../components/shared/index.js';
 import { colors, spacing } from '../../theme/index.js';
-<<<<<<< Updated upstream
-
-const DashboardAlumno = () => {
-  const [activeTab, setActiveTab] = useState('inicio');
-=======
 import { authService } from '../../services/authService.js';
+import ReservarClaseAlumno from './ReservarClaseAlumno.jsx';
+import MisClasesAlumno from './MisClasesAlumno.jsx';
 
 const DashboardAlumno = () => {
   const [activeTab, setActiveTab] = useState('inicio');
   const currentUser = authService.getCurrentUser();
   const alumnoNombre = currentUser?.nombre || 'Alumno';
->>>>>>> Stashed changes
 
   const stats = [
     { icon: BookOpen, label: 'Clases tomadas', value: '12', color: '#10b981' },
@@ -59,11 +55,7 @@ const DashboardAlumno = () => {
               color: colors.textPrimary,
               margin: '0 0 8px 0'
             }}>
-<<<<<<< Updated upstream
-              Bienvenido, Alumno
-=======
               Bienvenido, {alumnoNombre}
->>>>>>> Stashed changes
             </h2>
             <p style={{
               color: colors.textTertiary,
@@ -190,6 +182,16 @@ const DashboardAlumno = () => {
             </Button>
           </Card>
         </div>
+      )}
+
+      {/* RESERVAR CLASE TAB */}
+      {activeTab === 'reservar' && (
+        <ReservarClaseAlumno />
+      )}
+
+      {/* MIS CLASES TAB */}
+      {activeTab === 'misclases' && (
+        <MisClasesAlumno />
       )}
 
     </AlumnoLayout>

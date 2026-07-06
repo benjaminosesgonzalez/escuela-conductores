@@ -54,18 +54,6 @@ const Button = ({
   // Tamaños
   const sizes = {
     sm: {
-<<<<<<< Updated upstream
-      padding: `${spacing.padding.small} ${spacing.padding.md}`,
-      fontSize: '13px'
-    },
-    md: {
-      padding: `${spacing.padding.md} ${spacing.padding.lg}`,
-      fontSize: '14px'
-    },
-    lg: {
-      padding: `${spacing.padding.lg} ${spacing.padding.xl}`,
-      fontSize: '15px'
-=======
       padding: `${spacing.padding.md} ${spacing.padding.lg}`,
       fontSize: '20px'
     },
@@ -76,7 +64,6 @@ const Button = ({
     lg: {
       padding: `${spacing.padding.xlarge} ${spacing.padding.xl}`,
       fontSize: '20px'
->>>>>>> Stashed changes
     }
   };
 

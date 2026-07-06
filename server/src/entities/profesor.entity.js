@@ -28,15 +28,11 @@ export const ProfesorSchema = new EntitySchema({
       length: 15,
       nullable: true,
     },
-    sedes: {
-      target: "Sede",
-      type: "many-to-many",
-      joinTable: {
-        name: "profesor_sedes", // Tabla intermedia: id_profesor | id_sede
-        joinColumn: { name: "id_profesor", referencedColumnName: "id" },
-        inverseJoinColumn: { name: "id_sede", referencedColumnName: "id" },
-      },
-      cascade: true,
+    tipo_contrato: {
+      type: "varchar",
+      length: 20,
+      default: "full_time",
+      nullable: false,
     },
   },
 });

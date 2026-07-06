@@ -27,7 +27,7 @@ app.get("/", (req, res) => {
 
 app.use('/api/profesor', profesorRoutes);
 
-// Cargar todas las rutas
+// Cargar todas las rutas API
 routerApi(app);
 
 // Inicializa la conexión a la base de datos
