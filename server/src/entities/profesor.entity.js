@@ -47,5 +47,11 @@ export const ProfesorSchema = new EntitySchema({
       },
       cascade: true,
     },
+    tipo_contrato: {
+      type: "varchar",
+      length: 20,
+      default: "full_time",
+      nullable: false,
+    },
   },
 });

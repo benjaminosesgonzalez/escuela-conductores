@@ -3,6 +3,7 @@ import {
   Users, FileText, TrendingUp, UserPlus, Car, CalendarClock, Search, MapPin, Edit 
 } from 'lucide-react';
 import SecretariaLayout from '../../layouts/SecretariaLayout.jsx';
+import AgendarClasesSecretaria from './AgendarClasesSecretaria.jsx';
 import { Card, Button } from '../../components/shared/index.js';
 import { colors, spacing } from '../../theme/index.js';
 import { authService } from '../../services/authService.js';
@@ -47,6 +48,9 @@ const DashboardSecretaria = () => {
   const [formData, setFormData] = useState({
     nombre: '', rut: '', email: '', telefono: '', sexo: '', comuna: '', id_plan_matriculado: ''
   });
+
+  const currentUser = authService.getCurrentUser();
+  const secretariaNombre = currentUser?.nombre || 'Secretaria';
 
   // Estilos de botones de Tareas Rápidas
   const btnActionStyle = {
@@ -354,8 +358,21 @@ const DashboardSecretaria = () => {
       {activeTab === 'inicio' && (
         <div>
           <div style={{ marginBottom: spacing.margin.xlarge }}>
-            <h2 style={{ fontSize: '36px', fontWeight: 'bold', color: colors.textPrimary, margin: '0 0 8px 0' }}>Panel de Control</h2>
-            <p style={{ color: colors.textTertiary, margin: 0, fontSize: '14px' }}>Gestión de la escuela de conductores</p>
+            <h2 style={{
+              fontSize: '36px',
+              fontWeight: 'bold',
+              color: colors.textPrimary,
+              margin: '0 0 8px 0'
+            }}>
+              Panel de Control - {secretariaNombre}
+            </h2>
+            <p style={{
+              color: colors.textTertiary,
+              margin: 0,
+              fontSize: '14px'
+            }}>
+              Gestión de la escuela de conductores
+            </p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: spacing.gap.spacious, marginBottom: spacing.margin.xlarge }}>
@@ -426,10 +443,10 @@ const DashboardSecretaria = () => {
         <div>
           <div style={{ display: 'flex', gap: spacing.gap.normal, marginBottom: spacing.margin.large }}>
             <Button onClick={() => setVistaAlumno('tabla')} style={{ backgroundColor: vistaAlumno === 'tabla' ? colors.secretaria : colors.background, color: vistaAlumno === 'tabla' ? 'white' : colors.textPrimary }}>
-              📋 Ver Tabla
+              📋 Ver Tabla de Alumnos
             </Button>
             <Button onClick={() => { setFormData({nombre: '', rut: '', email: '', telefono: '', sexo: '', comuna: '', id_plan_matriculado: ''}); setVistaAlumno('crear'); }} style={{ backgroundColor: vistaAlumno === 'crear' ? colors.secretaria : colors.background, color: vistaAlumno === 'crear' ? 'white' : colors.textPrimary }}>
-              ➕ Ingresar Nuevo
+              ➕ Ingresar Alumno Nuevo
             </Button>
           </div>
           
@@ -445,6 +462,23 @@ const DashboardSecretaria = () => {
         </Card>
       )}
 
+      {/* AGENDAR CLASES TAB */}
+      {activeTab === 'agendar-clases' && (
+        <AgendarClasesSecretaria />
+      )}
+
+      {/* REPORTES TAB */}
+      {activeTab === 'reportes' && (
+        <Card title="Reportes" icon={FileText}>
+          <p style={{
+            color: colors.textSecondary,
+            textAlign: 'center',
+            padding: spacing.padding.xlarge
+          }}>
+            Módulo de reportes en desarrollo
+          </p>
+        </Card>
+      )}
     </SecretariaLayout>
   );
 };

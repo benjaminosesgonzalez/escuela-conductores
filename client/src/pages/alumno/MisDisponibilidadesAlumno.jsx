@@ -1,72 +1,55 @@
-﻿import React, { useState, useEffect } from "react";
-import { Calendar, Clock, CheckCircle, Circle, Save, AlertCircle, Loader } from "lucide-react";
-import { Card, Button } from "../../components/shared/index.js";
-import { colors, spacing } from "../../theme/index.js";
-import { authService } from "../../services/authService.js";
+import React, { useState, useEffect } from 'react';
+import { Calendar, Clock, CheckCircle, Circle, Save, Settings, AlertCircle, Loader } from 'lucide-react';
+import { Card, Button } from '../../components/shared/index.js';
+import { colors, spacing } from '../../theme/index.js';
+import { authService } from '../../services/authService.js';
 
-const ReservarClaseAlumno = () => {
+const MisDisponibilidadesAlumno = () => {
   const currentUser = authService.getCurrentUser();
-  // Usar alumnoId si existe (para alumnos), si no usar id como fallback
-  const alumnoId = currentUser?.alumnoId || currentUser?.id;
+  const alumnoId = currentUser?.id;
 
   const [disponibilidades, setDisponibilidades] = useState({});
   const [originalDisponibilidades, setOriginalDisponibilidades] = useState({});
-  const [selectedDay, setSelectedDay] = useState("lunes");
+  const [selectedDay, setSelectedDay] = useState('lunes');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [diasConCambios, setDiasConCambios] = useState([]);
-  const [generando, setGenerando] = useState(false);
   const [planInfo, setPlanInfo] = useState(null);
 
-  const diasSemana = ["lunes", "martes", "miércoles", "jueves", "viernes"];
+  const diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
 
-  // Usar planInfo del login si está disponible
-  useEffect(() => {
-    const userPlanInfo = currentUser?.planInfo;
-    if (userPlanInfo) {
-      setPlanInfo(userPlanInfo);
-    }
-  }, []);
-
-  const generarBloquesAutomaticamente = async () => {
+  // Obtener información del plan del alumno
+  const obtenerInfoPlan = async () => {
     try {
-      setGenerando(true);
-      if (!alumnoId) {
-        setError("No se pudo identificar al alumno");
-        return;
-      }
-
       const token = authService.getToken();
+      // Obtener el alumno con su plan
       const response = await fetch(
-        `http://localhost:5000/api/disponibilidades-alumnos/${alumnoId}/generar`,
+        `http://localhost:5000/api/alumnos/${alumnoId}`,
         {
-          method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            diasLaboral: ["lunes", "martes", "miércoles", "jueves", "viernes"]
-          })
+            'Authorization': `Bearer ${token}`
+          }
         }
       );
 
-      const data = await response.json();
-
-      if (data.success) {
-        await cargarDisponibilidades();
-        setSuccess("Horarios generados correctamente");
-        setTimeout(() => setSuccess(null), 2000);
-      } else {
-        setError(data.message || "Error al generar horarios");
+      if (response.ok) {
+        const data = await response.json();
+        // Aquí asumimos que el alumno tiene id_plan_matriculado
+        // Obtener los detalles del plan
+        if (data.data && data.data.id_plan_matriculado) {
+          const planResponse = await fetch(
+            `http://localhost:5000/api/plans/${data.data.id_plan_matriculado}`
+          );
+          if (planResponse.ok) {
+            const planData = await planResponse.json();
+            setPlanInfo(planData.data);
+          }
+        }
       }
     } catch (err) {
-      setError("Error al generar horarios");
-      console.error(err);
-    } finally {
-      setGenerando(false);
+      console.error('Error al obtener plan:', err);
     }
   };
 
@@ -74,7 +57,7 @@ const ReservarClaseAlumno = () => {
     try {
       setLoading(true);
       if (!alumnoId) {
-        setError("No se pudo identificar al alumno");
+        setError('No se pudo identificar al alumno');
         return;
       }
 
@@ -83,7 +66,7 @@ const ReservarClaseAlumno = () => {
         `http://localhost:5000/api/disponibilidades-alumnos/${alumnoId}`,
         {
           headers: {
-            Authorization: `Bearer ${token}`
+            'Authorization': `Bearer ${token}`
           }
         }
       );
@@ -96,22 +79,68 @@ const ReservarClaseAlumno = () => {
         setError(null);
         setDiasConCambios([]);
       } else {
-        setError(data.message || "Error al cargar horarios disponibles");
+        setError(data.message || 'Error al cargar disponibilidades');
       }
     } catch (err) {
-      setError("No se pudieron cargar los horarios");
+      setError('No se pudieron cargar las disponibilidades');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const guardarReserva = async () => {
+  const generarBloques = async () => {
+    try {
+      setSaving(true);
+      if (!alumnoId) {
+        setError('No se pudo identificar al alumno');
+        return;
+      }
+
+      if (!planInfo) {
+        setError('No se pudo obtener información del plan');
+        return;
+      }
+
+      const token = authService.getToken();
+      const response = await fetch(
+        `http://localhost:5000/api/disponibilidades-alumnos/${alumnoId}/generar`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            totalClases: planInfo.total_classes,
+            diasLaboral: ['lunes', 'martes', 'miércoles', 'jueves', 'viernes']
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        await cargarDisponibilidades();
+        setSuccess(`Bloques generados correctamente (${planInfo.total_classes} clases)`);
+        setTimeout(() => setSuccess(null), 3000);
+      } else {
+        setError(data.message || 'Error al generar bloques');
+      }
+    } catch (err) {
+      setError('Error al generar bloques');
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const guardarCambios = async () => {
     try {
       setSaving(true);
 
       if (!alumnoId) {
-        setError("No se pudo identificar al alumno");
+        setError('No se pudo identificar al alumno');
         setSaving(false);
         return;
       }
@@ -119,7 +148,7 @@ const ReservarClaseAlumno = () => {
       const bloquesDelDia = disponibilidades[selectedDay] || [];
 
       if (bloquesDelDia.length === 0) {
-        setError("No hay horarios disponibles. Por favor intenta más tarde.");
+        setError('No hay bloques para guardar. Primero genera bloques.');
         setSaving(false);
         return;
       }
@@ -129,21 +158,23 @@ const ReservarClaseAlumno = () => {
         disponible: b.disponible
       }));
 
+      console.log('📝 Guardando cambios:', { alumnoId, día: selectedDay, bloques: idsYEstados });
+
       const token = authService.getToken();
 
       if (!token) {
-        setError("No hay sesión activa. Por favor, inicia sesión de nuevo.");
+        setError('No hay sesión activa. Por favor, inicia sesión de nuevo.');
         setSaving(false);
         return;
       }
 
       const response = await fetch(
-        "http://localhost:5000/api/disponibilidades-alumnos/actualizar-multiples",
+        'http://localhost:5000/api/disponibilidades-alumnos/actualizar-multiples',
         {
-          method: "PATCH",
+          method: 'PATCH',
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             bloques: idsYEstados
@@ -151,7 +182,9 @@ const ReservarClaseAlumno = () => {
         }
       );
 
+      console.log('📡 Respuesta del servidor:', response.status);
       const data = await response.json();
+      console.log('📦 Datos recibidos:', data);
 
       if (data.success) {
         setOriginalDisponibilidades(prev => ({
@@ -162,14 +195,14 @@ const ReservarClaseAlumno = () => {
         setDiasConCambios(prev => prev.filter(dia => dia !== selectedDay));
 
         const nombreDia = selectedDay.charAt(0).toUpperCase() + selectedDay.slice(1);
-        setSuccess(`✓ Reserva de ${nombreDia} guardada. La secretaría confirmará tu clase.`);
+        setSuccess(`✓ Disponibilidad de ${nombreDia} guardada correctamente`);
         setTimeout(() => setSuccess(null), 3000);
       } else {
-        setError(data.message || "Error al guardar la reserva");
+        setError(data.message || 'Error al guardar los cambios');
       }
     } catch (err) {
-      setError("Error al guardar la reserva: " + err.message);
-      console.error(err);
+      setError('Error al guardar los cambios: ' + err.message);
+      console.error('❌ Error completo:', err);
     } finally {
       setSaving(false);
     }
@@ -177,18 +210,6 @@ const ReservarClaseAlumno = () => {
 
   const toggleBloque = (bloqueId) => {
     setDisponibilidades(prev => {
-      const bloqueActual = prev[selectedDay].find(b => b.id === bloqueId);
-
-      // Si va a seleccionar y ya tiene el máximo, no permitir
-      if (!bloqueActual.disponible && planInfo) {
-        const totalSeleccionados = Object.values(prev).flat().filter(b => b.disponible).length;
-        if (totalSeleccionados >= planInfo.total_classes) {
-          setError(`Ya tienes el máximo de clases seleccionadas (${planInfo.total_classes})`);
-          setTimeout(() => setError(null), 3000);
-          return prev;
-        }
-      }
-
       const actualizado = {
         ...prev,
         [selectedDay]: prev[selectedDay].map(bloque =>
@@ -209,20 +230,6 @@ const ReservarClaseAlumno = () => {
 
   const toggleTodosDelDia = () => {
     const todosDisponibles = disponibilidades[selectedDay]?.every(b => b.disponible);
-
-    // Si va a marcar todos y eso excede el máximo, no permitir
-    if (!todosDisponibles && planInfo) {
-      const totalSeleccionados = Object.values(disponibilidades).flat().filter(b => b.disponible).length;
-      const bloquesDia = disponibilidades[selectedDay]?.length || 0;
-      const nuevosSeleccionados = totalSeleccionados + bloquesDia;
-
-      if (nuevosSeleccionados > planInfo.total_classes) {
-        setError(`Solo puedes seleccionar ${planInfo.total_classes} clases en total`);
-        setTimeout(() => setError(null), 3000);
-        return;
-      }
-    }
-
     setDisponibilidades(prev => {
       const actualizado = {
         ...prev,
@@ -244,59 +251,72 @@ const ReservarClaseAlumno = () => {
   };
 
   useEffect(() => {
+    obtenerInfoPlan();
     cargarDisponibilidades();
   }, []);
 
   const bloquesDelDia = disponibilidades[selectedDay] || [];
-  const seleccionadosDelDia = bloquesDelDia.filter(b => b.disponible).length;
-  const totalSeleccionados = Object.values(disponibilidades).flat().filter(b => b.disponible).length;
+  const disponiblesDelDia = bloquesDelDia.filter(b => b.disponible).length;
 
   return (
     <div>
+      {/* Header */}
       <div style={{
         marginBottom: spacing.margin.xlarge,
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        flexWrap: "wrap",
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
         gap: spacing.gap.normal
       }}>
         <div style={{ flex: 1 }}>
           <h2 style={{
-            fontSize: "32px",
-            fontWeight: "bold",
+            fontSize: '32px',
+            fontWeight: 'bold',
             color: colors.textPrimary,
-            margin: "0 0 8px 0"
+            margin: '0 0 8px 0'
           }}>
-            Reservar clase
+            Mis disponibilidades
           </h2>
           <p style={{
-            fontSize: "20px",
+            fontSize: '20px',
             color: colors.textSecondary,
             margin: 0
           }}>
-            Selecciona los horarios en que deseas tomar tus clases. La secretaría confirmará tu reserva.
+            Selecciona los horarios en que deseas tomar clases
             {planInfo && (
-              <span style={{ color: colors.primary, fontWeight: 'bold', display: 'block', marginTop: '8px' }}>
-                Máximo: {planInfo.total_classes} clases ({planInfo.name})
+              <span style={{ color: colors.primary, fontWeight: 'bold', marginLeft: '8px' }}>
+                ({disponiblesDelDia}/{bloquesDelDia.length} clases)
               </span>
             )}
           </p>
         </div>
+
+        {Object.keys(disponibilidades).length === 0 && !loading && (
+          <Button
+            variant="primary"
+            onClick={generarBloques}
+            icon={Settings}
+            disabled={saving}
+          >
+            {saving ? 'Generando...' : 'Generar disponibilidades'}
+          </Button>
+        )}
       </div>
 
+      {/* Alertas */}
       {error && (
         <div style={{
           marginBottom: spacing.margin.lg,
           padding: spacing.padding.lg,
-          backgroundColor: "#fee2e2",
+          backgroundColor: '#fee2e2',
           border: `1px solid ${colors.danger}`,
           borderRadius: spacing.radius.lg,
           color: colors.danger,
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: spacing.gap.normal,
-          fontSize: "14px"
+          fontSize: '14px'
         }}>
           <AlertCircle size={18} />
           {error}
@@ -307,30 +327,31 @@ const ReservarClaseAlumno = () => {
         <div style={{
           marginBottom: spacing.margin.lg,
           padding: spacing.padding.lg,
-          backgroundColor: "#dcfce7",
+          backgroundColor: '#dcfce7',
           border: `1px solid ${colors.success}`,
           borderRadius: spacing.radius.lg,
           color: colors.success,
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: spacing.gap.normal,
-          fontSize: "14px"
+          fontSize: '14px'
         }}>
           <CheckCircle size={18} />
           {success}
         </div>
       )}
 
+      {/* Selector de días y resumen */}
       <div style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
         gap: spacing.gap.spacious,
         marginBottom: spacing.margin.xlarge
       }}>
-        <Card title="Selecciona un día" icon={Calendar}>
+        <Card title="Días disponibles" icon={Calendar}>
           <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(60px, 1fr))",
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(60px, 1fr))',
             gap: spacing.gap.tight
           }}>
             {diasSemana.map((dia) => {
@@ -341,18 +362,19 @@ const ReservarClaseAlumno = () => {
                   onClick={() => setSelectedDay(dia)}
                   style={{
                     padding: `${spacing.padding.md} ${spacing.padding.lg}`,
-                    backgroundColor: selectedDay === dia ? colors.alumno : colors.borderLight,
+                    backgroundColor: selectedDay === dia ? colors.primary : colors.borderLight,
                     color: selectedDay === dia ? colors.white : colors.textPrimary,
-                    border: tieneCambios ? `2px solid ${colors.warning}` : "none",
+                    border: tieneCambios ? `2px solid ${colors.warning}` : 'none',
                     borderRadius: spacing.radius.md,
-                    cursor: "pointer",
-                    fontSize: "26px",
-                    fontWeight: "600",
-                    transition: "all 0.2s ease",
-                    textTransform: "capitalize",
-                    textAlign: "center",
-                    position: "relative"
+                    cursor: 'pointer',
+                    fontSize: '26px',
+                    fontWeight: '600',
+                    transition: 'all 0.2s ease',
+                    textTransform: 'capitalize',
+                    textAlign: 'center',
+                    position: 'relative'
                   }}
+                  title={tieneCambios ? 'Cambios sin guardar' : ''}
                   onMouseEnter={(e) => {
                     if (selectedDay !== dia) {
                       e.currentTarget.style.backgroundColor = colors.border;
@@ -367,11 +389,11 @@ const ReservarClaseAlumno = () => {
                   {dia.slice(0, 3)}
                   {tieneCambios && (
                     <span style={{
-                      position: "absolute",
-                      top: "-6px",
-                      right: "-6px",
-                      width: "12px",
-                      height: "12px",
+                      position: 'absolute',
+                      top: '-6px',
+                      right: '-6px',
+                      width: '12px',
+                      height: '12px',
                       backgroundColor: colors.warning,
                       borderRadius: spacing.radius.full,
                       border: `2px solid ${colors.white}`
@@ -386,28 +408,28 @@ const ReservarClaseAlumno = () => {
         <Card>
           <div>
             <h3 style={{
-              fontSize: "14px",
-              fontWeight: "600",
+              fontSize: '14px',
+              fontWeight: '600',
               color: colors.textSecondary,
-              margin: "0 0 12px 0",
-              textTransform: "capitalize"
+              margin: '0 0 12px 0',
+              textTransform: 'capitalize'
             }}>
               {selectedDay}
             </h3>
             <p style={{
-              fontSize: "32px",
-              fontWeight: "bold",
-              color: colors.alumno,
-              margin: "0 0 8px 0"
+              fontSize: '32px',
+              fontWeight: 'bold',
+              color: colors.primary,
+              margin: '0 0 8px 0'
             }}>
-              {totalSeleccionados}/{planInfo?.total_classes || "?"}
+              {disponiblesDelDia}/{bloquesDelDia.length}
             </p>
             <p style={{
-              fontSize: "13px",
+              fontSize: '13px',
               color: colors.textTertiary,
-              margin: "0 0 16px 0"
+              margin: '0 0 16px 0'
             }}>
-              clases seleccionadas total
+              horarios seleccionados
             </p>
 
             <Button
@@ -416,57 +438,39 @@ const ReservarClaseAlumno = () => {
               fullWidth={true}
               onClick={toggleTodosDelDia}
             >
-              {seleccionadosDelDia === bloquesDelDia.length ? "Deseleccionar todas" : "Seleccionar todas"}
+              {disponiblesDelDia === bloquesDelDia.length ? 'Desmarcar todos' : 'Marcar todos'}
             </Button>
           </div>
         </Card>
       </div>
 
-      <Card title={`Horarios disponibles - ${selectedDay}`} icon={Clock}>
+      {/* Bloques de disponibilidad */}
+      <Card title={`Horarios de ${selectedDay}`} icon={Clock}>
         {loading ? (
           <div style={{
             padding: spacing.padding.xlarge,
-            textAlign: "center",
+            textAlign: 'center',
             color: colors.textTertiary
           }}>
             <Loader size={32} style={{
-              margin: "0 auto 12px",
-              animation: "spin 1s linear infinite"
+              margin: '0 auto 12px',
+              animation: 'spin 1s linear infinite'
             }} />
             Cargando horarios...
-          </div>
-        ) : Object.keys(disponibilidades).length === 0 ? (
-          <div style={{
-            padding: spacing.padding.xlarge,
-            textAlign: "center"
-          }}>
-            <p style={{
-              color: colors.textTertiary,
-              marginBottom: spacing.margin.lg
-            }}>
-              No hay horarios generados. Haz clic en el botón para generar tus bloques de disponibilidad.
-            </p>
-            <Button
-              variant="primary"
-              onClick={generarBloquesAutomaticamente}
-              disabled={generando}
-            >
-              {generando ? "Generando..." : "Generar mis horarios"}
-            </Button>
           </div>
         ) : bloquesDelDia.length === 0 ? (
           <div style={{
             padding: spacing.padding.xlarge,
-            textAlign: "center",
+            textAlign: 'center',
             color: colors.textTertiary
           }}>
-            No hay horarios disponibles para este día. Intenta otro día de la semana.
+            No hay horarios configurados. Usa "Generar disponibilidades" para crear los bloques según tu plan.
           </div>
         ) : (
           <>
             <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
               gap: spacing.gap.normal,
               marginBottom: spacing.margin.xlarge
             }}>
@@ -476,32 +480,32 @@ const ReservarClaseAlumno = () => {
                   onClick={() => toggleBloque(bloque.id)}
                   style={{
                     padding: spacing.padding.lg,
-                    backgroundColor: bloque.disponible ? "#f0fdf4" : "#fef2f2",
+                    backgroundColor: bloque.disponible ? '#f0fdf4' : '#fef2f2',
                     border: `2px solid ${bloque.disponible ? colors.success : colors.danger}`,
                     borderRadius: spacing.radius.md,
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                    display: "flex",
-                    alignItems: "center",
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: spacing.gap.normal
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "none";
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
                   <div style={{
-                    width: "40px",
-                    height: "40px",
+                    width: '40px',
+                    height: '40px',
                     borderRadius: spacing.radius.full,
-                    backgroundColor: bloque.disponible ? "#dcfce7" : "#fee2e2",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    backgroundColor: bloque.disponible ? '#dcfce7' : '#fee2e2',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     flexShrink: 0
                   }}>
                     {bloque.disponible ? (
@@ -513,20 +517,20 @@ const ReservarClaseAlumno = () => {
 
                   <div style={{ flex: 1 }}>
                     <p style={{
-                      fontSize: "14px",
-                      fontWeight: "600",
+                      fontSize: '14px',
+                      fontWeight: '600',
                       color: colors.textPrimary,
-                      margin: "0 0 4px 0"
+                      margin: '0 0 4px 0'
                     }}>
                       {bloque.horaInicio} - {bloque.horaFin}
                     </p>
                     <p style={{
-                      fontSize: "12px",
+                      fontSize: '12px',
                       color: bloque.disponible ? colors.success : colors.danger,
                       margin: 0,
-                      fontWeight: "500"
+                      fontWeight: '500'
                     }}>
-                      {bloque.disponible ? "✓ Seleccionado" : "✗ No seleccionado"}
+                      {bloque.disponible ? '✓ Seleccionado' : '✗ No disponible'}
                     </p>
                   </div>
                 </div>
@@ -536,13 +540,13 @@ const ReservarClaseAlumno = () => {
             <Button
               variant="success"
               fullWidth={true}
-              onClick={guardarReserva}
+              onClick={guardarCambios}
               disabled={saving || loading}
               icon={Save}
               size="lg"
               style={{ marginTop: spacing.margin.lg }}
             >
-              {saving ? "Guardando reserva..." : "Confirmar reserva"}
+              {saving ? 'Guardando...' : 'Guardar cambios'}
             </Button>
           </>
         )}
@@ -558,4 +562,4 @@ const ReservarClaseAlumno = () => {
   );
 };
 
-export default ReservarClaseAlumno;
+export default MisDisponibilidadesAlumno;

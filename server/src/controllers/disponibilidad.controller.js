@@ -10,18 +10,16 @@ import {
 import { sendResponse } from "../Handlers/responseHandlers.js";
 
 /**
- * Generar bloques de disponibilidad para un profesor
+ * Generar bloques de disponibilidad para un profesor según tipo de contrato
  */
 export const generarBloques = async (req, res) => {
   try {
     const { profesorId } = req.params;
-    const { horaInicio = 9, horaFin = 17, intervaloMinutos = 90, diasLaboral } = req.body;
+    const { tipoContrato = "full_time", diasLaboral = ["lunes", "martes", "miércoles", "jueves", "viernes"] } = req.body;
 
     const resultado = await generarBloquesDisponibilidad(
       parseInt(profesorId),
-      horaInicio,
-      horaFin,
-      intervaloMinutos,
+      tipoContrato,
       diasLaboral
     );
 
@@ -98,13 +96,29 @@ export const actualizarDisponibilidadBloque = async (req, res) => {
 
 /**
  * Actualizar múltiples disponibilidades
+ * Soporta dos formatos:
+ * 1. { ids: [1,2,3], disponible: true } - actualiza todos con el mismo estado
+ * 2. { bloques: [{id: 1, disponible: true}, {id: 2, disponible: false}] } - estados individuales
  */
 export const actualizarMultiples = async (req, res) => {
   try {
-    const { ids, disponible } = req.body;
+    const { ids, disponible, bloques } = req.body;
 
+    // Formato 2: bloques con estados individuales
+    if (bloques && Array.isArray(bloques) && bloques.length > 0) {
+      const bloqueIds = bloques.map(b => b.id);
+
+      // Actualizar cada bloque con su estado correspondiente
+      for (const bloque of bloques) {
+        await actualizarDisponibilidad(bloque.id, bloque.disponible);
+      }
+
+      return sendResponse(res, 200, true, "Disponibilidades actualizadas", { cantidad: bloques.length });
+    }
+
+    // Formato 1: ids con un único estado
     if (!Array.isArray(ids) || ids.length === 0) {
-      return sendResponse(res, 400, false, "Se requiere un array de ids no vacío");
+      return sendResponse(res, 400, false, "Se requiere un array de ids o bloques no vacío");
     }
 
     if (typeof disponible !== "boolean") {

@@ -3,10 +3,15 @@ import { Users, Calendar, Car, Clock, MapPin } from 'lucide-react';
 import ProfesorLayout from '../../layouts/ProfesorLayout.jsx';
 import { Card, Button } from '../../components/shared/index.js';
 import { colors, spacing } from '../../theme/index.js';
+import { authService } from '../../services/authService.js';
 import MisClasesProfesor from './MisClasesProfesor.jsx';
+import ClasesConfirmadasProfesor from './ClasesConfirmadasProfesor.jsx';
+import RepositorioProfesor from './RepositorioProfesor.jsx';
 
 const DashboardProfesor = () => {
   const [activeTab, setActiveTab] = useState('inicio');
+  const currentUser = authService.getCurrentUser();
+  const profesorNombre = currentUser?.nombre || 'Profesor';
 
   const stats = [
     { icon: Users, label: 'Alumnos a cargo', value: '9', color: '#5a68d8' },
@@ -63,7 +68,7 @@ const DashboardProfesor = () => {
               color: colors.textPrimary,
               margin: '0 0 8px 0'
             }}>
-              Bienvenido, Profesor
+              Bienvenido, {profesorNombre}
             </h2>
             <p style={{
               color: colors.textTertiary,
@@ -304,9 +309,19 @@ const DashboardProfesor = () => {
         </div>
       )}
 
-      {/* CLASES TAB */}
-      {activeTab === 'clases' && (
+      {/* DISPONIBILIDAD TAB */}
+      {activeTab === 'disponibilidad' && (
         <MisClasesProfesor />
+      )}
+
+      {/* MIS CLASES TAB */}
+      {activeTab === 'misclases' && (
+        <ClasesConfirmadasProfesor />
+      )}
+
+      {/* REPOSITORIO TAB */}
+      {activeTab === 'repositorio' && (
+        <RepositorioProfesor />
       )}
     </ProfesorLayout>
   );

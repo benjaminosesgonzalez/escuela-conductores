@@ -4,14 +4,23 @@ export const Secretaria = new EntitySchema({
   name: "Secretaria",
   tableName: "secretarias",
   columns: {
-    id: { primary: true, type: "int", generated: "increment" },
-    nombre: { type: "varchar", length: 100 },
+    id: {
+      primary: true,
+      type: "int",
+      generated: "increment",
+    },
+    nombre: {
+      type: "varchar",
+      length: 100,
+    },
     telefono: {
       type: "varchar",
       length: 12,
       nullable: true,
     },
-    id_user: { type: "int" },
+    id_user: {
+      type: "int",
+    },
   },
   relations: {
     user: {
