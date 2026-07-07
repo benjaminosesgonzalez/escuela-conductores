@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getToken } from "../../utils/auth";
+import { authService } from "../../services/authService";
 import "./ClasesOnlineDisponiblesAlumno.css";
 
 const ClasesOnlineDisponiblesAlumno = () => {
@@ -21,7 +21,7 @@ const ClasesOnlineDisponiblesAlumno = () => {
         `/api/clases-online-alumno/disponibles?semana=${semanaActual}`,
         {
           headers: {
-            Authorization: `Bearer ${getToken()}`,
+            Authorization: `Bearer ${authService.getToken()}`,
           },
         }
       );
@@ -46,7 +46,7 @@ const ClasesOnlineDisponiblesAlumno = () => {
           `/api/clases-online-alumno/${clase.id}/inscrito`,
           {
             headers: {
-              Authorization: `Bearer ${getToken()}`,
+              Authorization: `Bearer ${authService.getToken()}`,
             },
           }
         );
@@ -68,7 +68,7 @@ const ClasesOnlineDisponiblesAlumno = () => {
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${getToken()}`,
+            Authorization: `Bearer ${authService.getToken()}`,
             "Content-Type": "application/json",
           },
         }
@@ -103,7 +103,7 @@ const ClasesOnlineDisponiblesAlumno = () => {
         {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer ${getToken()}`,
+            Authorization: `Bearer ${authService.getToken()}`,
           },
         }
       );

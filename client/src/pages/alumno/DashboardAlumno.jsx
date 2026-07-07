@@ -7,7 +7,6 @@ import { authService } from '../../services/authService.js';
 import ReservarClaseAlumno from './ReservarClaseAlumno.jsx';
 import MisClasesAlumno from './MisClasesAlumno.jsx';
 import ClasesOnlineDisponiblesAlumno from './ClasesOnlineDisponiblesAlumno.jsx';
-import MisClasesOnlineAlumno from './MisClasesOnlineAlumno.jsx';
 
 const DashboardAlumno = () => {
   const [activeTab, setActiveTab] = useState('inicio');
@@ -196,14 +195,9 @@ const DashboardAlumno = () => {
         <MisClasesAlumno />
       )}
 
-      {/* CLASES ONLINE DISPONIBLES TAB */}
+      {/* RESERVAR CLASES ONLINE TAB */}
       {activeTab === 'clasesOnlineDisponibles' && (
         <ClasesOnlineDisponiblesAlumno />
-      )}
-
-      {/* MIS CLASES ONLINE TAB */}
-      {activeTab === 'misClasesOnline' && (
-        <MisClasesOnlineAlumno />
       )}
 
     </AlumnoLayout>

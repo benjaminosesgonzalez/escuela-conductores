@@ -3,8 +3,27 @@ import { ClaseOnlineAlumnoSchema } from "../entities/clase-online-alumno.entity.
 
 const claseOnlineAlumnoRepository = AppDataSource.getRepository(ClaseOnlineAlumnoSchema);
 
-export const inscribirAlumnoEnClaseOnline = async (claseOnlineId, alumnoId) => {
+// Helper: obtener ID del alumno usando el ID del usuario
+const obtenerIdAlumno = async (userId) => {
+  const resultado = await AppDataSource.query(
+    `SELECT id FROM alumnos WHERE id_user = $1`,
+    [userId]
+  );
+  return resultado.length > 0 ? resultado[0].id : null;
+};
+
+export const inscribirAlumnoEnClaseOnline = async (claseOnlineId, userId) => {
   try {
+    // Obtener ID real del alumno usando el ID del usuario
+    const alumnoId = await obtenerIdAlumno(userId);
+
+    if (!alumnoId) {
+      return {
+        success: false,
+        message: "No se encontró el alumno asociado a tu usuario",
+      };
+    }
+
     // Verificar si ya está inscrito
     const existente = await claseOnlineAlumnoRepository.findOne({
       where: {
@@ -69,9 +88,19 @@ export const inscribirAlumnoEnClaseOnline = async (claseOnlineId, alumnoId) => {
 
 export const desinscribirAlumnoDeClaseOnline = async (
   claseOnlineId,
-  alumnoId
+  userId
 ) => {
   try {
+    // Obtener ID real del alumno usando el ID del usuario
+    const alumnoId = await obtenerIdAlumno(userId);
+
+    if (!alumnoId) {
+      return {
+        success: false,
+        message: "No se encontró el alumno asociado a tu usuario",
+      };
+    }
+
     // Buscar y eliminar inscripción
     const inscripcion = await claseOnlineAlumnoRepository.findOne({
       where: {
@@ -169,8 +198,21 @@ export const obtenerClasesOnlineDisponibles = async (semanaActual = 0) => {
   }
 };
 
-export const obtenerMisClasesOnlineAlumno = async (alumnoId) => {
+export const obtenerMisClasesOnlineAlumno = async (userId) => {
   try {
+    // Obtener ID real del alumno usando el ID del usuario
+    const alumnoId = await obtenerIdAlumno(userId);
+
+    if (!alumnoId) {
+      return {
+        success: false,
+        proximas: [],
+        completadas: [],
+        canceladas: [],
+        message: "No se encontró el alumno asociado a tu usuario",
+      };
+    }
+
     const clases = await AppDataSource.query(
       `SELECT
         co.id,
@@ -235,8 +277,15 @@ export const obtenerMisClasesOnlineAlumno = async (alumnoId) => {
   }
 };
 
-export const verificarInscripcion = async (claseOnlineId, alumnoId) => {
+export const verificarInscripcion = async (claseOnlineId, userId) => {
   try {
+    // Obtener ID real del alumno usando el ID del usuario
+    const alumnoId = await obtenerIdAlumno(userId);
+
+    if (!alumnoId) {
+      return false;
+    }
+
     const inscripcion = await claseOnlineAlumnoRepository.findOne({
       where: {
         claseOnlineId,

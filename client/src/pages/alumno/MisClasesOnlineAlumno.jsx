@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getToken } from "../../utils/auth";
+import { authService } from "../../services/authService";
 import "./MisClasesOnlineAlumno.css";
 
 const MisClasesOnlineAlumno = () => {
@@ -23,7 +23,7 @@ const MisClasesOnlineAlumno = () => {
     try {
       const response = await fetch("/api/clases-online-alumno/mis-clases", {
         headers: {
-          Authorization: `Bearer ${getToken()}`,
+          Authorization: `Bearer ${authService.getToken()}`,
         },
       });
       const data = await response.json();

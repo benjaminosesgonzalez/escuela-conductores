@@ -19,8 +19,7 @@ const AlumnoLayout = ({ children, activeTab, onTabChange }) => {
     { id: 'inicio', label: 'Inicio', icon: Home },
     { id: 'reservar', label: 'Reservar clase', icon: Calendar },
     { id: 'misclases', label: 'Mis clases', icon: BookOpen },
-    { id: 'clasesOnlineDisponibles', label: 'Clases Online', icon: Video },
-    { id: 'misClasesOnline', label: 'Mis Clases Online', icon: Clock },
+    { id: 'clasesOnlineDisponibles', label: 'Reservar clases online', icon: Video },
     { id: 'avance', label: 'Mi avance', icon: Award }
   ];
 
