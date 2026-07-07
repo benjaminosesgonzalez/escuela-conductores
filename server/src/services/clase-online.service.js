@@ -39,20 +39,17 @@ export const generarClasesOnlineService = async (profesorId) => {
         const lunesActual = new Date(hoy);
         lunesActual.setDate(hoy.getDate() + diasAlLunes);
 
-        // Convertir fecha a Date si no lo es ya
-        let fechaDisp;
-        if (typeof disp.fecha === 'string') {
-          const [year, month, day] = disp.fecha.split('-');
-          fechaDisp = new Date(year, month - 1, day);
-        } else if (disp.fecha instanceof Date) {
-          fechaDisp = new Date(disp.fecha);
-        } else {
-          fechaDisp = new Date(disp.fecha);
-        }
-
-        // Convertir fecha a string YYYY-MM-DD si no lo es
+        // Convertir fecha a string YYYY-MM-DD en zona horaria local
         let fechaStr = disp.fecha;
-        if (typeof fechaStr !== 'string') {
+        let fechaDisp;
+
+        if (typeof fechaStr === 'string') {
+          // Ya es string, usarlo directamente
+          const [year, month, day] = fechaStr.split('-');
+          fechaDisp = new Date(year, month - 1, day);
+        } else {
+          // Es un objeto Date, convertir a string local (sin UTC)
+          fechaDisp = new Date(fechaStr);
           const year = fechaDisp.getFullYear();
           const month = String(fechaDisp.getMonth() + 1).padStart(2, '0');
           const day = String(fechaDisp.getDate()).padStart(2, '0');

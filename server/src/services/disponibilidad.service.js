@@ -74,13 +74,21 @@ export const generarBloquesDisponibilidad = async (
     const lunesActual = new Date(hoy);
     lunesActual.setDate(hoy.getDate() + diasAlLunes);
 
+    // Función auxiliar para obtener fecha en formato YYYY-MM-DD sin conversión a UTC
+    const obtenerFechaStr = (fecha) => {
+      const year = fecha.getFullYear();
+      const month = String(fecha.getMonth() + 1).padStart(2, '0');
+      const day = String(fecha.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
     // Generar para semana actual + siguiente (10 días laborales)
     for (let semana = 0; semana < 2; semana++) {
       for (const dia of diasLaboral) {
         const indice = diasLaboral.indexOf(dia);
         const fecha = new Date(lunesActual);
         fecha.setDate(lunesActual.getDate() + indice + (semana * 7));
-        const fechaStr = fecha.toISOString().split('T')[0]; // YYYY-MM-DD
+        const fechaStr = obtenerFechaStr(fecha); // YYYY-MM-DD en zona horaria local
 
         let horaActual = horaInicioMinutos;
 
