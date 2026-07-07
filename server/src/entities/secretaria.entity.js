@@ -13,6 +13,11 @@ export const Secretaria = new EntitySchema({
       type: "varchar",
       length: 100,
     },
+    rut: {
+      type: "varchar",
+      length: 12,
+      unique: true,
+    },
     telefono: {
       type: "varchar",
       length: 12,

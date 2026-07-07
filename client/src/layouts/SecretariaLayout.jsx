@@ -18,9 +18,9 @@ const SecretariaLayout = ({ children, activeTab, onTabChange }) => {
   const menuItems = [
     { id: 'inicio', label: 'Inicio', icon: Home },
     { id: 'alumnos', label: 'Gestión Alumnos', icon: Users },
-    { id: 'profesores', label: 'Gestión de Profesores', icon: UserCog },
+    { id: 'profesores', label: 'Gestión Profesores', icon: UserCog },
     { id: 'psicotecnico', label: 'Sala Psicotécnica', icon: Stethoscope },
-    { id: 'vehiculos', label: 'Vehículos y Examen Municipal', icon: Car },
+    { id: 'vehiculos', label: 'Vehículos', icon: Car },
     { id: 'agendar-clases', label: 'Agendar clases', icon: Calendar },
     { id: 'reportes', label: 'Reportes', icon: FileText },
     { id: 'configuracion', label: 'Configuración', icon: Settings }

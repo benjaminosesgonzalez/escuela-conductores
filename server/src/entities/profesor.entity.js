@@ -9,28 +9,37 @@ export const ProfesorSchema = new EntitySchema({
       type: "int",
       generated: true,
     },
-    email: {
-      type: "varchar",
-      length: 100,
-      unique: true,
-    },
-    password: {
-      type: "varchar",
-      length: 255,
-    },
     nombre: {
       type: "varchar",
       length: 100,
       nullable: true,
     },
+    rut: {
+      type: "varchar",
+      length: 12,
+      unique: true,
+    },  
     telefono: {
       type: "varchar",
       length: 15,
       nullable: true,
     },
-     },
-
+    tipo_contrato: {
+      type: "varchar",
+      length: 20,
+      default: "full_time",
+      nullable: false,
+    },
+  },
   relations: {
+    user: {
+      target: "User",
+      type: "one-to-one",
+      joinColumn: {
+        name: "id_user",
+      },
+      onDelete: "CASCADE",
+    },
     sedes: {
       target: "Sede",
       type: "many-to-many",
@@ -46,12 +55,6 @@ export const ProfesorSchema = new EntitySchema({
         },
       },
       cascade: true,
-    },
-    tipo_contrato: {
-      type: "varchar",
-      length: 20,
-      default: "full_time",
-      nullable: false,
     },
   },
 });

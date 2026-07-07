@@ -253,16 +253,24 @@ export const register = async (req, res) => {
 // REGISTER STAFF (solo admin)
 export const registerStaff = async (req, res) => {
   try {
-    const { email, password, rol } = req.body;
+    const {
+      nombre,
+      email,
+      rut,
+      rol,
+      telefono,
+      id_sedes
+    } = req.body;
 
-    if (!email || !password || !rol) {
+    if (!nombre || !email || !rut || !rol) {
       return res.status(400).json({
         success: false,
-        message: "Email, contraseña y rol son requeridos",
+        message: "Nombre, email, rut y rol son requeridos",
       });
     }
 
-    const rolesValidos = ["profesor", "administrador"];
+    const rolesValidos = ["profesor", "administrador", "secretaria"];
+
     if (!rolesValidos.includes(rol)) {
       return res.status(400).json({
         success: false,
@@ -271,7 +279,7 @@ export const registerStaff = async (req, res) => {
     }
 
     const existingUser = await userRepository.findOne({
-      where: { email: email },
+      where: { email },
     });
 
     if (existingUser) {
@@ -281,7 +289,19 @@ export const registerStaff = async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Obtener los últimos 5 dígitos del RUT
+    const rutLimpio = rut.replace(/[.-]/g, "");
+
+    if (rutLimpio.length < 5) {
+      return res.status(400).json({
+        success: false,
+        message: "El RUT debe tener al menos 5 caracteres",
+      });
+    }
+
+    const passwordTemporal = rutLimpio.slice(-5);
+
+    const hashedPassword = await bcrypt.hash(passwordTemporal, 10);
 
     const newStaff = userRepository.create({
       email,
@@ -293,39 +313,50 @@ export const registerStaff = async (req, res) => {
 
     if (rol === "profesor") {
       const profRepo = AppDataSource.getRepository(ProfesorSchema);
-      const sedesCargadas = id_sedes ? id_sedes.map((id) => ({ id })) : [];
+
+      const sedesCargadas = id_sedes
+        ? id_sedes.map((id) => ({ id }))
+        : [];
 
       await profRepo.save(
         profRepo.create({
           nombre,
           telefono: telefono || "Sin teléfono",
+          rut,
           id_user: savedUser.id,
           sedes: sedesCargadas,
-        }),
+        })
       );
-    } else if (rol === "secretaria") {
-      const secretariaRepo = AppDataSource.getRepository(Secretaria);
+    }
+
+    if (rol === "secretaria") {
+      const secretariaRepo =
+        AppDataSource.getRepository(Secretaria);
+
       await secretariaRepo.save(
         secretariaRepo.create({
           nombre,
-          id_user: savedUser.id,
           telefono: telefono || "Sin teléfono",
-        }),
+          rut,
+          id_user: savedUser.id,
+        })
       );
     }
 
     return res.status(201).json({
       success: true,
       message: "Staff registrado exitosamente",
+      passwordTemporal,
       user: {
-        id: newStaff.id,
-        email: newStaff.email,
-        rol: newStaff.rol,
-        created_at: newStaff.created_at,
+        id: savedUser.id,
+        email: savedUser.email,
+        rol: savedUser.rol,
+        created_at: savedUser.created_at,
       },
     });
   } catch (error) {
     console.error("❌ Error en registro de staff:", error);
+
     return res.status(500).json({
       success: false,
       message: "Error al procesar el registro de staff",

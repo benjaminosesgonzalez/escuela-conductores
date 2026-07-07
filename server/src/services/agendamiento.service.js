@@ -25,6 +25,7 @@ export async function configurarHorarioSalaService(datosHorario) {
         dia_semana,
         hora_inicio,
         hora_fin,
+        activo: true
     });
 
     return await horarioRepository.save(nuevoHorario);

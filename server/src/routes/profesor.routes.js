@@ -3,6 +3,8 @@ import {
   getProfesores,
   updateProfesor,
   deleteProfesor,
+  eliminarProfesoresMasivo,
+  resetPasswordProfesor
 } from "../controllers/profesor.controller.js";
 import {
   authMiddleware,
@@ -15,13 +17,13 @@ import { asignarSedeMasivaProfesoresSchema } from "../validations/secretaria.val
 const router = Router();
 
 router.use(authMiddleware, isAdminOrSecretaria);
-
+router.delete("/eliminar", authMiddleware, isAdminOrSecretaria, eliminarProfesoresMasivo);
 router.get("/", getProfesores);
-router.put("/:id", updateProfesor);
-router.delete("/:id", deleteProfesor);
-
 //asignar sedes a profesores (admin o secretaria) POST /api/profesores/sedes
 router.put("/sedes-profesor", authMiddleware, isAdminOrSecretaria, validateSchema(asignarSedeMasivaProfesoresSchema), asignarSedeMasivaProfesores);
 
+router.put("/reset-password/:id", authMiddleware, isAdminOrSecretaria, resetPasswordProfesor);
+router.put("/:id", updateProfesor);
+router.delete("/:id", deleteProfesor);
 
 export default router;

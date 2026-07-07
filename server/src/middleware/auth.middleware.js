@@ -64,12 +64,12 @@ export const isSecretaria = (req, res, next) => {
 };
 
 export const isAdminOrSecretaria = (req, res, next) => {
-  const rolesPermitidos = ["administracion", "secretaria"];
+  const rolesPermitidos = ["administrador", "secretaria"];
   if (req.user && rolesPermitidos.includes(req.user.rol)) {
     next();
   } else {
     return res
       .status(403)
-      .json({ success: false, message: "Acceso restringido a Staff" });
+      .json({ success: false, message: "Acceso restringido a Staff únicamente" });
   }
 };

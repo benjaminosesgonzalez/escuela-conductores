@@ -13,6 +13,7 @@ import {
 
 const router = Router();
 
+//GET /api/autos
 router.get("/", authMiddleware, getAutos);
 router.get("/disponibilidad/:idSede", authMiddleware, getDisponibilidadSede);
 
