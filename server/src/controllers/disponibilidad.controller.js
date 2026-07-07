@@ -19,20 +19,25 @@ export const generarBloques = async (req, res) => {
     const { profesorId } = req.params;
     const { tipoContrato = "full_time", diasLaboral = ["lunes", "martes", "miércoles", "jueves", "viernes"] } = req.body;
 
+    console.log(`🏫 GENERANDO BLOQUES para profesor ${profesorId}`);
+
     const resultado = await generarBloquesDisponibilidad(
       parseInt(profesorId),
       tipoContrato,
       diasLaboral
     );
 
+    console.log(`📋 Resultado de generar bloques:`, resultado);
+
     // Generar automáticamente las clases online después de crear disponibilidades
     let clasesOnlineResultado = { success: false };
     if (resultado.success || resultado.bloques > 0) {
       try {
+        console.log(`🎬 Iniciando generación de clases online...`);
         clasesOnlineResultado = await generarClasesOnlineService(parseInt(profesorId));
-        console.log("Clases online generadas automáticamente:", clasesOnlineResultado);
+        console.log("✨ Clases online generadas automáticamente:", clasesOnlineResultado);
       } catch (claseError) {
-        console.error("Error generando clases online automáticamente:", claseError);
+        console.error("❌ Error generando clases online automáticamente:", claseError);
         // No fallar la respuesta si hay error en clases online
       }
     }

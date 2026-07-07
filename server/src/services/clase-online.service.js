@@ -39,9 +39,25 @@ export const generarClasesOnlineService = async (profesorId) => {
         const lunesActual = new Date(hoy);
         lunesActual.setDate(hoy.getDate() + diasAlLunes);
 
-        // Convertir fecha string a Date para comparación
-        const [year, month, day] = disp.fecha.split('-');
-        const fechaDisp = new Date(year, month - 1, day);
+        // Convertir fecha a Date si no lo es ya
+        let fechaDisp;
+        if (typeof disp.fecha === 'string') {
+          const [year, month, day] = disp.fecha.split('-');
+          fechaDisp = new Date(year, month - 1, day);
+        } else if (disp.fecha instanceof Date) {
+          fechaDisp = new Date(disp.fecha);
+        } else {
+          fechaDisp = new Date(disp.fecha);
+        }
+
+        // Convertir fecha a string YYYY-MM-DD si no lo es
+        let fechaStr = disp.fecha;
+        if (typeof fechaStr !== 'string') {
+          const year = fechaDisp.getFullYear();
+          const month = String(fechaDisp.getMonth() + 1).padStart(2, '0');
+          const day = String(fechaDisp.getDate()).padStart(2, '0');
+          fechaStr = `${year}-${month}-${day}`;
+        }
 
         const semana0Inicio = new Date(lunesActual);
         const semana1Inicio = new Date(lunesActual);
@@ -60,14 +76,18 @@ export const generarClasesOnlineService = async (profesorId) => {
           continue;
         }
 
+        // Extraer HH:MM de los horarios (remover :SS si existen)
+        const horaInicio = String(disp.horaInicio).substring(0, 5);
+        const horaFin = String(disp.horaFin).substring(0, 5);
+
         const claseOnline = claseOnlineRepository.create({
           profesorId,
           numeroTema: tema.numero,
           nombreTema: tema.nombre,
           diaSemana: disp.diaSemana,
-          fecha: disp.fecha,
-          horaInicio: disp.horaInicio,
-          horaFin: disp.horaFin,
+          fecha: fechaStr,
+          horaInicio,
+          horaFin,
           capacidadMaxima: 30,
           alumnosAgendados: 0,
           linkZoom: null,
@@ -75,7 +95,7 @@ export const generarClasesOnlineService = async (profesorId) => {
         });
 
         clasesOnline.push(claseOnline);
-        console.log(`✅ Clase creada: ${tema.nombre} - ${disp.diaSemana} ${disp.fecha} ${disp.horaInicio}-${disp.horaFin}`);
+        console.log(`✅ Clase creada: ${tema.nombre} - ${disp.diaSemana} ${fechaStr} ${horaInicio}-${horaFin}`);
       } catch (itemError) {
         console.error(`❌ Error procesando disponibilidad:`, itemError);
       }
