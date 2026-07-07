@@ -1,6 +1,7 @@
 import {
   generarClasesOnlineService,
   obtenerClasesOnlineProfesor,
+  obtenerMisClasesFuturas,
   actualizarLinkZoom,
   obtenerClasesOnlineDisponibles,
 } from "../services/clase-online.service.js";
@@ -50,6 +51,32 @@ export const obtenerMisClasesOnline = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || "Error al obtener clases online",
+    });
+  }
+};
+
+export const obtenerMisClasesFuturasConInscripciones = async (req, res) => {
+  try {
+    const { profesorId } = req.params;
+
+    if (!profesorId) {
+      return res.status(400).json({
+        success: false,
+        message: "profesorId es requerido",
+      });
+    }
+
+    const clases = await obtenerMisClasesFuturas(parseInt(profesorId));
+
+    res.status(200).json({
+      success: true,
+      data: clases,
+    });
+  } catch (error) {
+    console.error("Error obteniendo clases futuras:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Error al obtener clases futuras",
     });
   }
 };

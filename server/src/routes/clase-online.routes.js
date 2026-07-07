@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   generarClasesOnline,
   obtenerMisClasesOnline,
+  obtenerMisClasesFuturasConInscripciones,
   generarLinkZoom,
   obtenerClasesDisponibles,
 } from "../controllers/clase-online.controller.js";
@@ -13,7 +14,11 @@ const router = Router();
 // POST /api/clases-online/:profesorId/generar
 router.post("/:profesorId/generar", authMiddleware, generarClasesOnline);
 
-// Obtener clases online del profesor
+// Obtener clases futuras con alumnos inscritos (para "Mis clases" del profesor)
+// GET /api/clases-online/:profesorId/futuras
+router.get("/:profesorId/futuras", authMiddleware, obtenerMisClasesFuturasConInscripciones);
+
+// Obtener clases online del profesor (todas, incluyendo vacías)
 // GET /api/clases-online/:profesorId
 router.get("/:profesorId", authMiddleware, obtenerMisClasesOnline);
 

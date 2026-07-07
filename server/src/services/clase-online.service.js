@@ -122,14 +122,60 @@ export const generarClasesOnlineService = async (profesorId) => {
 
 export const obtenerClasesOnlineProfesor = async (profesorId) => {
   try {
-    // Obtener clases con información de inscripciones
+    const clases = await claseOnlineRepository.find({
+      where: { profesorId },
+      order: {
+        fecha: "ASC",
+        horaInicio: "ASC",
+      },
+    });
+
+    // Agrupar por día de la semana
+    const agrupado = {
+      lunes: [],
+      martes: [],
+      miércoles: [],
+      jueves: [],
+      viernes: [],
+    };
+
+    clases.forEach((clase) => {
+      if (agrupado[clase.diaSemana]) {
+        agrupado[clase.diaSemana].push(clase);
+      }
+    });
+
+    return agrupado;
+  } catch (error) {
+    console.error("Error obteniendo clases online:", error);
+    throw error;
+  }
+};
+
+// Nuevo servicio: obtener clases futuras con alumnos inscritos
+export const obtenerMisClasesFuturas = async (profesorId) => {
+  try {
     const clases = await AppDataSource.query(
-      `SELECT
-        co.*,
+      `SELECT DISTINCT
+        co.id,
+        co."profesorId",
+        co."numeroTema",
+        co."nombreTema",
+        co."diaSemana",
+        co.fecha,
+        co."horaInicio",
+        co."horaFin",
+        co."capacidadMaxima",
+        co."alumnosAgendados",
+        co."linkZoom",
+        co.estado,
+        co."createdAt",
+        co."updatedAt",
         COUNT(coa.id) as "alumnosInscritos"
       FROM clases_online co
       LEFT JOIN clase_online_alumno coa ON co.id = coa."claseOnlineId"
       WHERE co."profesorId" = $1
+        AND co.estado = 'activa'
       GROUP BY co.id
       HAVING COUNT(coa.id) > 0
       ORDER BY co.fecha ASC, co."horaInicio" ASC`,
@@ -153,7 +199,7 @@ export const obtenerClasesOnlineProfesor = async (profesorId) => {
 
     return agrupado;
   } catch (error) {
-    console.error("Error obteniendo clases online:", error);
+    console.error("Error obteniendo clases futuras:", error);
     throw error;
   }
 };

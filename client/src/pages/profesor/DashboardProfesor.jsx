@@ -8,6 +8,7 @@ import MisClasesProfesor from './MisClasesProfesor.jsx';
 import ClasesConfirmadasProfesor from './ClasesConfirmadasProfesor.jsx';
 import RepositorioProfesor from './RepositorioProfesor.jsx';
 import MisClasesOnlineProfesor from './MisClasesOnlineProfesor.jsx';
+import MisClasesConInscriptosProfesor from './MisClasesConInscriptosProfesor.jsx';
 
 const DashboardProfesor = () => {
   const [activeTab, setActiveTab] = useState('inicio');
@@ -317,7 +318,7 @@ const DashboardProfesor = () => {
 
       {/* MIS CLASES TAB */}
       {activeTab === 'misclases' && (
-        <ClasesConfirmadasProfesor />
+        <MisClasesConInscriptosProfesor />
       )}
 
       {/* CLASES ONLINE TAB */}
