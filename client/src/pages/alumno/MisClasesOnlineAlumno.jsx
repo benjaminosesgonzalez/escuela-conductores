@@ -52,27 +52,47 @@ const MisClasesOnlineAlumno = () => {
     window.open(link, "_blank");
   };
 
-  const obtenerFechaFormato = (fecha) => {
-    const date = new Date(fecha + "T00:00:00");
-    return date.toLocaleDateString("es-ES", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+  const obtenerFechaFormato = (fechaStr) => {
+    try {
+      // Parsear la fecha string "YYYY-MM-DD"
+      const [year, month, day] = fechaStr.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+
+      if (isNaN(date.getTime())) {
+        return "Fecha inválida";
+      }
+
+      return date.toLocaleDateString("es-ES", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch (error) {
+      console.error("Error formateando fecha:", error);
+      return "Fecha inválida";
+    }
   };
 
   const puedeAccederZoom = (clase) => {
     if (!clase.linkZoom) return false;
 
-    const ahora = new Date();
-    const fecha = new Date(clase.fecha + "T00:00:00");
-    const [horas, minutos] = clase.horaInicio.split(":");
-    fecha.setHours(parseInt(horas), parseInt(minutos), 0, 0);
+    try {
+      const ahora = new Date();
+      // Parsear la fecha string "YYYY-MM-DD"
+      const [year, month, day] = clase.fecha.split('-');
+      const fecha = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
 
-    // Permite acceder 15 minutos antes
-    const horaPermitida = new Date(fecha.getTime() - 15 * 60000);
-    return ahora >= horaPermitida;
+      const [horas, minutos] = clase.horaInicio.split(":");
+      fecha.setHours(parseInt(horas), parseInt(minutos), 0, 0);
+
+      // Permite acceder 15 minutos antes
+      const horaPermitida = new Date(fecha.getTime() - 15 * 60000);
+      return ahora >= horaPermitida;
+    } catch (error) {
+      console.error("Error calculando acceso a Zoom:", error);
+      return false;
+    }
   };
 
   const TarjetaClase = ({ clase, puedeVerZoom }) => (

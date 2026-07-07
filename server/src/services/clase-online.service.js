@@ -122,13 +122,19 @@ export const generarClasesOnlineService = async (profesorId) => {
 
 export const obtenerClasesOnlineProfesor = async (profesorId) => {
   try {
-    const clases = await claseOnlineRepository.find({
-      where: { profesorId },
-      order: {
-        fecha: "ASC",
-        horaInicio: "ASC",
-      },
-    });
+    // Obtener clases con información de inscripciones
+    const clases = await AppDataSource.query(
+      `SELECT
+        co.*,
+        COUNT(coa.id) as "alumnosInscritos"
+      FROM clases_online co
+      LEFT JOIN clase_online_alumno coa ON co.id = coa."claseOnlineId"
+      WHERE co."profesorId" = $1
+      GROUP BY co.id
+      HAVING COUNT(coa.id) > 0
+      ORDER BY co.fecha ASC, co."horaInicio" ASC`,
+      [profesorId]
+    );
 
     // Agrupar por día de la semana
     const agrupado = {

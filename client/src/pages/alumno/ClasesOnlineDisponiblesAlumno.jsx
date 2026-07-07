@@ -137,14 +137,26 @@ const ClasesOnlineDisponiblesAlumno = () => {
 
   const profesores = [...new Set(clases.map((c) => c.nombreProfesor))];
 
-  const obtenerFechaFormato = (fecha) => {
-    const date = new Date(fecha + "T00:00:00");
-    return date.toLocaleDateString("es-ES", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+  const obtenerFechaFormato = (fechaStr) => {
+    try {
+      // Parsear la fecha string "YYYY-MM-DD"
+      const [year, month, day] = fechaStr.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+
+      if (isNaN(date.getTime())) {
+        return "Fecha inválida";
+      }
+
+      return date.toLocaleDateString("es-ES", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch (error) {
+      console.error("Error formateando fecha:", error);
+      return "Fecha inválida";
+    }
   };
 
   return (
