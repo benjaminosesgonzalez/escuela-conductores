@@ -49,27 +49,21 @@ export const generarClasesOnlineService = async (profesorId) => {
         if (typeof fechaStr === 'string') {
           // Ya es string, usarlo directamente
           if (fechaStr.includes('T')) {
-            // ISO format - extraer solo la fecha
-            const isoDate = new Date(fechaStr);
-            const year = isoDate.getFullYear();
-            const month = String(isoDate.getMonth() + 1).padStart(2, '0');
-            const day = String(isoDate.getDate()).padStart(2, '0');
-            fechaStr = `${year}-${month}-${day}`;
-            const [y, m, d] = fechaStr.split('-');
-            fechaDisp = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-          } else {
-            // Ya es YYYY-MM-DD
-            const [year, month, day] = fechaStr.split('-');
-            fechaDisp = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            // ISO format - extraer la parte YYYY-MM-DD antes de la T
+            fechaStr = fechaStr.split('T')[0];
           }
+          // Parsear como YYYY-MM-DD (tanto si fue convertido de ISO como si ya lo era)
+          const [year, month, day] = fechaStr.split('-');
+          fechaDisp = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
         } else {
           // Es un objeto Date, convertir a string local (sin UTC)
-          fechaDisp = new Date(fechaStr);
-          const year = fechaDisp.getFullYear();
-          const month = String(fechaDisp.getMonth() + 1).padStart(2, '0');
-          const day = String(fechaDisp.getDate()).padStart(2, '0');
+          const tempDate = new Date(fechaStr);
+          const year = tempDate.getFullYear();
+          const month = String(tempDate.getMonth() + 1).padStart(2, '0');
+          const day = String(tempDate.getDate()).padStart(2, '0');
           fechaStr = `${year}-${month}-${day}`;
-          fechaDisp.setHours(0, 0, 0, 0);
+          const [y, m, d] = fechaStr.split('-');
+          fechaDisp = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
         }
 
         const semana0Inicio = new Date(lunesActual);
