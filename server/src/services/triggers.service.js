@@ -22,6 +22,10 @@ export const initializeTriggers = async () => {
         v_year INTEGER;
         v_month VARCHAR;
         v_day VARCHAR;
+        v_lunes_actual DATE;
+        v_lunes_semana1 DATE;
+        v_numero_semana INTEGER;
+        v_hoy DATE;
       BEGIN
         -- Solo procesar si disponible cambió
         IF NEW.disponible IS DISTINCT FROM OLD.disponible THEN
@@ -38,14 +42,36 @@ export const initializeTriggers = async () => {
 
             -- Si no existe, crear la clase online
             IF v_clase_existente IS NULL THEN
-              -- Determinar tema basado en día
+              -- Calcular número de semana basado en fecha
+              v_hoy := CURRENT_DATE;
+              v_lunes_actual := v_hoy - (EXTRACT(DOW FROM v_hoy)::integer + 6) % 7;
+              v_lunes_semana1 := v_lunes_actual + 7;
+
+              v_numero_semana := 0;
+              IF COALESCE(NEW.fecha, v_hoy) >= v_lunes_semana1 THEN
+                v_numero_semana := 1;
+              END IF;
+
+              -- Determinar tema basado en semana y día (mismo cálculo que en el servicio)
               v_tema_numero := CASE
-                WHEN NEW."diaSemana" = 'lunes' THEN 1
-                WHEN NEW."diaSemana" = 'martes' THEN 2
-                WHEN NEW."diaSemana" = 'miércoles' THEN 3
-                WHEN NEW."diaSemana" = 'jueves' THEN 4
-                WHEN NEW."diaSemana" = 'viernes' THEN 5
-                ELSE 1
+                WHEN v_numero_semana = 0 THEN
+                  CASE
+                    WHEN NEW."diaSemana" = 'lunes' THEN 1
+                    WHEN NEW."diaSemana" = 'martes' THEN 2
+                    WHEN NEW."diaSemana" = 'miércoles' THEN 3
+                    WHEN NEW."diaSemana" = 'jueves' THEN 4
+                    WHEN NEW."diaSemana" = 'viernes' THEN 5
+                    ELSE 1
+                  END
+                ELSE
+                  CASE
+                    WHEN NEW."diaSemana" = 'lunes' THEN 6
+                    WHEN NEW."diaSemana" = 'martes' THEN 7
+                    WHEN NEW."diaSemana" = 'miércoles' THEN 8
+                    WHEN NEW."diaSemana" = 'jueves' THEN 9
+                    WHEN NEW."diaSemana" = 'viernes' THEN 10
+                    ELSE 6
+                  END
               END;
 
               v_tema_nombre := CASE
@@ -54,6 +80,11 @@ export const initializeTriggers = async () => {
                 WHEN v_tema_numero = 3 THEN 'Seguridad Vial Crítica y Sustancias'
                 WHEN v_tema_numero = 4 THEN 'Mecánica Básica y Funcionamiento'
                 WHEN v_tema_numero = 5 THEN 'Conducción en Condiciones Adversas'
+                WHEN v_tema_numero = 6 THEN 'Conducción Eficiente'
+                WHEN v_tema_numero = 7 THEN 'Siniestros y Sistema Seguro'
+                WHEN v_tema_numero = 8 THEN 'Psicología del Conductor y Atención'
+                WHEN v_tema_numero = 9 THEN 'Elementos de Seguridad Activa y Pasiva'
+                WHEN v_tema_numero = 10 THEN 'Convivencia Vial y Educación Vial'
                 ELSE 'Tema'
               END;
 
