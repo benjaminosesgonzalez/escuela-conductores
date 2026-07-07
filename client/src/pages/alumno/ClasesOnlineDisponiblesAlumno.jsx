@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { authService } from "../../services/authService";
 import "./ClasesOnlineDisponiblesAlumno.css";
 
-const ClasesOnlineDisponiblesAlumno = () => {
+const ClasesOnlineDisponiblesAlumno = ({ onDesinscripcion }) => {
   const [clases, setClases] = useState([]);
   const [semanaActual, setSemanaActual] = useState(0);
   const [inscripciones, setInscripciones] = useState(new Set());
@@ -116,6 +116,10 @@ const ClasesOnlineDisponiblesAlumno = () => {
         nuevas.delete(claseId);
         setInscripciones(nuevas);
         setTimeout(() => cargarClasesDisponibles(), 500);
+        // Notificar al padre para refrescar "Mis clases"
+        if (onDesinscripcion) {
+          setTimeout(() => onDesinscripcion(), 600);
+        }
       } else {
         setMensaje({ tipo: "error", texto: data.message });
       }

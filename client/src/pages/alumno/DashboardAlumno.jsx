@@ -10,8 +10,14 @@ import ClasesOnlineDisponiblesAlumno from './ClasesOnlineDisponiblesAlumno.jsx';
 
 const DashboardAlumno = () => {
   const [activeTab, setActiveTab] = useState('inicio');
+  const [refreshMisClases, setRefreshMisClases] = useState(0);
   const currentUser = authService.getCurrentUser();
   const alumnoNombre = currentUser?.nombre || 'Alumno';
+
+  const handleDesinscripcion = () => {
+    // Trigger para refrescar "Mis clases"
+    setRefreshMisClases(prev => prev + 1);
+  };
 
   const stats = [
     { icon: BookOpen, label: 'Clases tomadas', value: '12', color: '#10b981' },
@@ -192,12 +198,12 @@ const DashboardAlumno = () => {
 
       {/* MIS CLASES TAB */}
       {activeTab === 'misclases' && (
-        <MisClasesAlumno />
+        <MisClasesAlumno refreshTrigger={refreshMisClases} />
       )}
 
       {/* RESERVAR CLASES ONLINE TAB */}
       {activeTab === 'clasesOnlineDisponibles' && (
-        <ClasesOnlineDisponiblesAlumno />
+        <ClasesOnlineDisponiblesAlumno onDesinscripcion={handleDesinscripcion} />
       )}
 
     </AlumnoLayout>

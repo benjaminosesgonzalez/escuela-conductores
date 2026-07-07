@@ -302,14 +302,14 @@ const MisClasesProfesor = () => {
           </p>
         </div>
 
-        {Object.keys(disponibilidades).length === 0 && !loading && (
+        {!loading && (
           <Button
             variant="primary"
             onClick={generarBloques}
             icon={Settings}
             disabled={saving}
           >
-            {saving ? 'Generando...' : 'Generar horarios'}
+            {saving ? 'Generando...' : 'Generar/Actualizar horarios'}
           </Button>
         )}
       </div>

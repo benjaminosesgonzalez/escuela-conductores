@@ -4,7 +4,7 @@ import { colors, spacing } from '../../theme/index.js';
 import { authService } from '../../services/authService.js';
 import './MisClasesAlumno.css';
 
-const MisClasesAlumno = () => {
+const MisClasesAlumno = ({ refreshTrigger = 0 }) => {
   const [clasesPresenciales, setClasesPresenciales] = useState([]);
   const [clasesOnline, setClasesOnline] = useState({
     proximas: [],
@@ -20,7 +20,7 @@ const MisClasesAlumno = () => {
     obtenerTodasLasClases();
     const intervalo = setInterval(obtenerTodasLasClases, 30000);
     return () => clearInterval(intervalo);
-  }, []);
+  }, [refreshTrigger]);
 
   const obtenerTodasLasClases = async () => {
     try {
