@@ -7,12 +7,26 @@ import {
   actualizarMultiples,
   obtenerProfesoresDisponiblesController,
   obtenerConfiguracion,
+  regenerarBloquesController,
+  regenerarTodosBloquesController,
 } from "../controllers/disponibilidad.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
 // Rutas protegidas (requieren autenticación)
+
+/**
+ * POST /api/disponibilidades/regenerar-todos
+ * Regenerar bloques para TODOS los profesores
+ */
+router.post("/regenerar-todos", authMiddleware, regenerarTodosBloquesController);
+
+/**
+ * POST /api/disponibilidades/:profesorId/regenerar
+ * Regenerar bloques para un profesor específico
+ */
+router.post("/:profesorId/regenerar", authMiddleware, regenerarBloquesController);
 
 /**
  * PATCH /api/disponibilidades/actualizar-multiples

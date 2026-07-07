@@ -198,3 +198,45 @@ export const obtenerConfiguracion = async (req, res) => {
     sendResponse(res, 500, false, error.message || "Error al obtener configuración");
   }
 };
+
+/**
+ * Regenerar bloques para un profesor específico
+ * Elimina bloques sin fecha y genera nuevos para 2 semanas
+ */
+export const regenerarBloquesController = async (req, res) => {
+  try {
+    const { profesorId } = req.params;
+    const { regenerarBloquesProfesor } = await import("../services/disponibilidad-fix.service.js");
+
+    const resultado = await regenerarBloquesProfesor(parseInt(profesorId));
+
+    if (resultado.success) {
+      sendResponse(res, 200, true, "Bloques regenerados exitosamente", resultado);
+    } else {
+      sendResponse(res, 400, false, resultado.message || "No se pudieron regenerar los bloques");
+    }
+  } catch (error) {
+    console.error("Error en regenerarBloquesController:", error);
+    sendResponse(res, 500, false, error.message || "Error al regenerar bloques");
+  }
+};
+
+/**
+ * Regenerar bloques para TODOS los profesores
+ */
+export const regenerarTodosBloquesController = async (req, res) => {
+  try {
+    const { regenerarTodosLosBloque } = await import("../services/disponibilidad-fix.service.js");
+
+    const resultado = await regenerarTodosLosBloque();
+
+    if (resultado.success) {
+      sendResponse(res, 200, true, "Bloques regenerados para todos los profesores", resultado);
+    } else {
+      sendResponse(res, 400, false, "Hubo errores regenerando bloques", resultado);
+    }
+  } catch (error) {
+    console.error("Error en regenerarTodosBloquesController:", error);
+    sendResponse(res, 500, false, error.message || "Error al regenerar bloques");
+  }
+};
