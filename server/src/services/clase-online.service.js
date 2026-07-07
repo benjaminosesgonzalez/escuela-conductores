@@ -89,6 +89,8 @@ export const generarClasesOnlineService = async (profesorId) => {
           continue;
         }
 
+        console.log(`📅 Clase: ${disp.diaSemana} ${fechaStr} | Semana: ${numeroSemana} | Tema: ${tema.numero} - ${tema.nombre} | Comparación: fechaDisp=${fechaStr}, semana1Inicio=${semana1Inicio.toISOString().split('T')[0]}`);
+
         // Extraer HH:MM de los horarios (remover :SS si existen)
         const horaInicio = String(disp.horaInicio).substring(0, 5);
         const horaFin = String(disp.horaFin).substring(0, 5);

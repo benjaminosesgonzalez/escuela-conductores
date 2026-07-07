@@ -32,6 +32,7 @@ const AlumnoLayout = ({ children, activeTab, onTabChange }) => {
       onLogout={handleLogout}
       roleColor={colors.alumno}
       roleIcon={BookOpen}
+      roleLabel="Alumno"
       title={`${userEmail.toUpperCase()} - ESCUELA`}
     >
       {children}

@@ -32,6 +32,7 @@ const ProfesorLayout = ({ children, activeTab, onTabChange }) => {
       onLogout={handleLogout}
       roleColor={colors.profesor}
       roleIcon={Car}
+      roleLabel="Profesor"
       title={`${userEmail.toUpperCase()} - ESCUELA`}
     >
       {children}
