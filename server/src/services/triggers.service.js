@@ -57,23 +57,14 @@ export const initializeTriggers = async () => {
                 ELSE 'Tema'
               END;
 
-              -- Convertir fecha a string YYYY-MM-DD
-              IF NEW.fecha IS NOT NULL THEN
-                v_year := EXTRACT(YEAR FROM NEW.fecha);
-                v_month := LPAD(EXTRACT(MONTH FROM NEW.fecha)::text, 2, '0');
-                v_day := LPAD(EXTRACT(DAY FROM NEW.fecha)::text, 2, '0');
-                v_fecha_str := v_year || '-' || v_month || '-' || v_day;
-              ELSE
-                v_fecha_str := '1970-01-01';
-              END IF;
-
+              -- Insertar clase online (usar fecha directamente, puede ser NULL)
               INSERT INTO clases_online (
                 "profesorId", "numeroTema", "nombreTema", "diaSemana", fecha,
                 "horaInicio", "horaFin", "capacidadMaxima", "alumnosAgendados",
                 estado, "createdAt", "updatedAt"
               ) VALUES (
                 NEW."profesorId", v_tema_numero, v_tema_nombre,
-                NEW."diaSemana", v_fecha_str::date,
+                NEW."diaSemana", NEW.fecha,
                 SUBSTRING(NEW."horaInicio"::varchar, 1, 5), SUBSTRING(NEW."horaFin"::varchar, 1, 5),
                 30, 0, 'activa', NOW(), NOW()
               );
