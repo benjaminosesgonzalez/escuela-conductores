@@ -18,6 +18,10 @@ export const DisponibilidadSchema = new EntitySchema({
       length: 20, // 'lunes', 'martes', 'miércoles', 'jueves', 'viernes'
       nullable: false,
     },
+    fecha: {
+      type: "date",
+      nullable: true,
+    },
     horaInicio: {
       type: "time",
       nullable: false,

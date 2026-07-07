@@ -3,6 +3,7 @@ import { DataSource } from "typeorm";
 import { DATABASE, DB_USERNAME, HOST, PASSWORD, DB_PORT } from "./configEnv.js";
 import { User } from "../entities/user.entity.js";
 import { Administracion } from "../entities/administracion.entity.js";
+import { ClaseOnlineSchema } from "../entities/clase-online.entity.js";
 
 import bcrypt from "bcrypt";
 console.log("--- CARGANDO INSTANCIA DE DATASOURCE ---");

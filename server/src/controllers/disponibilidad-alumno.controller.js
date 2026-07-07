@@ -178,7 +178,7 @@ export const actualizarMultiplesDisponibilidadesAlumno = async (req, res) => {
     // Formato 2: bloques con estados individuales
     if (bloques && Array.isArray(bloques) && bloques.length > 0) {
       for (const bloque of bloques) {
-        await actualizarDisponibilidadAlumnoService(bloque.id, bloque.disponible);
+        await actualizarDisponibilidadAlumnoService(bloque.id, bloque.disponible, bloque.fecha);
       }
 
       return res.status(200).json({

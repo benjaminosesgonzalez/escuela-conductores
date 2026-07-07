@@ -1,5 +1,39 @@
 import * as profService from "../services/profesor.service.js";
 
+export const registrarProfesor = async (req, res) => {
+  try {
+    const { email, password, nombre, telefono, tipo_contrato } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email y contraseña son requeridos."
+      });
+    }
+
+    const profesor = await profService.registrarProfesorService({
+      email,
+      password,
+      nombre,
+      telefono,
+      tipo_contrato
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Profesor registrado correctamente.",
+      data: profesor
+    });
+  } catch (error) {
+    console.error("Error al registrar profesor:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error al registrar profesor.",
+      error: error.message
+    });
+  }
+};
+
 export const getProfesores = async (req, res) => {
   try {
     const profesores = await profService.getProfesoresService();

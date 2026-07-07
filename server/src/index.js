@@ -4,7 +4,6 @@ import morgan from "morgan";
 import cors from "cors";
 import { AppDataSource, connectDB } from "./config/configDb.js";
 import { routerApi } from "./routes/index.routes.js";
-import profesorRoutes from './routes/profesor.js';
 
 const app = express();
 
@@ -24,8 +23,6 @@ app.use(cors({
 app.get("/", (req, res) => {
   res.send("¡Bienvenido a mi API REST con TypeORM!");
 });
-
-app.use('/api/profesor', profesorRoutes);
 
 // Cargar todas las rutas API
 routerApi(app);

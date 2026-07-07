@@ -7,6 +7,7 @@ import { authService } from '../../services/authService.js';
 import MisClasesProfesor from './MisClasesProfesor.jsx';
 import ClasesConfirmadasProfesor from './ClasesConfirmadasProfesor.jsx';
 import RepositorioProfesor from './RepositorioProfesor.jsx';
+import MisClasesOnlineProfesor from './MisClasesOnlineProfesor.jsx';
 
 const DashboardProfesor = () => {
   const [activeTab, setActiveTab] = useState('inicio');
@@ -317,6 +318,11 @@ const DashboardProfesor = () => {
       {/* MIS CLASES TAB */}
       {activeTab === 'misclases' && (
         <ClasesConfirmadasProfesor />
+      )}
+
+      {/* CLASES ONLINE TAB */}
+      {activeTab === 'clasesOnline' && (
+        <MisClasesOnlineProfesor />
       )}
 
       {/* REPOSITORIO TAB */}

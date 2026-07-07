@@ -32,8 +32,18 @@ export const generarBloquesDisponibilidad = async (
   diasLaboral = ["lunes", "martes", "miércoles", "jueves", "viernes"]
 ) => {
   try {
-    // Eliminar disponibilidades anteriores
-    await disponibilidadRepository.delete({ profesorId });
+    // Verificar si ya existen bloques generados
+    const bloquesExistentes = await disponibilidadRepository.findOne({
+      where: { profesorId }
+    });
+
+    // Si ya existen bloques, no eliminarlos. Solo retornar mensaje
+    if (bloquesExistentes) {
+      const totalBloques = await disponibilidadRepository.count({
+        where: { profesorId }
+      });
+      return { success: true, bloques: totalBloques, message: "Bloques ya generados" };
+    }
 
     const bloques = [];
     const duracionClaseMinutos = 45;
@@ -57,30 +67,46 @@ export const generarBloquesDisponibilidad = async (
         horaFinMinutos = 19 * 60 + 45; // 7:45 PM
     }
 
-    // Generar bloques para cada día laboral
-    for (const dia of diasLaboral) {
-      let horaActual = horaInicioMinutos;
+    // Generar bloques para DOS semanas (semana actual + siguiente)
+    const hoy = new Date();
+    const diaSemana = hoy.getDay();
+    const diasAlLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+    const lunesActual = new Date(hoy);
+    lunesActual.setDate(hoy.getDate() + diasAlLunes);
 
-      while (horaActual + duracionClaseMinutos <= horaFinMinutos) {
-        const inicio = minutosAHora(horaActual);
-        const fin = minutosAHora(horaActual + duracionClaseMinutos);
+    // Generar para semana actual + siguiente (10 días laborales)
+    for (let semana = 0; semana < 2; semana++) {
+      for (const dia of diasLaboral) {
+        const indice = diasLaboral.indexOf(dia);
+        const fecha = new Date(lunesActual);
+        fecha.setDate(lunesActual.getDate() + indice + (semana * 7));
+        const fechaStr = fecha.toISOString().split('T')[0]; // YYYY-MM-DD
 
-        const disponibilidad = disponibilidadRepository.create({
-          profesorId,
-          diaSemana: dia,
-          horaInicio: inicio,
-          horaFin: fin,
-          disponible: true,
-        });
+        let horaActual = horaInicioMinutos;
 
-        bloques.push(disponibilidad);
-        horaActual += duracionClaseMinutos + breakMinutos;
+        while (horaActual + duracionClaseMinutos <= horaFinMinutos) {
+          const inicio = minutosAHora(horaActual);
+          const fin = minutosAHora(horaActual + duracionClaseMinutos);
+
+          bloques.push({
+            profesorId,
+            diaSemana: dia,
+            fecha: fechaStr,
+            horaInicio: inicio,
+            horaFin: fin,
+            disponible: true,
+          });
+
+          horaActual += duracionClaseMinutos + breakMinutos;
+        }
       }
     }
 
-    // Guardar todos los bloques
-    await disponibilidadRepository.save(bloques);
-    return { success: true, bloques: bloques.length, message: "Bloques generados exitosamente" };
+    // Guardar todos los bloques usando insert para asegurar que se guarden las fechas
+    if (bloques.length > 0) {
+      await disponibilidadRepository.insert(bloques);
+    }
+    return { success: true, bloques: bloques.length, message: `${bloques.length} bloques generados para 2 semanas` };
   } catch (error) {
     console.error("Error generando bloques de disponibilidad:", error);
     throw error;
@@ -95,12 +121,13 @@ export const obtenerDisponibilidadesPorProfesor = async (profesorId) => {
     const disponibilidades = await disponibilidadRepository.find({
       where: { profesorId },
       order: {
+        fecha: "ASC",
         diaSemana: "ASC",
         horaInicio: "ASC",
       },
     });
 
-    // Agrupar por día de la semana
+    // Agrupar por día de la semana (pero mantener los datos de fecha para que el frontend los use)
     const agrupado = {
       lunes: [],
       martes: [],
@@ -125,11 +152,16 @@ export const obtenerDisponibilidadesPorProfesor = async (profesorId) => {
 /**
  * Actualizar disponibilidad de un bloque específico
  */
-export const actualizarDisponibilidad = async (id, disponible) => {
+export const actualizarDisponibilidad = async (id, disponible, fecha = null) => {
   try {
+    const updateData = { disponible, updatedAt: new Date() };
+    if (fecha) {
+      updateData.fecha = fecha;
+    }
+
     const resultado = await disponibilidadRepository.update(
       { id },
-      { disponible, updatedAt: new Date() }
+      updateData
     );
 
     return resultado.affected > 0;

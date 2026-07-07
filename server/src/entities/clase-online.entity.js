@@ -1,16 +1,25 @@
 import { EntitySchema } from "typeorm";
 
-export const DisponibilidadAlumno = new EntitySchema({
-  name: "DisponibilidadAlumno",
-  tableName: "disponibilidades_alumnos",
+export const ClaseOnlineSchema = new EntitySchema({
+  name: "ClaseOnline",
+  tableName: "clases_online",
   columns: {
     id: {
       primary: true,
       type: "int",
       generated: "increment",
     },
-    alumnoId: {
+    profesorId: {
       type: "int",
+      nullable: false,
+    },
+    numeroTema: {
+      type: "int",
+      nullable: false, // 1-10
+    },
+    nombreTema: {
+      type: "varchar",
+      length: 255,
       nullable: false,
     },
     diaSemana: {
@@ -20,7 +29,7 @@ export const DisponibilidadAlumno = new EntitySchema({
     },
     fecha: {
       type: "date",
-      nullable: true,
+      nullable: false,
     },
     horaInicio: {
       type: "varchar",
@@ -32,9 +41,23 @@ export const DisponibilidadAlumno = new EntitySchema({
       length: 5,
       nullable: false,
     },
-    disponible: {
-      type: "boolean",
-      default: true,
+    capacidadMaxima: {
+      type: "int",
+      default: 30,
+    },
+    alumnosAgendados: {
+      type: "int",
+      default: 0,
+    },
+    linkZoom: {
+      type: "varchar",
+      length: 500,
+      nullable: true,
+    },
+    estado: {
+      type: "varchar",
+      length: 20,
+      default: "activa", // activa, completada, cancelada
     },
     createdAt: {
       type: "timestamp",
@@ -48,10 +71,10 @@ export const DisponibilidadAlumno = new EntitySchema({
     },
   },
   relations: {
-    alumno: {
-      target: "Alumno",
+    profesor: {
+      target: "Profesor",
       type: "many-to-one",
-      joinColumn: { name: "alumnoId" },
+      joinColumn: { name: "profesorId" },
       onDelete: "CASCADE",
     },
   },

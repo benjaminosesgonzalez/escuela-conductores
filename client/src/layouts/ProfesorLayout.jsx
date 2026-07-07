@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, Calendar, Car, LogOut, FolderOpen } from 'lucide-react';
+import { Home, Users, Calendar, Car, LogOut, FolderOpen, Video } from 'lucide-react';
 import { Layout } from '../components/shared/index.js';
 import { colors, spacing } from '../theme/index.js';
 import { authService } from '../services/authService.js';
@@ -19,6 +19,7 @@ const ProfesorLayout = ({ children, activeTab, onTabChange }) => {
     { id: 'inicio', label: 'Inicio', icon: Home },
     { id: 'disponibilidad', label: 'Disponibilidad', icon: Calendar },
     { id: 'misclases', label: 'Mis clases', icon: Car },
+    { id: 'clasesOnline', label: 'Clases Online', icon: Video },
     { id: 'repositorio', label: 'Repositorio', icon: FolderOpen }
   ];
 

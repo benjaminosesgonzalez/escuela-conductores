@@ -30,11 +30,54 @@ const ReservarClaseAlumno = () => {
     }
   }, []);
 
+  // Obtener información del plan del alumno
+  const obtenerInfoPlan = async () => {
+    try {
+      const token = authService.getToken();
+      const response = await fetch(
+        `http://localhost:5000/api/alumnos/${alumnoId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.data && data.data.id_plan_matriculado) {
+          const planResponse = await fetch(
+            `http://localhost:5000/api/plans/${data.data.id_plan_matriculado}`
+          );
+          if (planResponse.ok) {
+            const planData = await planResponse.json();
+            setPlanInfo(planData.data);
+            return planData.data;
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error al obtener plan:', err);
+    }
+    return null;
+  };
+
   const generarBloquesAutomaticamente = async () => {
     try {
       setGenerando(true);
       if (!alumnoId) {
         setError("No se pudo identificar al alumno");
+        return;
+      }
+
+      // Obtener información del plan si no la tenemos
+      let plan = planInfo;
+      if (!plan) {
+        plan = await obtenerInfoPlan();
+      }
+
+      if (!plan) {
+        setError("No se pudo obtener información del plan");
         return;
       }
 
@@ -48,6 +91,7 @@ const ReservarClaseAlumno = () => {
             Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({
+            totalClases: plan.total_classes,
             diasLaboral: ["lunes", "martes", "miércoles", "jueves", "viernes"]
           })
         }
@@ -244,6 +288,7 @@ const ReservarClaseAlumno = () => {
   };
 
   useEffect(() => {
+    obtenerInfoPlan();
     cargarDisponibilidades();
   }, []);
 

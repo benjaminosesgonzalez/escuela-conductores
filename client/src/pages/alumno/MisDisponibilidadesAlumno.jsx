@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, CheckCircle, Circle, Save, Settings, AlertCircle, Loader } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, Circle, Save, Settings, AlertCircle, Loader, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, Button } from '../../components/shared/index.js';
 import { colors, spacing } from '../../theme/index.js';
 import { authService } from '../../services/authService.js';
@@ -17,8 +17,37 @@ const MisDisponibilidadesAlumno = () => {
   const [success, setSuccess] = useState(null);
   const [diasConCambios, setDiasConCambios] = useState([]);
   const [planInfo, setPlanInfo] = useState(null);
+  const [semanaActual, setSemanaActual] = useState(0);
 
   const diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
+
+  // Calcular fecha de inicio de la semana
+  const obtenerFechasDelaSemana = (semanaOffset = 0) => {
+    const hoy = new Date();
+    const diaSemana = hoy.getDay();
+    const diasAlLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() + diasAlLunes + (semanaOffset * 7));
+
+    const viernes = new Date(lunes);
+    viernes.setDate(lunes.getDate() + 4);
+
+    return { lunes, viernes };
+  };
+
+  const formatearFecha = (fecha) => {
+    return fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  };
+
+  const obtenerFechaDelDia = (nombreDia) => {
+    const { lunes } = obtenerFechasDelaSemana(semanaActual);
+    const indice = diasSemana.indexOf(nombreDia);
+    const fecha = new Date(lunes);
+    fecha.setDate(lunes.getDate() + indice);
+    return fecha.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+  };
+
+  const { lunes, viernes } = obtenerFechasDelaSemana(semanaActual);
 
   // Obtener información del plan del alumno
   const obtenerInfoPlan = async () => {
@@ -74,8 +103,27 @@ const MisDisponibilidadesAlumno = () => {
       const data = await response.json();
 
       if (data.success) {
-        setDisponibilidades(data.data || {});
-        setOriginalDisponibilidades(JSON.parse(JSON.stringify(data.data || {})));
+        // Filtrar bloques por la semana actual
+        const { lunes, viernes } = obtenerFechasDelaSemana(semanaActual);
+        const lunesStr = lunes.toISOString().split('T')[0];
+        const viernesStr = viernes.toISOString().split('T')[0];
+        const bloquesFiltrados = {};
+
+        if (data.data) {
+          Object.keys(data.data).forEach(dia => {
+            bloquesFiltrados[dia] = data.data[dia].filter(bloque => {
+              // Si tiene fecha, filtrar por rango
+              if (bloque.fecha) {
+                return bloque.fecha >= lunesStr && bloque.fecha <= viernesStr;
+              }
+              // Si no tiene fecha, no incluirlo (son bloques viejos)
+              return false;
+            });
+          });
+        }
+
+        setDisponibilidades(bloquesFiltrados);
+        setOriginalDisponibilidades(JSON.parse(JSON.stringify(bloquesFiltrados)));
         setError(null);
         setDiasConCambios([]);
       } else {
@@ -153,12 +201,14 @@ const MisDisponibilidadesAlumno = () => {
         return;
       }
 
+      const fecha = obtenerFechaDelDia(selectedDay);
       const idsYEstados = bloquesDelDia.map(b => ({
         id: b.id,
-        disponible: b.disponible
+        disponible: b.disponible,
+        fecha: fecha
       }));
 
-      console.log('📝 Guardando cambios:', { alumnoId, día: selectedDay, bloques: idsYEstados });
+      console.log('📝 Guardando cambios:', { alumnoId, día: selectedDay, fecha, bloques: idsYEstados });
 
       const token = authService.getToken();
 
@@ -253,7 +303,7 @@ const MisDisponibilidadesAlumno = () => {
   useEffect(() => {
     obtenerInfoPlan();
     cargarDisponibilidades();
-  }, []);
+  }, [semanaActual]);
 
   const bloquesDelDia = disponibilidades[selectedDay] || [];
   const disponiblesDelDia = bloquesDelDia.filter(b => b.disponible).length;
@@ -349,6 +399,79 @@ const MisDisponibilidadesAlumno = () => {
         marginBottom: spacing.margin.xlarge
       }}>
         <Card title="Días disponibles" icon={Calendar}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: spacing.gap.normal,
+            marginBottom: spacing.margin.lg
+          }}>
+            <button
+              onClick={() => setSemanaActual(Math.max(0, semanaActual - 1))}
+              disabled={semanaActual === 0}
+              style={{
+                padding: spacing.padding.md,
+                backgroundColor: semanaActual === 0 ? colors.borderLight : colors.borderLight,
+                border: 'none',
+                borderRadius: spacing.radius.md,
+                cursor: semanaActual === 0 ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: semanaActual === 0 ? colors.textTertiary : colors.textPrimary,
+                transition: 'all 0.2s ease',
+                opacity: semanaActual === 0 ? 0.5 : 1
+              }}
+              onMouseEnter={(e) => {
+                if (semanaActual > 0) {
+                  e.currentTarget.style.backgroundColor = colors.border;
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = colors.borderLight;
+              }}
+            >
+              <ChevronLeft size={20} />
+            </button>
+
+            <div style={{
+              flex: 1,
+              textAlign: 'center',
+              fontSize: '13px',
+              color: colors.textSecondary,
+              fontWeight: '500'
+            }}>
+              {formatearFecha(lunes)} - {formatearFecha(viernes)}
+            </div>
+
+            <button
+              onClick={() => setSemanaActual(Math.min(1, semanaActual + 1))}
+              disabled={semanaActual === 1}
+              style={{
+                padding: spacing.padding.md,
+                backgroundColor: semanaActual === 1 ? colors.borderLight : colors.borderLight,
+                border: 'none',
+                borderRadius: spacing.radius.md,
+                cursor: semanaActual === 1 ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: semanaActual === 1 ? colors.textTertiary : colors.textPrimary,
+                transition: 'all 0.2s ease',
+                opacity: semanaActual === 1 ? 0.5 : 1
+              }}
+              onMouseEnter={(e) => {
+                if (semanaActual < 1) {
+                  e.currentTarget.style.backgroundColor = colors.border;
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = colors.borderLight;
+              }}
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(60px, 1fr))',

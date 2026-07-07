@@ -8,17 +8,17 @@ import {
   autoRegistroAlumno,
   asignarSedeMasiva
 } from "../controllers/alumno.controller.js";
-import { authMiddleware, isAdmin } from "../middleware/auth.middleware.js";
+import { authMiddleware, isAdmin, isAdminOrSecretaria } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-// Matricular nuevo alumno (sin autenticación requerida para testing)
+// Matricular nuevo alumno (solo secretaria/admin)
 // POST /api/alumnos/registro/nuevo
-router.post("/registro/nuevo", matricularNuevoAlumno);
+router.post("/registro/nuevo", authMiddleware, isAdminOrSecretaria, matricularNuevoAlumno);
 
-// Auto-registro de alumno (sin autenticación)
+// Auto-registro de alumno (solo secretaria/admin)
 // POST /api/alumnos/registro/auto
-router.post("/registro/auto", autoRegistroAlumno);
+router.post("/registro/auto", authMiddleware, isAdminOrSecretaria, autoRegistroAlumno);
 
 // Editar alumno
 // PUT /api/alumnos/:id

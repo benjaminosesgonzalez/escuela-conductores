@@ -7,10 +7,12 @@ import {
   obtenerProfesoresDisponibles,
   obtenerConfiguracionHorario,
 } from "../services/disponibilidad.service.js";
+import { generarClasesOnlineService } from "../services/clase-online.service.js";
 import { sendResponse } from "../Handlers/responseHandlers.js";
 
 /**
  * Generar bloques de disponibilidad para un profesor según tipo de contrato
+ * También genera automáticamente las clases online correspondientes
  */
 export const generarBloques = async (req, res) => {
   try {
@@ -23,7 +25,22 @@ export const generarBloques = async (req, res) => {
       diasLaboral
     );
 
-    sendResponse(res, 201, true, "Bloques generados exitosamente", resultado);
+    // Generar automáticamente las clases online después de crear disponibilidades
+    let clasesOnlineResultado = { success: false };
+    if (resultado.success || resultado.bloques > 0) {
+      try {
+        clasesOnlineResultado = await generarClasesOnlineService(parseInt(profesorId));
+        console.log("Clases online generadas automáticamente:", clasesOnlineResultado);
+      } catch (claseError) {
+        console.error("Error generando clases online automáticamente:", claseError);
+        // No fallar la respuesta si hay error en clases online
+      }
+    }
+
+    sendResponse(res, 201, true, "Bloques y clases online generados exitosamente", {
+      ...resultado,
+      clasesOnline: clasesOnlineResultado,
+    });
   } catch (error) {
     console.error("Error en generarBloques:", error);
     sendResponse(res, 500, false, error.message || "Error al generar bloques");
@@ -110,7 +127,7 @@ export const actualizarMultiples = async (req, res) => {
 
       // Actualizar cada bloque con su estado correspondiente
       for (const bloque of bloques) {
-        await actualizarDisponibilidad(bloque.id, bloque.disponible);
+        await actualizarDisponibilidad(bloque.id, bloque.disponible, bloque.fecha);
       }
 
       return sendResponse(res, 200, true, "Disponibilidades actualizadas", { cantidad: bloques.length });
