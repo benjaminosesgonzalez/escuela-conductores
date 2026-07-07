@@ -8,13 +8,13 @@ export const generarClasesOnlineService = async (profesorId) => {
   try {
     console.log(`🎓 Generando clases online para profesor: ${profesorId}`);
 
-    // Obtener disponibilidades del profesor
+    // Obtener solo disponibilidades donde disponible = true (clases que SÍ se van a hacer)
     const disponibilidades = await AppDataSource.query(
-      `SELECT * FROM disponibilidades WHERE "profesorId" = $1 ORDER BY fecha ASC, "diaSemana" ASC, "horaInicio" ASC`,
+      `SELECT * FROM disponibilidades WHERE "profesorId" = $1 AND disponible = true ORDER BY fecha ASC, "diaSemana" ASC, "horaInicio" ASC`,
       [profesorId]
     );
 
-    console.log(`📅 Disponibilidades encontradas: ${disponibilidades.length}`);
+    console.log(`📅 Disponibilidades disponibles encontradas: ${disponibilidades.length}`);
 
     if (disponibilidades.length === 0) {
       return {
