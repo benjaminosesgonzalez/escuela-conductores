@@ -15,6 +15,7 @@ const MisClasesAlumno = () => {
   const [activeTab, setActiveTab] = useState('presenciales');
   const [copiado, setCopiado] = useState(null);
   const currentUser = authService.getCurrentUser();
+  const alumnoNombre = currentUser?.nombre || 'Estudiante';
 
   useEffect(() => {
     obtenerTodasLasClases();
@@ -174,18 +175,40 @@ const MisClasesAlumno = () => {
 
               <div
                 style={{
-                  padding: spacing.md,
-                  backgroundColor: '#f0f0f0',
-                  borderRadius: spacing.radius.md,
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: spacing.sm,
                   marginBottom: spacing.md,
                 }}
               >
-                <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#999' }}>
-                  Profesor
-                </p>
-                <p style={{ margin: 0, fontWeight: '600' }}>
-                  {clase.profesor?.nombre || clase.nombreProfesor || 'Por asignar'}
-                </p>
+                <div
+                  style={{
+                    padding: spacing.md,
+                    backgroundColor: '#f0f0f0',
+                    borderRadius: spacing.radius.md,
+                  }}
+                >
+                  <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#999' }}>
+                    Profesor
+                  </p>
+                  <p style={{ margin: 0, fontWeight: '600' }}>
+                    {clase.profesor?.nombre || clase.nombreProfesor || 'Por asignar'}
+                  </p>
+                </div>
+                <div
+                  style={{
+                    padding: spacing.md,
+                    backgroundColor: '#f0f0f0',
+                    borderRadius: spacing.radius.md,
+                  }}
+                >
+                  <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#999' }}>
+                    Alumno
+                  </p>
+                  <p style={{ margin: 0, fontWeight: '600' }}>
+                    {alumnoNombre}
+                  </p>
+                </div>
               </div>
 
               {!esPresencial && clase.linkZoom && puedeAccederZoom(clase) && (

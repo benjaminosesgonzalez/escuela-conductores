@@ -36,8 +36,11 @@ export const generarClasesOnlineService = async (profesorId) => {
         const hoy = new Date();
         const diaSemana = hoy.getDay();
         const diasAlLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+
+        // Crear lunesActual sin hora para comparaciones correctas
         const lunesActual = new Date(hoy);
         lunesActual.setDate(hoy.getDate() + diasAlLunes);
+        lunesActual.setHours(0, 0, 0, 0);
 
         // Convertir fecha a string YYYY-MM-DD en zona horaria local
         let fechaStr = disp.fecha;
@@ -45,8 +48,20 @@ export const generarClasesOnlineService = async (profesorId) => {
 
         if (typeof fechaStr === 'string') {
           // Ya es string, usarlo directamente
-          const [year, month, day] = fechaStr.split('-');
-          fechaDisp = new Date(year, month - 1, day);
+          if (fechaStr.includes('T')) {
+            // ISO format - extraer solo la fecha
+            const isoDate = new Date(fechaStr);
+            const year = isoDate.getFullYear();
+            const month = String(isoDate.getMonth() + 1).padStart(2, '0');
+            const day = String(isoDate.getDate()).padStart(2, '0');
+            fechaStr = `${year}-${month}-${day}`;
+            const [y, m, d] = fechaStr.split('-');
+            fechaDisp = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+          } else {
+            // Ya es YYYY-MM-DD
+            const [year, month, day] = fechaStr.split('-');
+            fechaDisp = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          }
         } else {
           // Es un objeto Date, convertir a string local (sin UTC)
           fechaDisp = new Date(fechaStr);
@@ -54,6 +69,7 @@ export const generarClasesOnlineService = async (profesorId) => {
           const month = String(fechaDisp.getMonth() + 1).padStart(2, '0');
           const day = String(fechaDisp.getDate()).padStart(2, '0');
           fechaStr = `${year}-${month}-${day}`;
+          fechaDisp.setHours(0, 0, 0, 0);
         }
 
         const semana0Inicio = new Date(lunesActual);
