@@ -247,21 +247,42 @@ export const obtenerMisClasesOnlineAlumno = async (userId) => {
     const ahora = new Date();
 
     clases.forEach((clase) => {
-      const fecha = new Date(clase.fecha);
-      const horaFin = clase.horaFin.split(":");
-      fecha.setHours(
-        parseInt(horaFin[0]),
-        parseInt(horaFin[1]),
-        0,
-        0
-      );
+      try {
+        let fecha;
 
-      if (fecha > ahora && clase.estado === "activa") {
-        agrupado.proximas.push(clase);
-      } else if (clase.estado === "completada") {
-        agrupado.completadas.push(clase);
-      } else if (clase.estado === "cancelada") {
-        agrupado.canceladas.push(clase);
+        // Handle both YYYY-MM-DD and ISO 8601 formats
+        if (typeof clase.fecha === 'string') {
+          if (clase.fecha.includes('T')) {
+            // ISO 8601 format: 2026-07-06T04:00:00.000Z
+            fecha = new Date(clase.fecha);
+          } else {
+            // YYYY-MM-DD format
+            const [year, month, day] = clase.fecha.split('-');
+            fecha = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          }
+        } else {
+          // Already a Date object
+          fecha = new Date(clase.fecha);
+        }
+
+        // Set end time of the class
+        const horaFin = clase.horaFin.split(":");
+        fecha.setHours(
+          parseInt(horaFin[0]),
+          parseInt(horaFin[1]),
+          0,
+          0
+        );
+
+        if (fecha > ahora && clase.estado === "activa") {
+          agrupado.proximas.push(clase);
+        } else if (clase.estado === "completada") {
+          agrupado.completadas.push(clase);
+        } else if (clase.estado === "cancelada") {
+          agrupado.canceladas.push(clase);
+        }
+      } catch (err) {
+        console.error("Error parsing class date:", clase.fecha, err);
       }
     });
 

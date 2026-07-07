@@ -65,12 +65,32 @@ const MisClasesAlumno = () => {
 
   const puedeAccederZoom = (clase) => {
     if (!clase.linkZoom) return false;
-    const ahora = new Date();
-    const fecha = new Date(clase.fecha + 'T00:00:00');
-    const [horas, minutos] = clase.horaInicio.split(':');
-    fecha.setHours(parseInt(horas), parseInt(minutos), 0, 0);
-    const horaPermitida = new Date(fecha.getTime() - 15 * 60000);
-    return ahora >= horaPermitida;
+    try {
+      const ahora = new Date();
+      let fecha;
+
+      // Handle both YYYY-MM-DD and ISO 8601 formats
+      if (typeof clase.fecha === 'string') {
+        if (clase.fecha.includes('T')) {
+          // ISO 8601 format
+          fecha = new Date(clase.fecha);
+        } else {
+          // YYYY-MM-DD format
+          const [year, month, day] = clase.fecha.split('-');
+          fecha = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        }
+      } else {
+        fecha = new Date(clase.fecha);
+      }
+
+      const [horas, minutos] = clase.horaInicio.split(':');
+      fecha.setHours(parseInt(horas), parseInt(minutos), 0, 0);
+      const horaPermitida = new Date(fecha.getTime() - 15 * 60000);
+      return ahora >= horaPermitida;
+    } catch (error) {
+      console.error('Error calculating zoom access:', error);
+      return false;
+    }
   };
 
   const copiarLinkZoom = (link, claseId) => {
@@ -79,14 +99,38 @@ const MisClasesAlumno = () => {
     setTimeout(() => setCopiado(null), 2000);
   };
 
-  const obtenerFechaFormato = (fecha) => {
-    const date = new Date(fecha + 'T00:00:00');
-    return date.toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+  const obtenerFechaFormato = (fechaInput) => {
+    try {
+      let date;
+
+      // Handle both YYYY-MM-DD and ISO 8601 formats
+      if (typeof fechaInput === 'string') {
+        if (fechaInput.includes('T')) {
+          // ISO 8601 format
+          date = new Date(fechaInput);
+        } else {
+          // YYYY-MM-DD format
+          const [year, month, day] = fechaInput.split('-');
+          date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        }
+      } else {
+        date = new Date(fechaInput);
+      }
+
+      if (isNaN(date.getTime())) {
+        return 'Fecha inválida';
+      }
+
+      return date.toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Fecha inválida';
+    }
   };
 
   if (loading) {
