@@ -1,25 +1,26 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Home, Calendar, BookOpen, Award, Clock } from 'lucide-react';
-import { Layout } from '../components/shared/index.js';
-import { colors } from '../theme/index.js';
-import { authService } from '../services/authService.js';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { Home, Calendar, BookOpen, Award, Car } from "lucide-react";
+import { Layout } from "../components/shared/index.js";
+import { colors } from "../theme/index.js";
+import { authService } from "../services/authService.js";
 
 const AlumnoLayout = ({ children, activeTab, onTabChange }) => {
   const navigate = useNavigate();
   const currentUser = authService.getCurrentUser();
-  const userEmail = currentUser?.nombre || currentUser?.email || 'Alumno';
+  const userEmail = currentUser?.nombre || currentUser?.email || "Alumno";
 
   const handleLogout = () => {
     authService.logout();
-    navigate('/');
+    navigate("/");
   };
 
   const menuItems = [
-    { id: 'inicio', label: 'Inicio', icon: Home },
-    { id: 'reservar', label: 'Reservar clase', icon: Calendar },
-    { id: 'misclases', label: 'Mis clases', icon: BookOpen },
-    { id: 'avance', label: 'Mi avance', icon: Award }
+    { id: "inicio", label: "Inicio", icon: Home },
+    { id: "reservar", label: "Reservar clase", icon: Calendar },
+    { id: "misclases", label: "Mis clases", icon: BookOpen },
+    { id: "vehiculos", label: "Solicitar vehículo", icon: Car },
+    { id: "avance", label: "Mi avance", icon: Award },
   ];
 
   return (
