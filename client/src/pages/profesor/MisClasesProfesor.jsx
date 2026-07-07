@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, CheckCircle, Circle, Save, Settings, AlertCircle, Loader, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, Circle, Save, AlertCircle, Loader, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, Button } from '../../components/shared/index.js';
 import { colors, spacing } from '../../theme/index.js';
 import { authService } from '../../services/authService.js';
@@ -182,45 +182,6 @@ const MisClasesProfesor = () => {
     }
   };
 
-  const generarBloques = async () => {
-    try {
-      setSaving(true);
-      if (!profesorId) {
-        setError('No se pudo identificar al profesor');
-        return;
-      }
-
-      const token = authService.getToken();
-      const response = await fetch(
-        `http://localhost:5000/api/disponibilidades/${profesorId}/generar`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            diasLaboral: ['lunes', 'martes', 'miércoles', 'jueves', 'viernes']
-          })
-        }
-      );
-
-      const data = await response.json();
-
-      if (data.success) {
-        await cargarDisponibilidades();
-        setSuccess('Bloques generados correctamente');
-        setTimeout(() => setSuccess(null), 3000);
-      } else {
-        setError(data.message || 'Error al generar bloques');
-      }
-    } catch (err) {
-      setError('Error al generar bloques');
-      console.error(err);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const toggleBloque = (bloqueId) => {
     setDisponibilidades(prev => {
@@ -301,17 +262,6 @@ const MisClasesProfesor = () => {
             Gestiona tu disponibilidad para que los alumnos puedan reservar tus clases
           </p>
         </div>
-
-        {!loading && (
-          <Button
-            variant="primary"
-            onClick={generarBloques}
-            icon={Settings}
-            disabled={saving}
-          >
-            {saving ? 'Generando...' : 'Generar/Actualizar horarios'}
-          </Button>
-        )}
       </div>
 
       {/* Alertas */}
