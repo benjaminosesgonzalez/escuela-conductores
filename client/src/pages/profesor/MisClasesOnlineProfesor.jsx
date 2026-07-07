@@ -70,7 +70,8 @@ const MisClasesOnlineProfesor = () => {
               if (clase.fecha) {
                 return clase.fecha >= lunesStr && clase.fecha <= viernesStr;
               }
-              return false;
+              // Si no tiene fecha, mostrar en la semana actual (semana 0)
+              return semanaActual === 0;
             });
           });
         }

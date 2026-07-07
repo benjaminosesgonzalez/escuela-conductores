@@ -116,8 +116,8 @@ const MisDisponibilidadesAlumno = () => {
               if (bloque.fecha) {
                 return bloque.fecha >= lunesStr && bloque.fecha <= viernesStr;
               }
-              // Si no tiene fecha, no incluirlo (son bloques viejos)
-              return false;
+              // Si no tiene fecha, mostrar en la semana actual (semana 0)
+              return semanaActual === 0;
             });
           });
         }

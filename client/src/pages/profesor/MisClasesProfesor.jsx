@@ -82,8 +82,9 @@ const MisClasesProfesor = () => {
               if (bloque.fecha) {
                 return bloque.fecha >= lunesStr && bloque.fecha <= viernesStr;
               }
-              // Si no tiene fecha, no incluirlo (son bloques viejos)
-              return false;
+              // Si no tiene fecha, mostrar los bloques si es la semana actual (semana 0)
+              // Los bloques sin fecha son bloques antiguos de antes de la actualización
+              return semanaActual === 0;
             });
           });
         }
