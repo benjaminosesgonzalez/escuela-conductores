@@ -9,6 +9,7 @@ import secretariaRoutes from "./secretaria.routes.js";
 import profesorRoutes from "./profesor.routes.js";
 import claseRoutes from "./clase.routes.js";
 import claseOnlineRoutes from "./clase-online.routes.js";
+import claseOnlineAlumnoRoutes from "./clase-online-alumno.routes.js";
 
 export function routerApi(app) {
   const router = Router();
@@ -24,4 +25,5 @@ export function routerApi(app) {
   router.use("/disponibilidades-alumnos", disponibilidadAlumnoRoutes);
   router.use("/clases", claseRoutes);
   router.use("/clases-online", claseOnlineRoutes);
+  router.use("/clases-online-alumno", claseOnlineAlumnoRoutes);
 }

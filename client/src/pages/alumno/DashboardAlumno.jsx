@@ -6,6 +6,8 @@ import { colors, spacing } from '../../theme/index.js';
 import { authService } from '../../services/authService.js';
 import ReservarClaseAlumno from './ReservarClaseAlumno.jsx';
 import MisClasesAlumno from './MisClasesAlumno.jsx';
+import ClasesOnlineDisponiblesAlumno from './ClasesOnlineDisponiblesAlumno.jsx';
+import MisClasesOnlineAlumno from './MisClasesOnlineAlumno.jsx';
 
 const DashboardAlumno = () => {
   const [activeTab, setActiveTab] = useState('inicio');
@@ -192,6 +194,16 @@ const DashboardAlumno = () => {
       {/* MIS CLASES TAB */}
       {activeTab === 'misclases' && (
         <MisClasesAlumno />
+      )}
+
+      {/* CLASES ONLINE DISPONIBLES TAB */}
+      {activeTab === 'clasesOnlineDisponibles' && (
+        <ClasesOnlineDisponiblesAlumno />
+      )}
+
+      {/* MIS CLASES ONLINE TAB */}
+      {activeTab === 'misClasesOnline' && (
+        <MisClasesOnlineAlumno />
       )}
 
     </AlumnoLayout>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Calendar, BookOpen, Award, Clock } from 'lucide-react';
+import { Home, Calendar, BookOpen, Award, Clock, Video } from 'lucide-react';
 import { Layout } from '../components/shared/index.js';
 import { colors } from '../theme/index.js';
 import { authService } from '../services/authService.js';
@@ -19,6 +19,8 @@ const AlumnoLayout = ({ children, activeTab, onTabChange }) => {
     { id: 'inicio', label: 'Inicio', icon: Home },
     { id: 'reservar', label: 'Reservar clase', icon: Calendar },
     { id: 'misclases', label: 'Mis clases', icon: BookOpen },
+    { id: 'clasesOnlineDisponibles', label: 'Clases Online', icon: Video },
+    { id: 'misClasesOnline', label: 'Mis Clases Online', icon: Clock },
     { id: 'avance', label: 'Mi avance', icon: Award }
   ];
 
