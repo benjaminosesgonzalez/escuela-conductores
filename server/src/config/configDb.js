@@ -4,6 +4,7 @@ import { DATABASE, DB_USERNAME, HOST, PASSWORD, DB_PORT } from "./configEnv.js";
 import { User } from "../entities/user.entity.js";
 import { Administracion } from "../entities/administracion.entity.js";
 import { ClaseOnlineSchema } from "../entities/clase-online.entity.js";
+import { initializeTriggers } from "../services/triggers.service.js";
 
 import bcrypt from "bcrypt";
 console.log("--- CARGANDO INSTANCIA DE DATASOURCE ---");
@@ -55,6 +56,7 @@ export async function connectDB() {
     console.log("=> Conexión exitosa a la base de datos PostgreSQL!");
 
     await seedAdmin(); // Ejecuta la creación del admin
+    await initializeTriggers(); // Inicializar triggers de sincronización
   } catch (error) {
     console.error("Error al conectar con la base de datos:", error);
     process.exit(1);
