@@ -79,20 +79,31 @@ export const login = async (req, res) => {
     const token = generateToken(user);
 
     // Si es profesor, generar bloques automáticamente si no existen
+    let profesorId = null;
     if (user.rol === "profesor" && user.id) {
       try {
-        const disponibilidadRepository =
-          AppDataSource.getRepository(DisponibilidadSchema);
-        const bloquesExistentes = await disponibilidadRepository.findOne({
-          where: { profesorId: user.id },
-        });
+        // Buscar el profesor correspondiente a este usuario usando SQL crudo
+        const profesorResult = await AppDataSource.query(
+          "SELECT * FROM profesores WHERE id_user = $1",
+          [user.id]
+        );
 
-        if (!bloquesExistentes) {
-          const tipoContrato = user.tipo_contrato || "full_time";
-          console.log(
-            `📅 Generando bloques automáticos para profesor ${user.id} (${tipoContrato})`,
-          );
-          await generarBloquesDisponibilidad(user.id, tipoContrato);
+        if (profesorResult && profesorResult.length > 0) {
+          const profesor = profesorResult[0];
+          profesorId = profesor.id; // Guardar para devolverlo en la respuesta
+          const disponibilidadRepository =
+            AppDataSource.getRepository(DisponibilidadSchema);
+          const bloquesExistentes = await disponibilidadRepository.findOne({
+            where: { profesorId: profesor.id },
+          });
+
+          if (!bloquesExistentes) {
+            const tipoContrato = profesor.tipo_contrato || "full_time";
+            console.log(
+              `📅 Generando bloques automáticos para profesor ${profesor.id} (${tipoContrato})`,
+            );
+            await generarBloquesDisponibilidad(profesor.id, tipoContrato);
+          }
         }
       } catch (blockGenError) {
         console.error(
@@ -201,6 +212,7 @@ export const login = async (req, res) => {
         created_at: user.created_at,
         alumnoId: alumnoId, // Incluir alumnoId para alumnos
         planInfo: planInfo, // Incluir planInfo para alumnos
+        profesorId: profesorId, // Incluir profesorId para profesores
       },
     });
   } catch (error) {

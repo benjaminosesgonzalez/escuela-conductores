@@ -389,9 +389,6 @@ const DashboardProfesor = () => {
 
       {/* REPOSITORIO TAB */}
       {activeTab === "repositorio" && <RepositorioProfesor />}
-
-      {/* VEHÍCULOS Y SOLICITUDES TAB */}
-      {activeTab === "vehiculos" && <VehiculosYSolicitudes />}
     </ProfesorLayout>
   );
 };

@@ -30,7 +30,7 @@ const ConfirmarPlan = () => {
       .then((res) => res.json())
       .then((data) => {
         const listaPlanes = data.data || data;
-        const planEncontrado = listaPlanes.find((p) => p.id === planId);
+        const planEncontrado = listaPlanes.find((p) => p.id === Number(planId));
 
         if (planEncontrado) {
           setPlanInfo(planEncontrado);

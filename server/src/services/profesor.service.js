@@ -67,7 +67,7 @@ export const asignarSedesMasivaProfesoresService = async (profesoresIdsArray, se
 };
 
 export const eliminarProfesoresPorIdsService = async (profesoresIdsArray) => {
-  const profRepository = AppDataSource.getRepository(Profesor);
+  const profRepository = AppDataSource.getRepository(ProfesorSchema);
   const userRepository = AppDataSource.getRepository(User);
 
   const profesores = await profRepository.find({

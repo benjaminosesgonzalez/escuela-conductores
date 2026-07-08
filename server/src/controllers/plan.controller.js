@@ -53,13 +53,13 @@ export async function getPlans(req, res) {
   try {
     const plans = await getPlansService();
     if (!plans) {
-      return res.status(404).json({ message: "No se encontraron planes" });
+      return res.status(404).json({ success: false, message: "No se encontraron planes" });
     }
-    res.status(200).json(plans);
+    res.status(200).json({ success: true, data: plans });
   } catch (error) {
     res
       .status(500)
-      .json({ message: "Error al obtener los planes", error: error.message });
+      .json({ success: false, message: "Error al obtener los planes", error: error.message });
   }
 }
 
@@ -68,12 +68,12 @@ export async function getPlanById(req, res) {
     const { id } = req.params;
     const plan = await getPlanByIdService(id);
     if (!plan) {
-      return res.status(404).json({ message: "Plan no encontrado" });
+      return res.status(404).json({ success: false, message: "Plan no encontrado" });
     }
-    res.status(200).json(plan);
+    res.status(200).json({ success: true, data: plan });
   } catch (error) {
     res
       .status(500)
-      .json({ message: "Error al obtener el plan", error: error.message });
+      .json({ success: false, message: "Error al obtener el plan", error: error.message });
   }
 }
