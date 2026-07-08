@@ -10,6 +10,7 @@ import profesorRoutes from "./profesor.routes.js";
 import claseRoutes from "./clase.routes.js";
 import claseOnlineRoutes from "./clase-online.routes.js";
 import claseOnlineAlumnoRoutes from "./clase-online-alumno.routes.js";
+import clasePracticaAlumnoRoutes from "./clase-practica-alumno.routes.js";
 
 export function routerApi(app) {
   const router = Router();
@@ -26,4 +27,5 @@ export function routerApi(app) {
   router.use("/clases", claseRoutes);
   router.use("/clases-online", claseOnlineRoutes);
   router.use("/clases-online-alumno", claseOnlineAlumnoRoutes);
+  router.use("/clases-practicas-alumno", clasePracticaAlumnoRoutes);
 }

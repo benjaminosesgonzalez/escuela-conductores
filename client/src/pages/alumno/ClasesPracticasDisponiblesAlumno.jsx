@@ -18,7 +18,7 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
     setLoading(true);
     try {
       const response = await fetch(
-        `/api/clases-online-alumno/disponibles?semana=${semanaActual}&tipo=practica`,
+        `/api/clases-practicas-alumno/disponibles?semana=${semanaActual}`,
         {
           headers: {
             Authorization: `Bearer ${authService.getToken()}`,
@@ -29,8 +29,8 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
 
       if (data.success) {
         setClases(data.clases);
-        // Verificar inscripciones para cada clase
-        verificarInscripciones(data.clases);
+        // Cargar mis inscripciones
+        cargarMisInscripciones();
       }
     } catch (error) {
       setMensaje({ tipo: "error", texto: "Error al cargar las clases" });
@@ -38,33 +38,31 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
     setLoading(false);
   };
 
-  const verificarInscripciones = async (clasesData) => {
-    const inscritos = new Set();
-    for (const clase of clasesData) {
-      try {
-        const response = await fetch(
-          `/api/clases-online-alumno/${clase.id}/inscrito`,
-          {
-            headers: {
-              Authorization: `Bearer ${authService.getToken()}`,
-            },
-          }
-        );
-        const data = await response.json();
-        if (data.inscrito) {
-          inscritos.add(clase.id);
+  const cargarMisInscripciones = async () => {
+    try {
+      const response = await fetch(
+        `/api/clases-practicas-alumno/mis-clases`,
+        {
+          headers: {
+            Authorization: `Bearer ${authService.getToken()}`,
+          },
         }
-      } catch (error) {
-        console.error("Error verificando inscripción:", error);
+      );
+      const data = await response.json();
+
+      if (data.success && data.clases) {
+        const inscritos = new Set(data.clases.map(c => c.id));
+        setInscripciones(inscritos);
       }
+    } catch (error) {
+      console.error("Error al cargar mis inscripciones:", error);
     }
-    setInscripciones(inscritos);
   };
 
   const inscribirse = async (claseId) => {
     try {
       const response = await fetch(
-        `/api/clases-online-alumno/${claseId}/inscribirse`,
+        `/api/clases-practicas-alumno/${claseId}/inscribirse`,
         {
           method: "POST",
           headers: {
@@ -99,7 +97,7 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
   const desinscribirse = async (claseId) => {
     try {
       const response = await fetch(
-        `/api/clases-online-alumno/${claseId}/desinscribirse`,
+        `/api/clases-practicas-alumno/${claseId}/desinscribirse`,
         {
           method: "DELETE",
           headers: {
@@ -136,8 +134,7 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
   const claseFiltradas = clases.filter((c) => {
     const coincideProfesor = !filtroProfesor ||
       c.nombreProfesor?.toLowerCase().includes(filtroProfesor.toLowerCase());
-    const coincideTipo = c.tipoDisponibilidad === 'practica';
-    return coincideProfesor && coincideTipo;
+    return coincideProfesor;
   });
 
   const profesores = [...new Set(clases.map((c) => c.nombreProfesor))];
@@ -216,10 +213,8 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
           {claseFiltradas.map((clase) => (
             <div key={clase.id} className="tarjeta-clase">
               <div className="clase-header">
-                <h3>{clase.nombreTema}</h3>
-                <span className={`badge-tema tema-${clase.numeroTema}`}>
-                  Tema {clase.numeroTema}
-                </span>
+                <h3>Clase Práctica</h3>
+                <span className="badge-tema">🚗 Conducción</span>
               </div>
 
               <div className="clase-body">
@@ -234,17 +229,8 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
                     👨‍🏫 {clase.nombreProfesor}
                   </p>
                   <p className="capacidad-clase">
-                    👥 {clase.alumnosAgendados}/{clase.capacidadMaxima} inscritos
+                    👥 Cupo única (1 alumno)
                   </p>
-                </div>
-
-                <div className="barra-capacidad">
-                  <div
-                    className="capacidad-usada"
-                    style={{
-                      width: `${(clase.alumnosAgendados / clase.capacidadMaxima) * 100}%`,
-                    }}
-                  ></div>
                 </div>
 
                 <div className="clase-footer">
@@ -258,16 +244,16 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
                         Cancelar Inscripción
                       </button>
                     </>
-                  ) : clase.alumnosAgendados >= clase.capacidadMaxima ? (
-                    <button disabled className="btn-lleno">
-                      Clase Llena
-                    </button>
-                  ) : (
+                  ) : clase.estado === 'disponible' ? (
                     <button
                       onClick={() => inscribirse(clase.id)}
                       className="btn-inscribirse"
                     >
                       Inscribirse
+                    </button>
+                  ) : (
+                    <button disabled className="btn-lleno">
+                      No Disponible
                     </button>
                   )}
                 </div>
