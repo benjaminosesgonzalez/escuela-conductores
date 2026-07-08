@@ -22,7 +22,7 @@ export function routerApi(app) {
 
   router.use("/auth", authRoutes);
   router.use("/profile", profileRoutes);
-  router.use("/planes", planRoutes);
+  router.use("/plans", planRoutes);
   router.use("/sedes", sedeRoutes);
   router.use("/autos", autoRoutes);
   router.use("/alumnos", alumnoRoutes);

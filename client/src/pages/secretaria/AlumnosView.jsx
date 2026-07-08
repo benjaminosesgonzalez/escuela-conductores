@@ -14,16 +14,14 @@ const AlumnosView = ({ alumnos, setAlumnos, sedesDisponibles, setStatsData }) =>
   const [sedeMasiva, setSedeMasiva] = useState('');
   const [formData, setFormData] = useState({ nombre: '', rut: '', email: '', telefono: '', sexo: '', comuna: '', id_plan_matriculado: '' });
   
-  // NUEVO ESTADO: Guardará los planes reales que vienen del backend
+  // Guardará los planes reales que vienen del backend
   const [planesDisponibles, setPlanesDisponibles] = useState([]);
 
-  // NUEVO EFECTO: Carga los planes dinámicamente al montar el componente
+  // Carga los planes dinámicamente al montar el componente
   useEffect(() => {
     const fetchPlanes = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/planes', {
-          headers: { 'Authorization': `Bearer ${authService.getToken()}` }
-        });
+        const response = await fetch('http://localhost:5000/api/plans'); // Ruta de tu compañero
         const data = await response.json();
         if (data.success) {
           setPlanesDisponibles(data.data);

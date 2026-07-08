@@ -9,32 +9,44 @@ const LandingPage = () => {
   const [hoveredPlan, setHoveredPlan] = useState(null);
   const [cargando, setCargando] = useState(true);
 
-  const backendUrl = "http://localhost:5000/api";
+  // 1. Asegúrate de tener definidos estos tres estados arriba en tu componente:
+  //  const [planes, setPlanes] = useState([]);
+  // const [cargando, setCargando] = useState(true);
+  const [errorConexion, setErrorConexion] = useState(null); // 🔥 Nuevo: Para rastrear bloqueos
 
-  // 1. Cargar los planes reales desde el Backend
   useEffect(() => {
+    setCargando(true);
+    setErrorConexion(null);
+
     fetch("http://localhost:5000/api/plans")
-      .then((res) => res.json())
-      .then((data) => {
-        // 🔥 ESTE LOG TE DIRÁ SI LA LANDING LOGRA VER LA DATA
-        console.log("🔵 LANDING FETCH PLANES - RESPUESTA DEL SERVIDOR:", data);
-
-        let arregloPlanes = [];
-
-        if (data && Array.isArray(data.data)) {
-          arregloPlanes = data.data;
-        } else if (Array.isArray(data)) {
-          arregloPlanes = data;
+      .then((res) => {
+        // Si el servidor responde con un estatus de error (404, 500, etc.), disparamos una alerta
+        if (!res.ok) {
+          throw new Error(
+            `Servidor fuera de línea o ruta inválida (Status: ${res.status})`,
+          );
         }
-
-        const planesLimpios = arregloPlanes.filter(
-          (p) => p !== null && p !== undefined,
-        );
-        setPlanes(planesLimpios);
+        return res.json();
       })
-      .catch((err) =>
-        console.error("❌ Error cargando planes en la landing:", err),
-      );
+      .then((data) => {
+        console.log("🤖 DATA INTERNA RECIBIDA EN LANDING:", data);
+
+        // Desempaquetamos con máxima seguridad según el formato que venga
+        if (data && Array.isArray(data.data)) {
+          setPlanes(data.data);
+        } else if (Array.isArray(data)) {
+          setPlanes(data);
+        } else {
+          console.error("El formato recibido no es un arreglo válido:", data);
+        }
+      })
+      .catch((err) => {
+        console.error("❌ CAPTURA DE ERROR EN LANDING:", err);
+        setErrorConexion(err.message); // Guardamos el error real para mostrarlo
+      })
+      .finally(() => {
+        setCargando(false); // 🔥 EL APAGADOR CRUCIAL: Pase lo que pase, se detiene la carga
+      });
   }, []);
 
   // 2. Lógica de Redirección Inteligente al seleccionar un Plan
