@@ -1,12 +1,19 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { authService } from "../services/authService";
+import { authService } from "../../services/authService";
 
 const Registro = () => {
   const navigate = useNavigate();
+
+  // 1. Estados para todos los campos requeridos por tu backend
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rut, setRut] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [comuna, setComuna] = useState("");
+  const [sexo, setSexo] = useState("");
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -17,39 +24,50 @@ const Registro = () => {
     setError("");
     setLoading(true);
 
-    if (!nombre.trim() || !email.trim() || !password) {
-      setError("Por favor completa todos los campos requeridos");
+    // 2. Validación estricta de campos vacíos antes de disparar al servidor
+    if (
+      !nombre.trim() ||
+      !email.trim() ||
+      !password ||
+      !rut.trim() ||
+      !telefono.trim() ||
+      !comuna.trim() ||
+      !sexo
+    ) {
+      setError("Por favor completa todos los campos del formulario");
       setLoading(false);
       return;
     }
 
     try {
-      // 1. Petición a tu ruta de auto-registro del backend
+      // 3. Petición al endpoint mandando el set completo de datos
       const res = await fetch(`${backendUrl}/alumnos/registro/auto`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre, email, password }),
+        body: JSON.stringify({
+          nombre,
+          email,
+          password,
+          rut,
+          telefono,
+          comuna,
+          sexo,
+        }),
       });
 
       const data = await res.json();
 
       if (data.success) {
-        console.log("✅ Registro exitoso de alumno");
+        console.log("Registro exitoso de expediente de alumno");
 
-        // 2. Auto-loguear al usuario tras registrarse para obtener su sesión
-        // Si tu endpoint 'registro/auto' ya retorna el token y el user, puedes usarlos directo.
-        // Si no, llamamos al authService para iniciar sesión de inmediato:
+        // Auto-loguear inmediatamente para capturar el token JWT
         const loginResult = await authService.login(email, password);
 
         if (loginResult.success) {
           const planPendiente = localStorage.getItem("plan_pendiente");
 
           if (planPendiente) {
-            console.log(
-              `Alumno nuevo detectado con intención de compra para el plan: ${planPendiente}`,
-            );
-
-            // 3. Registrar el plan de interés en el backend antes de ir a pagar
+            // Notificar plan de interés en tu ruta oficial /preferencia
             await fetch(`${backendUrl}/alumnos/preferencia`, {
               method: "POST",
               headers: {
@@ -61,27 +79,24 @@ const Registro = () => {
               console.error("Error al registrar preferencia inicial:", err),
             );
 
-            // Desviar al nuevo alumno directo al checkout del plan que eligió en la Landing
             navigate(`/confirmar-plan?planId=${planPendiente}`);
           } else {
-            // Si se registró de la nada sin elegir plan, lo mandamos a la landing para que escoja uno
             alert(
-              "¡Registro completado! Por favor, selecciona el plan de conducción que deseas tomar.",
+              "¡Registro completado con éxito! Elige el plan con el que deseas matricularte.",
             );
             navigate("/");
           }
         } else {
-          // Si falla el auto-login, lo mandamos a loguearse manualmente
           navigate("/login");
         }
       } else {
         setError(
           data.message ||
-            "No se pudo completar el registro. Intenta con otro correo.",
+            "Error al crear la cuenta. Verifica que el RUT o Correo no estén registrados.",
         );
       }
     } catch (err) {
-      console.error("❌ Error en registro:", err);
+      console.error("Error en registro:", err);
       setError("Error al conectar con el servidor de registros");
     } finally {
       setLoading(false);
@@ -100,12 +115,10 @@ const Registro = () => {
 
       <main style={styles.main}>
         <section style={styles.card}>
-          <h1 style={styles.title}>Crea tu cuenta</h1>
-          <p style={{ color: "#666", fontSize: "14px", marginBottom: "20px" }}>
-            Regístrate para agendar tus clases y simular tu matrícula
+          <h1 style={styles.title}>Crea tu cuenta de Alumno</h1>
+          <p style={{ color: "#666", fontSize: "13px", marginBottom: "16px" }}>
+            Ingresa tus datos para abrir tu ficha de conducción institucional
           </p>
-
-          <div style={styles.icon}>📝</div>
 
           {error && (
             <div style={styles.errorBox}>
@@ -114,36 +127,94 @@ const Registro = () => {
           )}
 
           <form style={styles.form} onSubmit={handleRegistro}>
+            {/* Campo: Nombre Completo */}
             <div style={styles.field}>
               <label style={styles.label}>Nombre Completo</label>
               <input
                 style={styles.input}
                 type="text"
-                placeholder="Ej: Juan Pérez"
+                placeholder="Ej: Juan Pérez Muñoz"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 disabled={loading}
               />
             </div>
 
+            {/* Fila Doble: RUT y Teléfono */}
+            <div style={styles.row}>
+              <div style={{ ...styles.field, flex: 1 }}>
+                <label style={styles.label}>RUT</label>
+                <input
+                  style={styles.input}
+                  type="text"
+                  placeholder="12345678-9"
+                  value={rut}
+                  onChange={(e) => setRut(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+              <div style={{ ...styles.field, flex: 1 }}>
+                <label style={styles.label}>Teléfono</label>
+                <input
+                  style={styles.input}
+                  type="text"
+                  placeholder="988887777"
+                  value={telefono}
+                  onChange={(e) => setTelefono(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            {/* Fila Doble: Comuna y Sexo */}
+            <div style={styles.row}>
+              <div style={{ ...styles.field, flex: 1 }}>
+                <label style={styles.label}>Comuna</label>
+                <input
+                  style={styles.input}
+                  type="text"
+                  placeholder="Ej: Concepción"
+                  value={comuna}
+                  onChange={(e) => setComuna(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+              <div style={{ ...styles.field, flex: 1 }}>
+                <label style={styles.label}>Sexo / Género</label>
+                <select
+                  style={styles.select}
+                  value={sexo}
+                  onChange={(e) => setSexo(e.target.value)}
+                  disabled={loading}
+                >
+                  <option value="">Selecciona...</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Femenino">Femenino</option>
+                  <option value="Otro">Otro / Prefiero no decir</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Campo: Correo Electrónico */}
             <div style={styles.field}>
               <label style={styles.label}>Correo Electrónico</label>
               <input
                 style={styles.input}
                 type="email"
-                placeholder="ingresa@correo.com"
+                placeholder="alumno@correo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
               />
             </div>
 
+            {/* Campo: Contraseña */}
             <div style={styles.field}>
               <label style={styles.label}>Contraseña</label>
               <input
                 style={styles.input}
                 type="password"
-                placeholder="Crea una contraseña segura"
+                placeholder="Mínimo 6 caracteres"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
@@ -159,12 +230,14 @@ const Registro = () => {
               }}
               disabled={loading}
             >
-              {loading ? "Creando expediente..." : "Registrarse y Continuar"}
+              {loading
+                ? "Validando con Base de Datos..."
+                : "Registrarse y Contratar Plan"}
             </button>
 
-            <div style={{ marginTop: "14px" }}>
+            <div style={{ marginTop: "10px" }}>
               <span style={{ fontSize: "13px", color: "#666" }}>
-                ¿Ya tienes una cuenta?{" "}
+                ¿Ya tienes tu cuenta lista?{" "}
               </span>
               <Link
                 to="/login"
@@ -186,7 +259,7 @@ const Registro = () => {
 };
 
 // ================================================================
-// Estilos Clonados de tu Login.jsx para consistencia estética absoluta
+// Estilos Optimizados (Se ensanchó la tarjeta a 460px para el diseño en grilla)
 // ================================================================
 const styles = {
   page: {
@@ -219,59 +292,71 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    padding: "24px",
+    padding: "20px",
   },
   card: {
-    width: "410px",
+    width: "460px",
     backgroundColor: "white",
     borderRadius: "18px",
-    padding: "36px 34px",
+    padding: "30px 34px",
     boxShadow: "0 14px 35px rgba(0,0,0,0.15)",
     textAlign: "center",
   },
   title: {
-    fontSize: "28px",
+    fontSize: "24px",
     fontWeight: "800",
     color: "#2c3e8f",
-    marginBottom: "6px",
+    marginBottom: "4px",
   },
-  icon: { fontSize: "44px", marginBottom: "20px" },
   errorBox: {
     backgroundColor: "#fee",
     border: "1px solid #fcc",
     borderRadius: "8px",
-    padding: "12px",
-    marginBottom: "18px",
+    padding: "10px",
+    marginBottom: "14px",
   },
-  errorText: { color: "#c33", fontSize: "14px", margin: "0" },
-  form: { display: "flex", flexDirection: "column", gap: "18px" },
+  errorText: { color: "#c33", fontSize: "13px", margin: "0" },
+  form: { display: "flex", flexDirection: "column", gap: "14px" },
+  row: { display: "flex", gap: "16px" },
   field: { textAlign: "left" },
   label: {
     display: "block",
-    fontSize: "14px",
+    fontSize: "13px",
     fontWeight: "700",
     color: "#2c3e8f",
-    marginBottom: "6px",
+    marginBottom: "4px",
   },
   input: {
     width: "100%",
     border: "none",
     borderBottom: "2px solid #8793d8",
-    padding: "10px 4px",
-    fontSize: "15px",
+    padding: "8px 4px",
+    fontSize: "14px",
     outline: "none",
     color: "#2c3e8f",
     backgroundColor: "transparent",
     boxSizing: "border-box",
   },
+  select: {
+    width: "100%",
+    border: "none",
+    borderBottom: "2px solid #8793d8",
+    padding: "8px 0px",
+    fontSize: "14px",
+    outline: "none",
+    color: "#2c3e8f",
+    backgroundColor: "transparent",
+    boxSizing: "border-box",
+    cursor: "pointer",
+  },
   registerButton: {
-    marginTop: "12px",
+    marginTop: "10px",
     backgroundColor: "#ff6b35",
     color: "white",
     border: "none",
     borderRadius: "999px",
     padding: "13px",
-    fontSize: "15px",
+    fontSize: "14px",
     fontWeight: "800",
     cursor: "pointer",
     boxShadow: "0 5px 12px rgba(255,107,53,0.3)",

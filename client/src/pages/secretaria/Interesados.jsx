@@ -36,7 +36,7 @@ const Interesados = () => {
   // 2. Simulación de Envío de Oferta Especial
   const handleEnviarOferta = (email, planNombre) => {
     setMensaje(
-      `📩 ¡Oferta enviada con éxito a ${email}! Se despachó un cupón del 10% para el curso ${planNombre}.`,
+      `¡Oferta enviada con éxito a ${email}! Se despachó un cupón del 10% para el curso ${planNombre}.`,
     );
     setTimeout(() => setMensaje(""), 4000);
   };
@@ -135,10 +135,10 @@ const Interesados = () => {
               margin: 0,
             }}
           >
-            💡 <strong>Consejo comercial:</strong> Estos usuarios se registraron
-            en el sistema y seleccionaron un plan, pero se retiraron en la
-            pasarela de pago. Envíales un recordatorio o comunícate directamente
-            para ofrecerles asistencia.
+            <strong>Usuarios que abandonaron:</strong> Estos usuarios se
+            registraron en el sistema y seleccionaron un plan, pero se retiraron
+            en la pasarela de pago. Envíales un recordatorio o comunícate
+            directamente para ofrecerles asistencia.
           </p>
         </div>
       </div>
@@ -154,8 +154,8 @@ const Interesados = () => {
               fontSize: "14px",
             }}
           >
-            🎉 ¡Excelente! No hay registros abandonados. Todos los alumnos
-            interesados han completado sus matrículas oficiales.
+            No hay registros abandonados. Todos los alumnos interesados han
+            completado sus matrículas oficiales.
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
