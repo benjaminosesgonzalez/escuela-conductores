@@ -1,24 +1,23 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { CreditCard, ShieldCheck, ArrowLeft, CheckCircle } from "lucide-react";
+// 🔥 NUEVO: Importamos el servicio de autenticación para saber quién está operando
+import { authService } from "../../services/authService";
 
 const ConfirmarPlan = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Obtener el planId desde la URL (?planId=...)
   const planId = searchParams.get("planId");
   const userToken = localStorage.getItem("token");
   const backendUrl = "http://localhost:5000/api";
 
-  // Estados de datos
   const [planInfo, setPlanInfo] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [procesandoPago, setProcesandoPago] = useState(false);
   const [pagoExitoso, setPagoExitoso] = useState(false);
   const [error, setError] = useState("");
 
-  // 1. Cargar la información del plan seleccionado
   useEffect(() => {
     if (!planId) {
       setError("No se ha especificado ningún plan para la matrícula.");
@@ -26,11 +25,13 @@ const ConfirmarPlan = () => {
       return;
     }
 
-    fetch(`${backendUrl}/planes`)
+    fetch(`${backendUrl}/plans`)
       .then((res) => res.json())
       .then((data) => {
         const listaPlanes = data.data || data;
-        const planEncontrado = listaPlanes.find((p) => p.id === Number(planId));
+        const planEncontrado = listaPlanes.find(
+          (p) => String(p.id) === String(planId),
+        );
 
         if (planEncontrado) {
           setPlanInfo(planEncontrado);
@@ -47,35 +48,36 @@ const ConfirmarPlan = () => {
       .finally(() => setCargando(false));
   }, [planId]);
 
-  // 2. Simulación de la Pasarela de Pago y Matrícula
   const handleSimularPago = async () => {
     setProcesandoPago(true);
     setError("");
 
-    // Simulamos un retraso de 2 segundos para dar realismo a la transacción bancaria
+    // Capturamos los datos del alumno logueado en este milisegundo
+    const alumnoLogueado = authService.getCurrentUser();
+
     setTimeout(async () => {
       try {
-        // Impactamos tu endpoint de matrícula en el backend
-        // Enviamos el idPlan para ejecutar tu función matricularAlumnoService
+        // 🔥 CORREGIDO: Apuntando a tu ruta real '/alumnos/matricular'
         const res = await fetch(`${backendUrl}/alumnos/matricular`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${userToken}`,
           },
-          body: JSON.stringify({ idPlan: planInfo.id }),
+          // 🔥 ENVIAMOS EL SET COMPLETO DE LLAVES QUE EL CONTROLADOR NECESITA
+          body: JSON.stringify({
+            id_alumno: alumnoLogueado?.id || alumnoLogueado?.sub, // ID extraído de la sesión del navegador
+            id_plan_definitivo: Number(planInfo.id), // Forzamos número entero
+            idPlan: Number(planInfo.id), // Enviamos ambas variantes por seguridad
+          }),
         });
 
         const data = await res.json();
 
-        if (data.success) {
-          // Pago y matrícula aprobados en el servidor
+        if (data.success || res.ok) {
           setPagoExitoso(true);
-
-          // Limpiamos el plan pendiente del localStorage ya que fue pagado con éxito
           localStorage.removeItem("plan_pendiente");
 
-          // Esperamos 3 segundos mostrando la pantalla de éxito antes de mandarlo al Dashboard
           setTimeout(() => {
             navigate("/alumno");
           }, 3000);
