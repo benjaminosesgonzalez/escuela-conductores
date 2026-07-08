@@ -195,9 +195,21 @@ const MisClasesProfesor = () => {
     setDisponibilidades(prev => {
       const actualizado = {
         ...prev,
-        [selectedDay]: prev[selectedDay].map(bloque =>
-          bloque.id === bloqueId ? { ...bloque, disponible: !bloque.disponible, tipoDisponibilidad } : bloque
-        )
+        [selectedDay]: prev[selectedDay].map(bloque => {
+          if (bloque.id !== bloqueId) return bloque;
+
+          const esDelTipoActual = bloque.tipoDisponibilidad === tipoDisponibilidad;
+
+          // Ciclo de estados:
+          // Si es del tipo actual y disponible → pasa a no disponible
+          // Si es del tipo actual y no disponible → pasa a disponible del tipo actual
+          // Si es de otro tipo → pasa a disponible del tipo actual
+          if (esDelTipoActual && bloque.disponible) {
+            return { ...bloque, disponible: false };
+          } else {
+            return { ...bloque, disponible: true, tipoDisponibilidad };
+          }
+        })
       };
 
       // Verificar si hay cambios en este día
@@ -213,17 +225,14 @@ const MisClasesProfesor = () => {
   };
 
   const toggleTodosDelDia = (tipo) => {
-    const bloquesMismoTipo = disponibilidades[selectedDay]?.filter(b => b.tipoDisponibilidad === tipo) || [];
-    const todosMismoTipoDisponibles = bloquesMismoTipo.every(b => b.disponible);
-
     setDisponibilidades(prev => {
       const actualizado = {
         ...prev,
-        [selectedDay]: prev[selectedDay].map(bloque =>
-          bloque.tipoDisponibilidad === tipo
-            ? { ...bloque, disponible: !todosMismoTipoDisponibles }
-            : bloque
-        )
+        [selectedDay]: prev[selectedDay].map(bloque => ({
+          ...bloque,
+          disponible: true,
+          tipoDisponibilidad: tipo
+        }))
       };
 
       // Verificar si hay cambios en este día
