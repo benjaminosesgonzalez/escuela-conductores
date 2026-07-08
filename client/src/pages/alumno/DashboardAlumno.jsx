@@ -4,15 +4,22 @@ import AlumnoLayout from '../../layouts/AlumnoLayout.jsx';
 import { Card, Button } from '../../components/shared/index.js';
 import { colors, spacing } from '../../theme/index.js';
 import { authService } from '../../services/authService.js';
-import ReservarClaseAlumno from './ReservarClaseAlumno.jsx';
 import MisClasesAlumno from './MisClasesAlumno.jsx';
 import SalaPsicotecnicaAlumno from './SalaPsicotecnicaAlumno.jsx';
 import SolicitarVehiculo from '../../components/shared/SolicitarVehiculo.jsx';
+import ClasesOnlineDisponiblesAlumno from './ClasesOnlineDisponiblesAlumno.jsx';
+import ClasesPracticasDisponiblesAlumno from './ClasesPracticasDisponiblesAlumno.jsx';
 
 const DashboardAlumno = () => {
   const [activeTab, setActiveTab] = useState('inicio');
+  const [refreshMisClases, setRefreshMisClases] = useState(0);
   const currentUser = authService.getCurrentUser();
   const alumnoNombre = currentUser?.nombre || 'Alumno';
+
+  const handleDesinscripcion = () => {
+    // Trigger para refrescar "Mis clases"
+    setRefreshMisClases(prev => prev + 1);
+  };
 
   const stats = [
     { icon: BookOpen, label: 'Clases tomadas', value: '12', color: '#10b981' },
@@ -186,14 +193,19 @@ const DashboardAlumno = () => {
         </div>
       )}
 
-      {/* RESERVAR CLASE TAB */}
-      {activeTab === 'reservar' && (
-        <ReservarClaseAlumno />
-      )}
-
       {/* MIS CLASES TAB */}
       {activeTab === 'misclases' && (
-        <MisClasesAlumno />
+        <MisClasesAlumno refreshTrigger={refreshMisClases} />
+      )}
+
+      {/* RESERVAR CLASES ONLINE TAB */}
+      {activeTab === 'clasesOnlineDisponibles' && (
+        <ClasesOnlineDisponiblesAlumno onDesinscripcion={handleDesinscripcion} />
+      )}
+
+      {/* RESERVAR CLASE PRACTICA TAB */}
+      {activeTab === 'clasesPracticasDisponibles' && (
+        <ClasesPracticasDisponiblesAlumno onDesinscripcion={handleDesinscripcion} />
       )}
 
       {/* SALA PSICOTÉCNICA TAB */}

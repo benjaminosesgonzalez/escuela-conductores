@@ -12,6 +12,7 @@ const Layout = ({
   onLogout,
   roleColor = colors.primary,
   roleIcon,
+  roleLabel = 'Usuario',
   title = 'ESCUELA DE CONDUCTORES'
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -42,6 +43,7 @@ const Layout = ({
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           userEmail={userEmail}
           onLogout={onLogout}
+          roleLabel={roleLabel}
           title={title}
         />
 

@@ -18,6 +18,10 @@ export const DisponibilidadAlumno = new EntitySchema({
       length: 20,
       nullable: false,
     },
+    fecha: {
+      type: "date",
+      nullable: true,
+    },
     horaInicio: {
       type: "varchar",
       length: 5,

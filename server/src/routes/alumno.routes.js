@@ -23,7 +23,7 @@ import { registroAlumnoSchema, editarAlumnoSchema } from "../validations/alumno.
 
 const router = Router();
 
-// Matricular nuevo alumno (sin autenticación requerida para testing)
+// Matricular nuevo alumno (solo secretaria/admin)
 // POST /api/alumnos/registro/nuevo
 router.post("/registro/nuevo", authMiddleware, isAdminOrSecretaria, validateSchema(registroAlumnoSchema), matricularNuevoAlumno);
 // Obtener todos los alumnos

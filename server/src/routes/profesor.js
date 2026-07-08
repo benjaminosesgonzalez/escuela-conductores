@@ -1,10 +1,12 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
-import { AppDataSource } from '../config/configDb.js'; // 🔴 CAMBIO 1
+import { AppDataSource } from '../config/configDb.js';
+import { authMiddleware, isAdmin } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-router.post('/register', async (req, res) => {
+// Registro de profesor (solo admin autorizado)
+router.post('/register', authMiddleware, isAdmin, async (req, res) => {
   try {
     const { email, password, nombre, telefono, tipo_contrato = 'full_time' } = req.body;
 

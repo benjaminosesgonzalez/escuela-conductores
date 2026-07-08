@@ -38,8 +38,23 @@ export const generarBloquesDisponibilidadAlumnoService = async (
       throw new Error("Alumno no encontrado");
     }
 
-    // Eliminar disponibilidades anteriores
-    await disponibilidadAlumnoRepository.delete({ alumnoId });
+    // Verificar si ya existen bloques generados
+    const bloquesExistentes = await disponibilidadAlumnoRepository.findOne({
+      where: { alumnoId }
+    });
+
+    // Si ya existen bloques, no eliminarlos. Solo retornar mensaje
+    if (bloquesExistentes) {
+      const totalBloques = await disponibilidadAlumnoRepository.count({
+        where: { alumnoId }
+      });
+      return {
+        success: true,
+        bloques: totalBloques,
+        totalSeleccionables: totalClases,
+        message: `Bloques ya generados (${totalBloques} bloques disponibles)`
+      };
+    }
 
     const bloques = [];
     const duracionClaseMinutos = 45;
@@ -49,24 +64,39 @@ export const generarBloquesDisponibilidadAlumnoService = async (
     const horaInicioMinutos = 9 * 60; // 9:00 AM
     const horaFinMinutos = 20 * 60; // 8:00 PM
 
-    // Generar TODOS los bloques posibles para cada día laboral
-    for (const dia of diasLaboral) {
-      let horaActual = horaInicioMinutos;
+    // Generar bloques para DOS semanas (semana actual + siguiente)
+    const hoy = new Date();
+    const diaSemana = hoy.getDay();
+    const diasAlLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+    const lunesActual = new Date(hoy);
+    lunesActual.setDate(hoy.getDate() + diasAlLunes);
 
-      while (horaActual + duracionClaseMinutos <= horaFinMinutos) {
-        const inicio = minutosAHora(horaActual);
-        const fin = minutosAHora(horaActual + duracionClaseMinutos);
+    // Generar para semana actual + siguiente (10 días laborales)
+    for (let semana = 0; semana < 2; semana++) {
+      for (const dia of diasLaboral) {
+        const indice = diasLaboral.indexOf(dia);
+        const fecha = new Date(lunesActual);
+        fecha.setDate(lunesActual.getDate() + indice + (semana * 7));
+        const fechaStr = fecha.toISOString().split('T')[0]; // YYYY-MM-DD
 
-        const disponibilidad = disponibilidadAlumnoRepository.create({
-          alumnoId,
-          diaSemana: dia,
-          horaInicio: inicio,
-          horaFin: fin,
-          disponible: false, // Por defecto no seleccionado
-        });
+        let horaActual = horaInicioMinutos;
 
-        bloques.push(disponibilidad);
-        horaActual += duracionClaseMinutos + breakMinutos;
+        while (horaActual + duracionClaseMinutos <= horaFinMinutos) {
+          const inicio = minutosAHora(horaActual);
+          const fin = minutosAHora(horaActual + duracionClaseMinutos);
+
+          const disponibilidad = disponibilidadAlumnoRepository.create({
+            alumnoId,
+            diaSemana: dia,
+            fecha: fechaStr,
+            horaInicio: inicio,
+            horaFin: fin,
+            disponible: false, // Por defecto no seleccionado
+          });
+
+          bloques.push(disponibilidad);
+          horaActual += duracionClaseMinutos + breakMinutos;
+        }
       }
     }
 
@@ -77,7 +107,7 @@ export const generarBloquesDisponibilidadAlumnoService = async (
       success: true,
       bloques: bloques.length,
       totalSeleccionables: totalClases,
-      message: `${bloques.length} bloques generados (puede seleccionar máximo ${totalClases})`
+      message: `${bloques.length} bloques generados para 2 semanas (puede seleccionar máximo ${totalClases})`
     };
   } catch (error) {
     console.error("Error generando bloques de disponibilidad del alumno:", error);
@@ -123,11 +153,16 @@ export const obtenerDisponibilidadesAlumnoService = async (alumnoId) => {
 /**
  * Actualizar disponibilidad de un bloque
  */
-export const actualizarDisponibilidadAlumnoService = async (bloqueId, disponible) => {
+export const actualizarDisponibilidadAlumnoService = async (bloqueId, disponible, fecha = null) => {
   try {
+    const updateData = { disponible, updatedAt: new Date() };
+    if (fecha) {
+      updateData.fecha = fecha;
+    }
+
     const resultado = await disponibilidadAlumnoRepository.update(
       { id: bloqueId },
-      { disponible, updatedAt: new Date() }
+      updateData
     );
 
     return resultado.affected > 0;
