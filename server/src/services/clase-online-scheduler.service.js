@@ -82,7 +82,7 @@ export const generarClasesParaSemana = async (lunesBase) => {
 
       // Obtener disponibilidades del profesor
       const disponibilidades = await AppDataSource.query(
-        `SELECT * FROM disponibilidades
+        `SELECT * FROM disponibilidades_profesores
          WHERE "profesorId" = $1 AND disponible = true
          ORDER BY "diaSemana" ASC, "horaInicio" ASC`,
         [profesorId]

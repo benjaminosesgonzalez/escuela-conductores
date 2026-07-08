@@ -2,7 +2,7 @@ import { EntitySchema } from "typeorm";
 
 export const DisponibilidadSchema = new EntitySchema({
   name: "Disponibilidad",
-  tableName: "disponibilidades",
+  tableName: "disponibilidades_profesores",
   columns: {
     id: {
       primary: true,
@@ -33,6 +33,13 @@ export const DisponibilidadSchema = new EntitySchema({
     disponible: {
       type: "boolean",
       default: true,
+      nullable: false,
+    },
+    tipoDisponibilidad: {
+      type: "varchar",
+      length: 20,
+      enum: ["teorica", "practica"],
+      default: "teorica",
       nullable: false,
     },
     createdAt: {

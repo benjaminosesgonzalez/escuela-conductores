@@ -17,6 +17,7 @@ const MisClasesProfesor = () => {
   const [success, setSuccess] = useState(null);
   const [diasConCambios, setDiasConCambios] = useState([]);
   const [semanaActual, setSemanaActual] = useState(0);
+  const [tipoDisponibilidad, setTipoDisponibilidad] = useState('teorica');
 
   const diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
 
@@ -133,7 +134,8 @@ const MisClasesProfesor = () => {
       const idsYEstados = bloquesDelDia.map(b => ({
         id: b.id,
         disponible: b.disponible,
-        fecha: fecha
+        fecha: fecha,
+        tipoDisponibilidad: b.tipoDisponibilidad || tipoDisponibilidad
       }));
 
       console.log('📝 Guardando cambios:', { profesorId, día: selectedDay, fecha, bloques: idsYEstados });
@@ -194,7 +196,7 @@ const MisClasesProfesor = () => {
       const actualizado = {
         ...prev,
         [selectedDay]: prev[selectedDay].map(bloque =>
-          bloque.id === bloqueId ? { ...bloque, disponible: !bloque.disponible } : bloque
+          bloque.id === bloqueId ? { ...bloque, disponible: !bloque.disponible, tipoDisponibilidad } : bloque
         )
       };
 
@@ -210,15 +212,18 @@ const MisClasesProfesor = () => {
     });
   };
 
-  const toggleTodosDelDia = () => {
-    const todosDisponibles = disponibilidades[selectedDay]?.every(b => b.disponible);
+  const toggleTodosDelDia = (tipo) => {
+    const bloquesMismoTipo = disponibilidades[selectedDay]?.filter(b => b.tipoDisponibilidad === tipo) || [];
+    const todosMismoTipoDisponibles = bloquesMismoTipo.every(b => b.disponible);
+
     setDisponibilidades(prev => {
       const actualizado = {
         ...prev,
-        [selectedDay]: prev[selectedDay].map(bloque => ({
-          ...bloque,
-          disponible: !todosDisponibles
-        }))
+        [selectedDay]: prev[selectedDay].map(bloque =>
+          bloque.tipoDisponibilidad === tipo
+            ? { ...bloque, disponible: !todosMismoTipoDisponibles }
+            : bloque
+        )
       };
 
       // Verificar si hay cambios en este día
@@ -454,32 +459,77 @@ const MisClasesProfesor = () => {
               margin: '0 0 12px 0',
               textTransform: 'capitalize'
             }}>
-              {selectedDay}
+              {selectedDay} - Tipo de disponibilidad
             </h3>
-            <p style={{
-              fontSize: '32px',
-              fontWeight: 'bold',
-              color: colors.primary,
-              margin: '0 0 8px 0'
-            }}>
-              {disponiblesDelDia}/{bloquesDelDia.length}
-            </p>
-            <p style={{
-              fontSize: '13px',
-              color: colors.textTertiary,
-              margin: '0 0 16px 0'
-            }}>
-              bloques disponibles
-            </p>
 
-            <Button
-              variant="secondary"
-              size="md"
-              fullWidth={true}
-              onClick={toggleTodosDelDia}
-            >
-              {disponiblesDelDia === bloquesDelDia.length ? 'Desmarcar todos' : 'Marcar todos'}
-            </Button>
+            {/* Toggle Teórica/Práctica */}
+            <div style={{
+              display: 'flex',
+              gap: spacing.gap.normal,
+              marginBottom: spacing.margin.lg,
+              backgroundColor: colors.borderLight,
+              padding: spacing.padding.md,
+              borderRadius: spacing.radius.md
+            }}>
+              <button
+                onClick={() => setTipoDisponibilidad('teorica')}
+                style={{
+                  flex: 1,
+                  padding: `${spacing.padding.md} ${spacing.padding.lg}`,
+                  backgroundColor: tipoDisponibilidad === 'teorica' ? '#22c55e' : colors.borderLight,
+                  color: tipoDisponibilidad === 'teorica' ? colors.white : colors.textPrimary,
+                  border: 'none',
+                  borderRadius: spacing.radius.md,
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.2s ease',
+                  fontSize: '14px'
+                }}
+              >
+                📚 Teórica
+              </button>
+              <button
+                onClick={() => setTipoDisponibilidad('practica')}
+                style={{
+                  flex: 1,
+                  padding: `${spacing.padding.md} ${spacing.padding.lg}`,
+                  backgroundColor: tipoDisponibilidad === 'practica' ? '#a855f7' : colors.borderLight,
+                  color: tipoDisponibilidad === 'practica' ? colors.white : colors.textPrimary,
+                  border: 'none',
+                  borderRadius: spacing.radius.md,
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.2s ease',
+                  fontSize: '14px'
+                }}
+              >
+                🚗 Práctica
+              </button>
+            </div>
+
+            {/* Botones Marcar Todos */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: spacing.gap.normal
+            }}>
+              <Button
+                variant="secondary"
+                size="sm"
+                fullWidth={true}
+                onClick={() => toggleTodosDelDia('teorica')}
+              >
+                Marcar todos teóricos
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                fullWidth={true}
+                onClick={() => toggleTodosDelDia('practica')}
+              >
+                Marcar todos prácticos
+              </Button>
+            </div>
           </div>
         </Card>
       </div>
@@ -514,67 +564,83 @@ const MisClasesProfesor = () => {
               gap: spacing.gap.normal,
               marginBottom: spacing.margin.xlarge
             }}>
-              {bloquesDelDia.map(bloque => (
-                <div
-                  key={bloque.id}
-                  onClick={() => toggleBloque(bloque.id)}
-                  style={{
-                    padding: spacing.padding.lg,
-                    backgroundColor: bloque.disponible ? '#f0fdf4' : '#fef2f2',
-                    border: `2px solid ${bloque.disponible ? colors.success : colors.danger}`,
-                    borderRadius: spacing.radius.md,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing.gap.normal
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                >
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: spacing.radius.full,
-                    backgroundColor: bloque.disponible ? '#dcfce7' : '#fee2e2',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}>
-                    {bloque.disponible ? (
-                      <CheckCircle size={24} color={colors.success} />
-                    ) : (
-                      <Circle size={24} color={colors.danger} />
-                    )}
-                  </div>
+              {bloquesDelDia
+                .filter(bloque => bloque.tipoDisponibilidad === tipoDisponibilidad)
+                .map(bloque => {
+                  const esTeortica = bloque.tipoDisponibilidad === 'teorica';
+                  const colorBase = esTeortica ? '#22c55e' : '#a855f7';
+                  const bgLight = esTeortica ? '#f0fdf4' : '#faf5ff';
+                  const bgCheck = esTeortica ? '#dcfce7' : '#e9d5ff';
 
-                  <div style={{ flex: 1 }}>
-                    <p style={{
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: colors.textPrimary,
-                      margin: '0 0 4px 0'
-                    }}>
-                      {bloque.horaInicio} - {bloque.horaFin}
-                    </p>
-                    <p style={{
-                      fontSize: '12px',
-                      color: bloque.disponible ? colors.success : colors.danger,
-                      margin: 0,
-                      fontWeight: '500'
-                    }}>
-                      {bloque.disponible ? '✓ Disponible' : '✗ No disponible'}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                  return (
+                    <div
+                      key={bloque.id}
+                      onClick={() => toggleBloque(bloque.id)}
+                      style={{
+                        padding: spacing.padding.lg,
+                        backgroundColor: bloque.disponible ? bgLight : '#fef2f2',
+                        border: `2px solid ${bloque.disponible ? colorBase : colors.danger}`,
+                        borderRadius: spacing.radius.md,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: spacing.gap.normal
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: spacing.radius.full,
+                        backgroundColor: bloque.disponible ? bgCheck : '#fee2e2',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}>
+                        {bloque.disponible ? (
+                          <CheckCircle size={24} color={colorBase} />
+                        ) : (
+                          <Circle size={24} color={colors.danger} />
+                        )}
+                      </div>
+
+                      <div style={{ flex: 1 }}>
+                        <p style={{
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: colors.textPrimary,
+                          margin: '0 0 4px 0'
+                        }}>
+                          {bloque.horaInicio} - {bloque.horaFin}
+                        </p>
+                        <p style={{
+                          fontSize: '12px',
+                          color: bloque.disponible ? colorBase : colors.danger,
+                          margin: 0,
+                          fontWeight: '500'
+                        }}>
+                          {bloque.disponible ? '✓ Disponible' : '✗ No disponible'}
+                        </p>
+                        <p style={{
+                          fontSize: '11px',
+                          color: colors.textTertiary,
+                          margin: '4px 0 0 0'
+                        }}>
+                          {esTeortica ? '📚 Teórica' : '🚗 Práctica'}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
 
             <Button

@@ -23,7 +23,7 @@ export const generarClasesOnlineService = async (profesorId) => {
     const lunesProxStr = String(lunesProximo.getFullYear()).concat('-', String(lunesProximo.getMonth() + 1).padStart(2, '0'), '-', String(lunesProximo.getDate()).padStart(2, '0'));
 
     const disponibilidades = await AppDataSource.query(
-      `SELECT * FROM disponibilidades
+      `SELECT * FROM disponibilidades_profesores
        WHERE "profesorId" = $1 AND disponible = true AND fecha >= $2 AND fecha < $3
        ORDER BY fecha ASC, "diaSemana" ASC, "horaInicio" ASC`,
       [profesorId, lunesStr, lunesProxStr]

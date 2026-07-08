@@ -103,6 +103,7 @@ export const generarBloquesDisponibilidad = async (
             horaInicio: inicio,
             horaFin: fin,
             disponible: true,
+            tipoDisponibilidad: "teorica",
           });
 
           horaActual += duracionClaseMinutos + breakMinutos;
@@ -160,11 +161,14 @@ export const obtenerDisponibilidadesPorProfesor = async (profesorId) => {
 /**
  * Actualizar disponibilidad de un bloque específico
  */
-export const actualizarDisponibilidad = async (id, disponible, fecha = null) => {
+export const actualizarDisponibilidad = async (id, disponible, fecha = null, tipoDisponibilidad = null) => {
   try {
     const updateData = { disponible, updatedAt: new Date() };
     if (fecha) {
       updateData.fecha = fecha;
+    }
+    if (tipoDisponibilidad) {
+      updateData.tipoDisponibilidad = tipoDisponibilidad;
     }
 
     const resultado = await disponibilidadRepository.update(

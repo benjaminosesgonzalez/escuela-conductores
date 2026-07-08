@@ -107,7 +107,7 @@ export const actualizarDisponibilidadBloque = async (req, res) => {
     // Obtener el bloque para saber a qué profesor pertenece
     const { AppDataSource } = await import("../config/configDb.js");
     const bloque = await AppDataSource.query(
-      `SELECT "profesorId" FROM disponibilidades WHERE id = $1`,
+      `SELECT "profesorId" FROM disponibilidades_profesores WHERE id = $1`,
       [bloqueId]
     );
 
@@ -145,7 +145,7 @@ export const actualizarDisponibilidadBloque = async (req, res) => {
  * Actualizar múltiples disponibilidades
  * Soporta dos formatos:
  * 1. { ids: [1,2,3], disponible: true } - actualiza todos con el mismo estado
- * 2. { bloques: [{id: 1, disponible: true}, {id: 2, disponible: false}] } - estados individuales
+ * 2. { bloques: [{id: 1, disponible: true, tipoDisponibilidad: 'teorica'}, ...] } - estados individuales
  * Regenera automáticamente las clases online del profesor
  */
 export const actualizarMultiples = async (req, res) => {
@@ -164,7 +164,7 @@ export const actualizarMultiples = async (req, res) => {
 
       // Obtener profesorId
       const bloqueInfo = await AppDataSource.query(
-        `SELECT "profesorId" FROM disponibilidades WHERE id = $1 LIMIT 1`,
+        `SELECT "profesorId" FROM disponibilidades_profesores WHERE id = $1 LIMIT 1`,
         [idsAActualizar[0]]
       );
       if (bloqueInfo.length > 0) {
@@ -173,7 +173,7 @@ export const actualizarMultiples = async (req, res) => {
 
       // Actualizar cada bloque con su estado correspondiente
       for (const bloque of bloques) {
-        await actualizarDisponibilidad(bloque.id, bloque.disponible, bloque.fecha);
+        await actualizarDisponibilidad(bloque.id, bloque.disponible, bloque.fecha, bloque.tipoDisponibilidad);
       }
 
       // Regenerar clases si tenemos profesorId
@@ -200,7 +200,7 @@ export const actualizarMultiples = async (req, res) => {
 
     // Obtener profesorId
     const bloqueInfo = await AppDataSource.query(
-      `SELECT "profesorId" FROM disponibilidades WHERE id = $1 LIMIT 1`,
+      `SELECT "profesorId" FROM disponibilidades_profesores WHERE id = $1 LIMIT 1`,
       [ids[0]]
     );
     if (bloqueInfo.length > 0) {

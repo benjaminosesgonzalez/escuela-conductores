@@ -26,7 +26,7 @@ export const regenerarBloquesProfesor = async (profesorId) => {
 
     // Eliminar TODOS los bloques existentes para regenerar completamente
     const bloquesAntiguos = await AppDataSource.query(
-      `DELETE FROM disponibilidades
+      `DELETE FROM disponibilidades_profesores
        WHERE "profesorId" = $1`,
       [profesorId]
     );
