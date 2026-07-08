@@ -58,12 +58,7 @@ router.delete(
 router.post("/preferencia", authMiddleware, elegirPlanPreferencia);
 
 // POST /api/alumnos/matricular
-router.post(
-  "/matricular",
-  authMiddleware,
-  isAdminOrSecretaria,
-  oficializarMatricula,
-);
+router.post("/matricular", authMiddleware, oficializarMatricula);
 
 //ruta para asignar sedes masivamente a alumnos POST /api/alumnos/sede-alumno
 router.put(

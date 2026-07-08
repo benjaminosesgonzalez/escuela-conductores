@@ -286,8 +286,8 @@ const PlanesView = () => {
       <Card
         title={
           editandoId
-            ? "📝 Editar Plan de Conducción"
-            : "🚀 Crear Nuevo Plan de Conducción"
+            ? "Editar Plan de Conducción"
+            : "Crear Nuevo Plan de Conducción"
         }
         icon={Layers}
       >

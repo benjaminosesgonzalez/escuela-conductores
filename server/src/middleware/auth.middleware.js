@@ -34,7 +34,7 @@ export function authMiddleware(req, res, next) {
 
 export function isAdmin(req, res, next) {
   try {
-    if (req.user && req.user.rol === "administrador") {
+    if (req.user && req.user.rol === "administracion") {
       next();
     } else {
       const rolEncontrado = req.user ? req.user.rol : "Ninguno";
@@ -68,8 +68,9 @@ export const isAdminOrSecretaria = (req, res, next) => {
   if (req.user && rolesPermitidos.includes(req.user.rol)) {
     next();
   } else {
-    return res
-      .status(403)
-      .json({ success: false, message: "Acceso restringido a Staff únicamente" });
+    return res.status(403).json({
+      success: false,
+      message: "Acceso restringido a Staff únicamente",
+    });
   }
 };
