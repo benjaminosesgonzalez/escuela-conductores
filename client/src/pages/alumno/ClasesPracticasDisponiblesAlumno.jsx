@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { authService } from "../../services/authService";
 import "./ClasesOnlineDisponiblesAlumno.css";
 
-const ClasesOnlineDisponiblesAlumno = ({ onDesinscripcion }) => {
+const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
   const [clases, setClases] = useState([]);
   const [semanaActual, setSemanaActual] = useState(0);
   const [inscripciones, setInscripciones] = useState(new Set());
@@ -136,7 +136,7 @@ const ClasesOnlineDisponiblesAlumno = ({ onDesinscripcion }) => {
   const claseFiltradas = clases.filter((c) => {
     const coincideProfesor = !filtroProfesor ||
       c.nombreProfesor?.toLowerCase().includes(filtroProfesor.toLowerCase());
-    const coincideTipo = (c.tipoDisponibilidad || 'teorica') === 'teorica';
+    const coincideTipo = c.tipoDisponibilidad === 'practica';
     return coincideProfesor && coincideTipo;
   });
 
@@ -167,7 +167,7 @@ const ClasesOnlineDisponiblesAlumno = ({ onDesinscripcion }) => {
   return (
     <div className="clases-online-disponibles-container">
       <div className="header-clases">
-        <h2>📚 Clases Online Disponibles</h2>
+        <h2>🚗 Reservar Clase Práctica</h2>
         <div className="controles-semana">
           <button
             onClick={() => setSemanaActual(Math.max(0, semanaActual - 1))}
@@ -280,4 +280,4 @@ const ClasesOnlineDisponiblesAlumno = ({ onDesinscripcion }) => {
   );
 };
 
-export default ClasesOnlineDisponiblesAlumno;
+export default ClasesPracticasDisponiblesAlumno;

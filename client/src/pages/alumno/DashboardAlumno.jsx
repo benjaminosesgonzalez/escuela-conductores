@@ -6,6 +6,7 @@ import { colors, spacing } from '../../theme/index.js';
 import { authService } from '../../services/authService.js';
 import MisClasesAlumno from './MisClasesAlumno.jsx';
 import ClasesOnlineDisponiblesAlumno from './ClasesOnlineDisponiblesAlumno.jsx';
+import ClasesPracticasDisponiblesAlumno from './ClasesPracticasDisponiblesAlumno.jsx';
 
 const DashboardAlumno = () => {
   const [activeTab, setActiveTab] = useState('inicio');
@@ -198,6 +199,11 @@ const DashboardAlumno = () => {
       {/* RESERVAR CLASES ONLINE TAB */}
       {activeTab === 'clasesOnlineDisponibles' && (
         <ClasesOnlineDisponiblesAlumno onDesinscripcion={handleDesinscripcion} />
+      )}
+
+      {/* RESERVAR CLASE PRACTICA TAB */}
+      {activeTab === 'clasesPracticasDisponibles' && (
+        <ClasesPracticasDisponiblesAlumno onDesinscripcion={handleDesinscripcion} />
       )}
 
     </AlumnoLayout>
