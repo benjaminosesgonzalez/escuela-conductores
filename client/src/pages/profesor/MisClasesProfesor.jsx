@@ -564,10 +564,9 @@ const MisClasesProfesor = () => {
               gap: spacing.gap.normal,
               marginBottom: spacing.margin.xlarge
             }}>
-              {bloquesDelDia
-                .filter(bloque => bloque.tipoDisponibilidad === tipoDisponibilidad)
-                .map(bloque => {
-                  const esTeortica = bloque.tipoDisponibilidad === 'teorica';
+              {bloquesDelDia.map(bloque => {
+                  const bloqueType = bloque.tipoDisponibilidad || 'teorica';
+                  const esTeortica = bloqueType === 'teorica';
                   const colorBase = esTeortica ? '#22c55e' : '#a855f7';
                   const bgLight = esTeortica ? '#f0fdf4' : '#faf5ff';
                   const bgCheck = esTeortica ? '#dcfce7' : '#e9d5ff';
