@@ -8,34 +8,25 @@ import {
   asignarSedeMasivaPorIdsService,
   getAlumnosService,
   resetPasswordAlumnoService,
-  eliminarAlumnosPorIdsService,
+  eliminarAlumnosPorIdsService
 } from "../services/alumno.service.js";
 
 // Matricular nuevo alumno (por secretaria)
 export async function matricularNuevoAlumno(req, res) {
   try {
-    const {
-      email,
-      nombre,
-      rut,
-      telefono,
-      sexo,
-      comuna,
-      sede,
-      id_plan_matriculado,
-    } = req.body;
+    const { email, nombre, rut, telefono, sexo, comuna, sede, id_plan_matriculado } = req.body;
 
     // 1. Quitamos 'password' de la validación estricta
     if (!email || !nombre || !rut) {
       return res.status(400).json({
         success: false,
-        message: "Email, nombre y RUT son obligatorios.",
+        message: "Email, nombre y RUT son obligatorios."
       });
     }
 
     // 2. Generar contraseña temporal: Últimos 5 dígitos del RUT
     // Limpiamos el RUT de puntos y guiones para evitar inconsistencias
-    const rutLimpio = rut.replace(/[^0-9kK]/g, "");
+    const rutLimpio = rut.replace(/[^0-9kK]/g, '');
     const defaultPassword = rutLimpio.slice(-5);
 
     // 3. Enviamos el payload completo al servicio, incluyendo la contraseña generada
@@ -48,32 +39,30 @@ export async function matricularNuevoAlumno(req, res) {
       sexo,
       comuna,
       sede,
-      id_plan_matriculado,
+      id_plan_matriculado
     });
 
     res.status(201).json({
       success: true,
       message: `Alumno matriculado correctamente. La clave temporal es: ${defaultPassword}`,
-      data: alumno,
+      data: alumno
     });
   } catch (error) {
     console.error("Error al registrar alumno:", error);
-
+    
     // Captura específica de errores de duplicidad de PostgreSQL (Unique Constraint)
-    if (error.code === "23505") {
-      const campoDuplicado = error.detail.includes("email")
-        ? "correo electrónico"
-        : "RUT";
+    if (error.code === '23505') {
+      const campoDuplicado = error.detail.includes('email') ? 'correo electrónico' : 'RUT';
       return res.status(400).json({
         success: false,
-        message: `El ${campoDuplicado} ingresado ya se encuentra registrado en el sistema.`,
+        message: `El ${campoDuplicado} ingresado ya se encuentra registrado en el sistema.`
       });
     }
 
     res.status(500).json({
       success: false,
       message: "Error interno al registrar alumno.",
-      error: error.message,
+      error: error.message
     });
   }
 }
@@ -85,11 +74,7 @@ export async function getAlumnos(req, res) {
     res.status(200).json({ success: true, data: alumnos });
   } catch (error) {
     console.error("Error al obtener alumnos:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error al obtener alumnos.",
-      error: error.message,
-    });
+    res.status(500).json({ success: false, message: "Error al obtener alumnos.", error: error.message });
   }
 }
 
@@ -99,29 +84,26 @@ export async function editarAlumno(req, res) {
     const { id } = req.params;
     const datosAEditar = req.body;
 
-    const alumnoActualizado = await editarAlumnoService(
-      parseInt(id),
-      datosAEditar,
-    );
+    const alumnoActualizado = await editarAlumnoService(parseInt(id), datosAEditar);
 
     if (!alumnoActualizado) {
       return res.status(404).json({
         success: false,
-        message: "Alumno no encontrado.",
+        message: "Alumno no encontrado."
       });
     }
 
     res.status(200).json({
       success: true,
       message: "Alumno actualizado correctamente.",
-      data: alumnoActualizado,
+      data: alumnoActualizado
     });
   } catch (error) {
     console.error("Error al editar alumno:", error);
     res.status(500).json({
       success: false,
       message: "Error al editar alumno.",
-      error: error.message,
+      error: error.message
     });
   }
 }
@@ -129,36 +111,26 @@ export async function editarAlumno(req, res) {
 export async function elegirPlanPreferencia(req, res) {
   try {
     const idUsuario = req.user.sub;
-
     const { id_plan } = req.body;
 
     const alumno = await seleccionarPlanInteresService(idUsuario, id_plan);
-
     if (!alumno) {
       return res
-
         .status(404)
-
         .json({ message: "No se encontró el perfil de alumno." });
     }
 
     res
-
       .status(200)
-
       .json({
         message: "Preferencia de plan guardada correctamente.",
-
         data: alumno,
       });
   } catch (error) {
     res
-
       .status(500)
-
       .json({
         message: "Error al seleccionar preferencia.",
-
         error: error.message,
       });
   }
@@ -166,136 +138,63 @@ export async function elegirPlanPreferencia(req, res) {
 
 export async function oficializarMatricula(req, res) {
   try {
-    const {
-      id_alumno,
-      idAlumno,
-      alumnoId,
-      idUsuario,
-      id_plan_definitivo,
-      id_plan,
-      idPlan,
-    } = req.body;
+    const { id_alumno, id_plan_definitivo } = req.body;
 
-    // 1. Rescatamos el ID de donde sea que venga (body o token)
-    const alumnoIdCrudo =
-      id_alumno ||
-      idAlumno ||
-      alumnoId ||
-      idUsuario ||
-      req.user?.sub ||
-      req.user?.id;
-    const planIdCrudo = id_plan_definitivo || id_plan || idPlan;
-
-    // 2. 🔥 IMPRIMIR AUDITORÍA EN TU TERMINAL (Revisa los logs de tu consola Node.js)
-    console.log("=================================================");
-    console.log("🕵️‍♂️ AUDITORÍA DE MATRÍCULA ENTRANTE:");
-    console.log(
-      "-> Alumno ID recibido (Crudo):",
-      alumnoIdCrudo,
-      "Tipo:",
-      typeof alumnoIdCrudo,
-    );
-    console.log(
-      "-> Plan ID recibido (Crudo):",
-      planIdCrudo,
-      "Tipo:",
-      typeof planIdCrudo,
-    );
-    console.log("-> Datos en req.user (Token):", req.user);
-    console.log("=================================================");
-
-    if (!alumnoIdCrudo || !planIdCrudo) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "El ID del alumno y el ID del plan definitivo son obligatorios.",
-      });
-    }
-
-    // 3. 🔄 FORZAMOS NUMBER() EN AMBOS: Rompe el bloqueo de tipos de datos en PostgreSQL
     const matriculado = await matricularAlumnoService(
-      Number(alumnoIdCrudo),
-      Number(planIdCrudo),
+      id_alumno,
+      id_plan_definitivo,
     );
-
     if (!matriculado) {
-      return res.status(404).json({
-        success: false,
-        message: `Alumno no encontrado en los registros. Intentaste buscar el ID numérico: ${Number(alumnoIdCrudo)}`,
-      });
+      return res.status(404).json({ message: "Alumno no encontrado." });
     }
 
-    res.status(200).json({
-      success: true,
-      message: "Alumno matriculado exitosamente.",
-      data: matriculado,
-    });
+    res
+      .status(200)
+      .json({ message: "Alumno matriculado exitosamente.", data: matriculado });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error al procesar la matrícula.",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .json({
+        message: "Error al procesar la matrícula.",
+        error: error.message,
+      });
   }
 }
 
 // Auto-registro de alumno (registro público)
-
 export async function autoRegistroAlumno(req, res) {
   try {
-    const {
-      email,
-      password,
-      nombre,
-      rut,
-      telefono,
-      sexo,
-      comuna,
-      id_plan_interes,
-    } = req.body;
+    const { email, password, nombre, rut, telefono, sexo, comuna, id_plan_interes } = req.body;
 
     if (!email || !password || !nombre || !rut) {
       return res.status(400).json({
         success: false,
-
-        message: "Email, contraseña, nombre y RUT son obligatorios.",
+        message: "Email, contraseña, nombre y RUT son obligatorios."
       });
     }
 
     const alumno = await autoRegistroAlumnoService({
       email,
-
       password,
-
       nombre,
-
       rut,
-
       telefono,
-
       sexo,
-
       comuna,
-
-      id_plan_interes,
+      id_plan_interes
     });
 
     res.status(201).json({
       success: true,
-
       message: "Alumno registrado correctamente.",
-
-      data: alumno,
+      data: alumno
     });
   } catch (error) {
     console.error("Error en auto-registro:", error);
-
     res.status(500).json({
       success: false,
-
       message: "Error en el auto-registro.",
-
-      error: error.message,
+      error: error.message
     });
   }
 }
@@ -311,27 +210,24 @@ export async function asignarSedeMasiva(req, res) {
     if (!alumnosIds || !Array.isArray(alumnosIds) || !idSede) {
       return res.status(400).json({
         success: false,
-        message: "Faltan datos: alumnosIds (array) e idSede son obligatorios.",
+        message: "Faltan datos: alumnosIds (array) e idSede son obligatorios."
       });
     }
 
     // 3. Pasamos los datos validados a tu servicio
-    const cantidadActualizada = await asignarSedeMasivaPorIdsService(
-      alumnosIds,
-      idSede,
-    );
+    const cantidadActualizada = await asignarSedeMasivaPorIdsService(alumnosIds, idSede);
 
     res.status(200).json({
       success: true,
       message: `Sede asignada correctamente a ${cantidadActualizada} alumno(s).`,
-      data: { cantidadActualizada },
+      data: { cantidadActualizada }
     });
   } catch (error) {
     console.error("Error al asignar sede masiva:", error);
     res.status(500).json({
       success: false,
       message: "Error interno al asignar sede.",
-      error: error.message,
+      error: error.message
     });
   }
 }
@@ -340,26 +236,23 @@ export async function asignarSedeMasiva(req, res) {
 export async function resetPasswordAlumno(req, res) {
   try {
     const { id } = req.params;
-
+    
     // Delegamos toda la carga pesada a la capa de servicio
     const nuevaPassword = await resetPasswordAlumnoService(id);
 
     // Si el servicio devuelve null, el alumno no existía
     if (!nuevaPassword) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Alumno no encontrado." });
+      return res.status(404).json({ success: false, message: "Alumno no encontrado." });
     }
 
-    return res.status(200).json({
-      success: true,
-      message: `Contraseña reiniciada exitosamente a: ${nuevaPassword}`,
+    return res.status(200).json({ 
+      success: true, 
+      message: `Contraseña reiniciada exitosamente a: ${nuevaPassword}` 
     });
+
   } catch (error) {
     console.error("Error al reiniciar contraseña:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Error interno del servidor" });
+    return res.status(500).json({ success: false, message: "Error interno del servidor" });
   }
 }
 
@@ -368,22 +261,17 @@ export async function eliminarAlumnosMasivo(req, res) {
     const alumnosIds = req.body.alumnosIds || req.body.alumnos_ids;
 
     if (!alumnosIds || !Array.isArray(alumnosIds) || alumnosIds.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Debe proporcionar un array de IDs de alumnos.",
-      });
+      return res.status(400).json({ success: false, message: "Debe proporcionar un array de IDs de alumnos." });
     }
 
     const cantidadEliminada = await eliminarAlumnosPorIdsService(alumnosIds);
 
     res.status(200).json({
       success: true,
-      message: `Se han eliminado ${cantidadEliminada} alumno(s) correctamente.`,
+      message: `Se han eliminado ${cantidadEliminada} alumno(s) correctamente.`
     });
   } catch (error) {
     console.error("Error al eliminar alumnos:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Error interno al eliminar alumnos." });
+    res.status(500).json({ success: false, message: "Error interno al eliminar alumnos." });
   }
 }
