@@ -13,25 +13,28 @@ const LandingPage = () => {
 
   // 1. Cargar los planes reales desde el Backend
   useEffect(() => {
-    fetch(`${backendUrl}/planes`)
+    fetch("http://localhost:5000/api/plans")
       .then((res) => res.json())
       .then((data) => {
-        // Asumiendo que tu backend responde { success: true, data: [...] } o el arreglo directo
-        const listaPlanes = data.data || data;
-        if (Array.isArray(listaPlanes)) {
-          setPlanes(listaPlanes);
-          // Seleccionamos el primer o segundo plan por defecto para mantener el diseño resaltado
-          if (listaPlanes.length > 0) {
-            setSelectedPlan(
-              listaPlanes[Math.min(1, listaPlanes.length - 1)].id,
-            );
-          }
+        // 🔥 ESTE LOG TE DIRÁ SI LA LANDING LOGRA VER LA DATA
+        console.log("🔵 LANDING FETCH PLANES - RESPUESTA DEL SERVIDOR:", data);
+
+        let arregloPlanes = [];
+
+        if (data && Array.isArray(data.data)) {
+          arregloPlanes = data.data;
+        } else if (Array.isArray(data)) {
+          arregloPlanes = data;
         }
+
+        const planesLimpios = arregloPlanes.filter(
+          (p) => p !== null && p !== undefined,
+        );
+        setPlanes(planesLimpios);
       })
       .catch((err) =>
-        console.error("Error al obtener planes del backend:", err),
-      )
-      .finally(() => setCargando(false));
+        console.error("❌ Error cargando planes en la landing:", err),
+      );
   }, []);
 
   // 2. Lógica de Redirección Inteligente al seleccionar un Plan
