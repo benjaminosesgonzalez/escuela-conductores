@@ -93,6 +93,7 @@ export const obtenerDisponibilidadesPorDiaController = async (req, res) => {
 
 /**
  * Actualizar disponibilidad de un bloque
+ * Regenera automáticamente las clases online del profesor
  */
 export const actualizarDisponibilidadBloque = async (req, res) => {
   try {
@@ -103,10 +104,34 @@ export const actualizarDisponibilidadBloque = async (req, res) => {
       return sendResponse(res, 400, false, "El parámetro 'disponible' debe ser boolean");
     }
 
+    // Obtener el bloque para saber a qué profesor pertenece
+    const { AppDataSource } = await import("../config/configDb.js");
+    const bloque = await AppDataSource.query(
+      `SELECT "profesorId" FROM disponibilidades WHERE id = $1`,
+      [bloqueId]
+    );
+
+    if (bloque.length === 0) {
+      return sendResponse(res, 404, false, "Bloque no encontrado");
+    }
+
+    const profesorId = bloque[0].profesorId;
+
+    // Actualizar disponibilidad
     const actualizado = await actualizarDisponibilidad(parseInt(bloqueId), disponible);
 
     if (actualizado) {
-      sendResponse(res, 200, true, "Disponibilidad actualizada", { id: bloqueId, disponible });
+      // Regenerar automáticamente las clases online del profesor
+      try {
+        const { generarClasesOnlineService } = await import("../services/clase-online.service.js");
+        await generarClasesOnlineService(profesorId);
+        console.log(`✅ Clases regeneradas automáticamente para profesor ${profesorId}`);
+      } catch (claseError) {
+        console.error("⚠️ Error regenerando clases:", claseError.message);
+        // No fallar la respuesta si hay error en la regeneración
+      }
+
+      sendResponse(res, 200, true, "Disponibilidad actualizada y clases regeneradas", { id: bloqueId, disponible });
     } else {
       sendResponse(res, 404, false, "Bloque no encontrado");
     }
@@ -121,21 +146,47 @@ export const actualizarDisponibilidadBloque = async (req, res) => {
  * Soporta dos formatos:
  * 1. { ids: [1,2,3], disponible: true } - actualiza todos con el mismo estado
  * 2. { bloques: [{id: 1, disponible: true}, {id: 2, disponible: false}] } - estados individuales
+ * Regenera automáticamente las clases online del profesor
  */
 export const actualizarMultiples = async (req, res) => {
   try {
     const { ids, disponible, bloques } = req.body;
+    const { AppDataSource } = await import("../config/configDb.js");
+    const { generarClasesOnlineService } = await import("../services/clase-online.service.js");
+
+    // Obtener profesorId de los bloques a actualizar
+    let idsAActualizar = [];
+    let profesorId = null;
 
     // Formato 2: bloques con estados individuales
     if (bloques && Array.isArray(bloques) && bloques.length > 0) {
-      const bloqueIds = bloques.map(b => b.id);
+      idsAActualizar = bloques.map(b => b.id);
+
+      // Obtener profesorId
+      const bloqueInfo = await AppDataSource.query(
+        `SELECT "profesorId" FROM disponibilidades WHERE id = $1 LIMIT 1`,
+        [idsAActualizar[0]]
+      );
+      if (bloqueInfo.length > 0) {
+        profesorId = bloqueInfo[0].profesorId;
+      }
 
       // Actualizar cada bloque con su estado correspondiente
       for (const bloque of bloques) {
         await actualizarDisponibilidad(bloque.id, bloque.disponible, bloque.fecha);
       }
 
-      return sendResponse(res, 200, true, "Disponibilidades actualizadas", { cantidad: bloques.length });
+      // Regenerar clases si tenemos profesorId
+      if (profesorId) {
+        try {
+          await generarClasesOnlineService(profesorId);
+          console.log(`✅ Clases regeneradas automáticamente para profesor ${profesorId}`);
+        } catch (claseError) {
+          console.error("⚠️ Error regenerando clases:", claseError.message);
+        }
+      }
+
+      return sendResponse(res, 200, true, "Disponibilidades actualizadas y clases regeneradas", { cantidad: bloques.length });
     }
 
     // Formato 1: ids con un único estado
@@ -147,10 +198,29 @@ export const actualizarMultiples = async (req, res) => {
       return sendResponse(res, 400, false, "El parámetro 'disponible' debe ser boolean");
     }
 
+    // Obtener profesorId
+    const bloqueInfo = await AppDataSource.query(
+      `SELECT "profesorId" FROM disponibilidades WHERE id = $1 LIMIT 1`,
+      [ids[0]]
+    );
+    if (bloqueInfo.length > 0) {
+      profesorId = bloqueInfo[0].profesorId;
+    }
+
     const actualizado = await actualizarMultiplesDisponibilidades(ids, disponible);
 
     if (actualizado) {
-      sendResponse(res, 200, true, "Disponibilidades actualizadas", { cantidad: ids.length });
+      // Regenerar clases si tenemos profesorId
+      if (profesorId) {
+        try {
+          await generarClasesOnlineService(profesorId);
+          console.log(`✅ Clases regeneradas automáticamente para profesor ${profesorId}`);
+        } catch (claseError) {
+          console.error("⚠️ Error regenerando clases:", claseError.message);
+        }
+      }
+
+      sendResponse(res, 200, true, "Disponibilidades actualizadas y clases regeneradas", { cantidad: ids.length });
     } else {
       sendResponse(res, 500, false, "No se pudieron actualizar los registros");
     }

@@ -8,10 +8,25 @@ export const generarClasesOnlineService = async (profesorId) => {
   try {
     console.log(`🎓 Generando clases online para profesor: ${profesorId}`);
 
-    // Obtener solo disponibilidades donde disponible = true (clases que SÍ se van a hacer)
+    // Obtener disponibilidades donde disponible = true SOLO PARA LAS PRIMERAS 2 SEMANAS
+    // (aunque el profesor puede configurar hasta 4 semanas)
+    const hoy = new Date();
+    const diaSemana = hoy.getDay();
+    const diasAlLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+    const lunesActual = new Date(hoy);
+    lunesActual.setDate(hoy.getDate() + diasAlLunes);
+
+    const lunesProximo = new Date(lunesActual);
+    lunesProximo.setDate(lunesActual.getDate() + 14); // 2 semanas = 14 días
+
+    const lunesStr = String(lunesActual.getFullYear()).concat('-', String(lunesActual.getMonth() + 1).padStart(2, '0'), '-', String(lunesActual.getDate()).padStart(2, '0'));
+    const lunesProxStr = String(lunesProximo.getFullYear()).concat('-', String(lunesProximo.getMonth() + 1).padStart(2, '0'), '-', String(lunesProximo.getDate()).padStart(2, '0'));
+
     const disponibilidades = await AppDataSource.query(
-      `SELECT * FROM disponibilidades WHERE "profesorId" = $1 AND disponible = true ORDER BY fecha ASC, "diaSemana" ASC, "horaInicio" ASC`,
-      [profesorId]
+      `SELECT * FROM disponibilidades
+       WHERE "profesorId" = $1 AND disponible = true AND fecha >= $2 AND fecha < $3
+       ORDER BY fecha ASC, "diaSemana" ASC, "horaInicio" ASC`,
+      [profesorId, lunesStr, lunesProxStr]
     );
 
     console.log(`📅 Disponibilidades disponibles encontradas: ${disponibilidades.length}`);
@@ -142,7 +157,7 @@ export const obtenerClasesOnlineProfesor = async (profesorId) => {
       },
     });
 
-    // Agrupar por día de la semana
+    // Agrupar por día de la semana y normalizar fechas a YYYY-MM-DD (local, no UTC)
     const agrupado = {
       lunes: [],
       martes: [],
@@ -153,7 +168,24 @@ export const obtenerClasesOnlineProfesor = async (profesorId) => {
 
     clases.forEach((clase) => {
       if (agrupado[clase.diaSemana]) {
-        agrupado[clase.diaSemana].push(clase);
+        // Convertir fecha a string YYYY-MM-DD (local, no UTC)
+        let fechaStr = clase.fecha;
+        if (clase.fecha && typeof clase.fecha !== 'string') {
+          // Si es objeto Date, convertir a string local
+          const fecha = new Date(clase.fecha);
+          const year = fecha.getFullYear();
+          const month = String(fecha.getMonth() + 1).padStart(2, '0');
+          const day = String(fecha.getDate()).padStart(2, '0');
+          fechaStr = `${year}-${month}-${day}`;
+        } else if (typeof clase.fecha === 'string' && clase.fecha.includes('T')) {
+          // Si es ISO string, extraer la parte YYYY-MM-DD
+          fechaStr = clase.fecha.split('T')[0];
+        }
+
+        agrupado[clase.diaSemana].push({
+          ...clase,
+          fecha: fechaStr
+        });
       }
     });
 
@@ -194,7 +226,7 @@ export const obtenerMisClasesFuturas = async (profesorId) => {
       [profesorId]
     );
 
-    // Agrupar por día de la semana
+    // Agrupar por día de la semana y normalizar fechas a YYYY-MM-DD (local, no UTC)
     const agrupado = {
       lunes: [],
       martes: [],
@@ -205,7 +237,24 @@ export const obtenerMisClasesFuturas = async (profesorId) => {
 
     clases.forEach((clase) => {
       if (agrupado[clase.diaSemana]) {
-        agrupado[clase.diaSemana].push(clase);
+        // Convertir fecha a string YYYY-MM-DD (local, no UTC)
+        let fechaStr = clase.fecha;
+        if (clase.fecha && typeof clase.fecha !== 'string') {
+          // Si es objeto Date, convertir a string local
+          const fecha = new Date(clase.fecha);
+          const year = fecha.getFullYear();
+          const month = String(fecha.getMonth() + 1).padStart(2, '0');
+          const day = String(fecha.getDate()).padStart(2, '0');
+          fechaStr = `${year}-${month}-${day}`;
+        } else if (typeof clase.fecha === 'string' && clase.fecha.includes('T')) {
+          // Si es ISO string, extraer la parte YYYY-MM-DD
+          fechaStr = clase.fecha.split('T')[0];
+        }
+
+        agrupado[clase.diaSemana].push({
+          ...clase,
+          fecha: fechaStr
+        });
       }
     });
 

@@ -159,6 +159,12 @@ export const obtenerClasesOnlineDisponibles = async (semanaActual = 0) => {
     const fechaInicio = lunesStr(semanaInicio);
     const fechaFin = lunesStr(semanaFin);
 
+    // Obtener la hora actual del servidor para filtrar clases pasadas
+    const ahora = new Date();
+    const horaActual = String(ahora.getHours()).padStart(2, '0') + ':' +
+                       String(ahora.getMinutes()).padStart(2, '0');
+    const fechaActual = lunesStr(ahora);
+
     const clases = await AppDataSource.query(
       `SELECT
         co.id,
@@ -178,8 +184,9 @@ export const obtenerClasesOnlineDisponibles = async (semanaActual = 0) => {
       WHERE co.estado = 'activa'
         AND co.fecha >= $1
         AND co.fecha <= $2
+        AND (co.fecha > $3 OR (co.fecha = $3 AND co."horaFin" > $4))
       ORDER BY co.fecha, co."horaInicio"`,
-      [fechaInicio, fechaFin]
+      [fechaInicio, fechaFin, fechaActual, horaActual]
     );
 
     return {

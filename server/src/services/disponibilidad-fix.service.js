@@ -24,14 +24,14 @@ export const regenerarBloquesProfesor = async (profesorId) => {
 
     const tipoContrato = profesor[0].tipo_contrato || "full_time";
 
-    // Eliminar bloques existentes sin fecha (bloques antiguos)
+    // Eliminar TODOS los bloques existentes para regenerar completamente
     const bloquesAntiguos = await AppDataSource.query(
       `DELETE FROM disponibilidades
-       WHERE "profesorId" = $1 AND fecha IS NULL`,
+       WHERE "profesorId" = $1`,
       [profesorId]
     );
 
-    console.log(`🗑️ Bloques antiguos eliminados: ${bloquesAntiguos[1]}`);
+    console.log(`🗑️ Todos los bloques eliminados: ${bloquesAntiguos[1]}`);
 
     // Generar nuevos bloques para 2 semanas
     const result = await generarBloquesDisponibilidad(

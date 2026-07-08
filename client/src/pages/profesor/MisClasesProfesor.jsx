@@ -69,10 +69,16 @@ const MisClasesProfesor = () => {
       const data = await response.json();
 
       if (data.success) {
-        // Filtrar bloques por la semana actual
+        // Filtrar bloques por la semana actual usando formato LOCAL (no UTC)
         const { lunes, viernes } = obtenerFechasDelaSemana(semanaActual);
-        const lunesStr = lunes.toISOString().split('T')[0];
-        const viernesStr = viernes.toISOString().split('T')[0];
+
+        const lunesStr = String(lunes.getFullYear()) + '-' +
+                         String(lunes.getMonth() + 1).padStart(2, '0') + '-' +
+                         String(lunes.getDate()).padStart(2, '0');
+        const viernesStr = String(viernes.getFullYear()) + '-' +
+                           String(viernes.getMonth() + 1).padStart(2, '0') + '-' +
+                           String(viernes.getDate()).padStart(2, '0');
+
         const bloquesFiltrados = {};
 
         if (data.data) {
@@ -355,23 +361,23 @@ const MisClasesProfesor = () => {
             </div>
 
             <button
-              onClick={() => setSemanaActual(Math.min(1, semanaActual + 1))}
-              disabled={semanaActual === 1}
+              onClick={() => setSemanaActual(Math.min(3, semanaActual + 1))}
+              disabled={semanaActual === 3}
               style={{
                 padding: spacing.padding.md,
-                backgroundColor: semanaActual === 1 ? colors.borderLight : colors.borderLight,
+                backgroundColor: semanaActual === 3 ? colors.borderLight : colors.borderLight,
                 border: 'none',
                 borderRadius: spacing.radius.md,
-                cursor: semanaActual === 1 ? 'not-allowed' : 'pointer',
+                cursor: semanaActual === 3 ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: semanaActual === 1 ? colors.textTertiary : colors.textPrimary,
+                color: semanaActual === 3 ? colors.textTertiary : colors.textPrimary,
                 transition: 'all 0.2s ease',
-                opacity: semanaActual === 1 ? 0.5 : 1
+                opacity: semanaActual === 3 ? 0.5 : 1
               }}
               onMouseEnter={(e) => {
-                if (semanaActual < 1) {
+                if (semanaActual < 3) {
                   e.currentTarget.style.backgroundColor = colors.border;
                 }
               }}

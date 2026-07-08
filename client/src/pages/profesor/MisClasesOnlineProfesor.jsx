@@ -58,15 +58,38 @@ const MisClasesOnlineProfesor = () => {
       const data = await response.json();
 
       if (data.success) {
-        // Filtrar clases por la semana actual
+        // Filtrar clases por la semana actual Y marcar como expiradas si corresponde
         const { lunes, viernes } = obtenerFechasDelaSemana(semanaActual);
-        const lunesStr = lunes.toISOString().split('T')[0];
-        const viernesStr = viernes.toISOString().split('T')[0];
+
+        // Convertir a YYYY-MM-DD en formato LOCAL (no UTC)
+        const lunesStr = String(lunes.getFullYear()) + '-' +
+                         String(lunes.getMonth() + 1).padStart(2, '0') + '-' +
+                         String(lunes.getDate()).padStart(2, '0');
+        const viernesStr = String(viernes.getFullYear()) + '-' +
+                           String(viernes.getMonth() + 1).padStart(2, '0') + '-' +
+                           String(viernes.getDate()).padStart(2, '0');
+
         const clasesFiltradas = {};
+        const ahora = new Date();
 
         if (data.data) {
           Object.keys(data.data).forEach(dia => {
-            clasesFiltradas[dia] = data.data[dia].filter(clase => {
+            clasesFiltradas[dia] = data.data[dia].map(clase => {
+              // Determinar si la clase está expirada
+              let esExpirada = false;
+              if (clase.fecha) {
+                const [year, month, day] = clase.fecha.split('-');
+                const fechaClase = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                const [horaF, minF] = clase.horaFin.split(':');
+                fechaClase.setHours(parseInt(horaF), parseInt(minF), 0);
+                esExpirada = fechaClase < ahora;
+              }
+
+              return {
+                ...clase,
+                esExpirada
+              };
+            }).filter(clase => {
               if (clase.fecha) {
                 return clase.fecha >= lunesStr && clase.fecha <= viernesStr;
               }
@@ -322,18 +345,37 @@ const MisClasesOnlineProfesor = () => {
                 key={clase.id}
                 style={{
                   padding: spacing.padding.lg,
-                  backgroundColor: '#f8f9ff',
-                  border: `2px solid ${colors.primary}`,
+                  backgroundColor: clase.esExpirada ? '#f5f5f5' : '#f8f9ff',
+                  border: `2px solid ${clase.esExpirada ? '#ccc' : colors.primary}`,
                   borderRadius: spacing.radius.md,
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: spacing.gap.normal
+                  gap: spacing.gap.normal,
+                  opacity: clase.esExpirada ? 0.7 : 1,
+                  position: 'relative'
                 }}
               >
-                <div>
+                {clase.esExpirada && (
+                  <div style={{
+                    position: 'absolute',
+                    top: spacing.padding.md,
+                    right: spacing.padding.md,
+                    backgroundColor: '#ff9800',
+                    color: 'white',
+                    padding: `${spacing.padding.sm} ${spacing.padding.md}`,
+                    borderRadius: spacing.radius.sm,
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    textTransform: 'uppercase'
+                  }}>
+                    Expirada
+                  </div>
+                )}
+
+                <div style={{ paddingRight: clase.esExpirada ? '70px' : '0' }}>
                   <p style={{
                     fontSize: '12px',
-                    color: colors.primary,
+                    color: clase.esExpirada ? '#999' : colors.primary,
                     fontWeight: '600',
                     margin: '0 0 4px 0',
                     textTransform: 'uppercase'
@@ -343,7 +385,7 @@ const MisClasesOnlineProfesor = () => {
                   <p style={{
                     fontSize: '16px',
                     fontWeight: 'bold',
-                    color: colors.textPrimary,
+                    color: clase.esExpirada ? '#999' : colors.textPrimary,
                     margin: 0
                   }}>
                     {clase.nombreTema}
@@ -414,7 +456,8 @@ const MisClasesOnlineProfesor = () => {
                         actualizarLinkZoom(clase.id, linkZoom.trim());
                       }
                     }}
-                    disabled={updatingZoom === clase.id}
+                    disabled={updatingZoom === clase.id || clase.esExpirada}
+                    title={clase.esExpirada ? 'No puedes editar clases expiradas' : ''}
                   >
                     {updatingZoom === clase.id ? 'Actualizando...' : '+ Agregar link Zoom'}
                   </Button>

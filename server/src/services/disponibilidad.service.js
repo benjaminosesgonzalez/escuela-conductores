@@ -82,8 +82,8 @@ export const generarBloquesDisponibilidad = async (
       return `${year}-${month}-${day}`;
     };
 
-    // Generar para semana actual + siguiente (10 días laborales)
-    for (let semana = 0; semana < 2; semana++) {
+    // Generar para 4 semanas (preventiva para el profesor)
+    for (let semana = 0; semana < 4; semana++) {
       for (const dia of diasLaboral) {
         const indice = diasLaboral.indexOf(dia);
         const fecha = new Date(lunesActual);
@@ -114,7 +114,7 @@ export const generarBloquesDisponibilidad = async (
     if (bloques.length > 0) {
       await disponibilidadRepository.insert(bloques);
     }
-    return { success: true, bloques: bloques.length, message: `${bloques.length} bloques generados para 2 semanas` };
+    return { success: true, bloques: bloques.length, message: `${bloques.length} bloques generados para 4 semanas` };
   } catch (error) {
     console.error("Error generando bloques de disponibilidad:", error);
     throw error;
