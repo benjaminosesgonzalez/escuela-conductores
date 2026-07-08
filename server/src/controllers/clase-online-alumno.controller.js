@@ -8,8 +8,8 @@ import {
 
 export const obtenerClasesDisponibles = async (req, res) => {
   try {
-    const { semana = 0 } = req.query;
-    const resultado = await obtenerClasesOnlineDisponibles(parseInt(semana));
+    const { semana = 0, tipo = "teorica" } = req.query;
+    const resultado = await obtenerClasesOnlineDisponibles(parseInt(semana), tipo);
     res.json(resultado);
   } catch (error) {
     console.error("Error en obtenerClasesDisponibles:", error);

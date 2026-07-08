@@ -18,7 +18,7 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
     setLoading(true);
     try {
       const response = await fetch(
-        `/api/clases-online-alumno/disponibles?semana=${semanaActual}`,
+        `/api/clases-online-alumno/disponibles?semana=${semanaActual}&tipo=practica`,
         {
           headers: {
             Authorization: `Bearer ${authService.getToken()}`,

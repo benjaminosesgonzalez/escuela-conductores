@@ -67,12 +67,12 @@ export const generarBloquesDisponibilidad = async (
         horaFinMinutos = 19 * 60 + 45; // 7:45 PM
     }
 
-    // Generar bloques para DOS semanas (semana actual + siguiente)
-    const hoy = new Date();
-    const diaSemana = hoy.getDay();
-    const diasAlLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
-    const lunesActual = new Date(hoy);
-    lunesActual.setDate(hoy.getDate() + diasAlLunes);
+    // Función auxiliar para sumar días a una fecha sin problemas de zona horaria
+    const agregarDias = (fecha, dias) => {
+      const result = new Date(fecha);
+      result.setDate(result.getDate() + dias);
+      return result;
+    };
 
     // Función auxiliar para obtener fecha en formato YYYY-MM-DD sin conversión a UTC
     const obtenerFechaStr = (fecha) => {
@@ -82,12 +82,17 @@ export const generarBloquesDisponibilidad = async (
       return `${year}-${month}-${day}`;
     };
 
+    // Obtener lunes actual de forma segura
+    const hoy = new Date();
+    const diaSemana = hoy.getDay();
+    const diasAlLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+    const lunesActual = agregarDias(hoy, diasAlLunes);
+
     // Generar para 4 semanas (preventiva para el profesor)
     for (let semana = 0; semana < 4; semana++) {
       for (const dia of diasLaboral) {
         const indice = diasLaboral.indexOf(dia);
-        const fecha = new Date(lunesActual);
-        fecha.setDate(lunesActual.getDate() + indice + (semana * 7));
+        const fecha = agregarDias(lunesActual, indice + (semana * 7));
         const fechaStr = obtenerFechaStr(fecha); // YYYY-MM-DD en zona horaria local
 
         let horaActual = horaInicioMinutos;

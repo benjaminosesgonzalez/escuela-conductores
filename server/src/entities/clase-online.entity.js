@@ -59,6 +59,13 @@ export const ClaseOnlineSchema = new EntitySchema({
       length: 20,
       default: "activa", // activa, completada, cancelada
     },
+    tipoDisponibilidad: {
+      type: "varchar",
+      length: 20,
+      enum: ["teorica", "practica"],
+      default: "teorica",
+      nullable: false,
+    },
     createdAt: {
       type: "timestamp",
       createDate: true,

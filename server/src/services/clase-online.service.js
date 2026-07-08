@@ -116,6 +116,7 @@ export const generarClasesOnlineService = async (profesorId) => {
           alumnosAgendados: 0,
           linkZoom: null,
           estado: "activa",
+          tipoDisponibilidad: disp.tipoDisponibilidad || "teorica",
         });
 
         clasesOnline.push(claseOnline);

@@ -134,7 +134,7 @@ export const desinscribirAlumnoDeClaseOnline = async (
   }
 };
 
-export const obtenerClasesOnlineDisponibles = async (semanaActual = 0) => {
+export const obtenerClasesOnlineDisponibles = async (semanaActual = 0, tipoDisponibilidad = "teorica") => {
   try {
     // Calcular fechas de la semana solicitada
     const hoy = new Date();
@@ -178,15 +178,17 @@ export const obtenerClasesOnlineDisponibles = async (semanaActual = 0) => {
         co."capacidadMaxima",
         co."alumnosAgendados",
         co.estado,
+        co."tipoDisponibilidad",
         p.nombre as "nombreProfesor"
       FROM clases_online co
       LEFT JOIN profesores p ON co."profesorId" = p.id
       WHERE co.estado = 'activa'
-        AND co.fecha >= $1
-        AND co.fecha <= $2
-        AND (co.fecha > $3 OR (co.fecha = $3 AND co."horaFin" > $4))
+        AND co."tipoDisponibilidad" = $1
+        AND co.fecha >= $2
+        AND co.fecha <= $3
+        AND (co.fecha > $4 OR (co.fecha = $4 AND co."horaFin" > $5))
       ORDER BY co.fecha, co."horaInicio"`,
-      [fechaInicio, fechaFin, fechaActual, horaActual]
+      [tipoDisponibilidad, fechaInicio, fechaFin, fechaActual, horaActual]
     );
 
     return {
