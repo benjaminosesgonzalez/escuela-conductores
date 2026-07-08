@@ -2,11 +2,57 @@
 import { AppDataSource } from "../config/configDb.js";
 import { Alumno } from "../entities/alumno.entity.js";
 import { User } from "../entities/user.entity.js";
-import { Sede } from "../entities/sede.entity.js";
+import { DisponibilidadAlumno } from "../entities/disponibilidad-alumno.entity.js";
 import bcrypt from "bcrypt";
 import { In } from "typeorm";
+import { Sede } from "../entities/sede.entity.js";
 
+// Función auxiliar para generar bloques de disponibilidad
+const minutosAHora = (minutos) => {
+  const horas = Math.floor(minutos / 60);
+  const mins = minutos % 60;
+  return `${String(horas).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
+};
+
+const generarBloquesAlumnoAutomaticamente = async (queryRunner, alumnoId) => {
+  try {
+    const duracionClaseMinutos = 45;
+    const breakMinutos = 15;
+    const horaInicioMinutos = 9 * 60;
+    const horaFinMinutos = 20 * 60;
+    const diasLaboral = ["lunes", "martes", "miércoles", "jueves", "viernes"];
+
+    const bloques = [];
+
+    for (const dia of diasLaboral) {
+      let horaActual = horaInicioMinutos;
+
+      while (horaActual + duracionClaseMinutos <= horaFinMinutos) {
+        const inicio = minutosAHora(horaActual);
+        const fin = minutosAHora(horaActual + duracionClaseMinutos);
+
+        const disponibilidad = queryRunner.manager.create(DisponibilidadAlumno, {
+          alumnoId,
+          diaSemana: dia,
+          horaInicio: inicio,
+          horaFin: fin,
+          disponible: false
+        });
+
+        bloques.push(disponibilidad);
+        horaActual += duracionClaseMinutos + breakMinutos;
+      }
+    }
+
+    await queryRunner.manager.save(DisponibilidadAlumno, bloques);
+    return bloques.length;
+  } catch (error) {
+    console.error("Error generando bloques automáticos:", error);
+    throw error;
+  }
+  
 const alumnoRepo = AppDataSource.getRepository(Alumno);
+};
 
 export async function matricularNuevoAlumnoService(datosGenerales) {
   const queryRunner = AppDataSource.createQueryRunner();
@@ -55,6 +101,9 @@ export async function matricularNuevoAlumnoService(datosGenerales) {
       estado_matricula: "matriculado",
     });
     const savedAlumno = await queryRunner.manager.save(Alumno, newAlumno);
+
+    // Generar bloques de disponibilidad automáticamente
+    await generarBloquesAlumnoAutomaticamente(queryRunner, savedAlumno.id);
 
     await queryRunner.commitTransaction();
 
@@ -189,6 +238,9 @@ export async function autoRegistroAlumnoService(datosRegistro) {
       estado_matricula: "pendiente",
     });
     const savedAlumno = await queryRunner.manager.save(Alumno, newAlumno);
+
+    // Generar bloques de disponibilidad automáticamente
+    await generarBloquesAlumnoAutomaticamente(queryRunner, savedAlumno.id);
 
     await queryRunner.commitTransaction();
     return savedAlumno;

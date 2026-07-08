@@ -35,6 +35,11 @@ export const Alumno = new EntitySchema({
       length: 15,
       nullable: true,
     },
+    sexo: {
+      type: "varchar",
+      length: 20,
+      nullable: true,
+    },
     comuna: {
       type: "varchar",
       length: 100,
@@ -43,11 +48,6 @@ export const Alumno = new EntitySchema({
     sede: {
       type: "int",
       nullable: true,
-    },
-    sexo: {
-      type: "varchar",
-      length: 20,
-      unique: false
     },
     id_user: {
       type: "int",

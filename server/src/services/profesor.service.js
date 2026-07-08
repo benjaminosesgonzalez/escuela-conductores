@@ -1,9 +1,11 @@
 import { AppDataSource } from "../config/configDb.js";
 import { ProfesorSchema } from "../entities/profesor.entity.js";
-import { In } from "typeorm";
+import { User } from "../entities/user.entity.js";
 import bcrypt from "bcrypt";
+import { In } from "typeorm";
 
 const profRepo = AppDataSource.getRepository(ProfesorSchema);
+const userRepo = AppDataSource.getRepository(User);
 
 export const getProfesoresService = async () => {
   return await profRepo.find({
@@ -65,7 +67,7 @@ export const asignarSedesMasivaProfesoresService = async (profesoresIdsArray, se
 };
 
 export const eliminarProfesoresPorIdsService = async (profesoresIdsArray) => {
-  const profRepository = AppDataSource.getRepository(Profesor);
+  const profRepository = AppDataSource.getRepository(ProfesorSchema);
   const userRepository = AppDataSource.getRepository(User);
 
   const profesores = await profRepository.find({

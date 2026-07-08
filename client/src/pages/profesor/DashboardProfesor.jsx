@@ -1,12 +1,14 @@
-import React, { useState } from "react";
-import { Users, Calendar, Car, Clock, MapPin } from "lucide-react";
-import ProfesorLayout from "../../layouts/ProfesorLayout.jsx";
-import { Card, Button } from "../../components/shared/index.js";
-import { colors, spacing } from "../../theme/index.js";
-import { authService } from "../../services/authService.js";
-import MisClasesProfesor from "./MisClasesProfesor.jsx";
-import ClasesConfirmadasProfesor from "./ClasesConfirmadasProfesor.jsx";
-import RepositorioProfesor from "./RepositorioProfesor.jsx";
+import React, { useState } from 'react';
+import { Users, Calendar, Car, Clock, MapPin } from 'lucide-react';
+import ProfesorLayout from '../../layouts/ProfesorLayout.jsx';
+import { Card, Button } from '../../components/shared/index.js';
+import { colors, spacing } from '../../theme/index.js';
+import { authService } from '../../services/authService.js';
+import MisClasesProfesor from './MisClasesProfesor.jsx';
+import ClasesConfirmadasProfesor from './ClasesConfirmadasProfesor.jsx';
+import RepositorioProfesor from './RepositorioProfesor.jsx';
+import MisClasesOnlineProfesor from './MisClasesOnlineProfesor.jsx';
+import MisClasesConInscriptosProfesor from './MisClasesConInscriptosProfesor.jsx';
 import SolicitarVehiculo from "../../components/shared/SolicitarVehiculo.jsx";
 
 const DashboardProfesor = () => {
@@ -374,16 +376,19 @@ const DashboardProfesor = () => {
       {activeTab === "disponibilidad" && <MisClasesProfesor />}
 
       {/* MIS CLASES TAB */}
-      {activeTab === "misclases" && <ClasesConfirmadasProfesor />}
+      {activeTab === 'misclases' && (
+        <MisClasesConInscriptosProfesor />
+      )}
 
+      {/* CLASES ONLINE TAB */}
+      {activeTab === 'clasesOnline' && (
+        <MisClasesOnlineProfesor />
+      )}
       {/* VEHÍCULOS TAB */}
       {activeTab === "vehiculos" && <SolicitarVehiculo userRole="profesor" />}
 
       {/* REPOSITORIO TAB */}
       {activeTab === "repositorio" && <RepositorioProfesor />}
-
-      {/* VEHÍCULOS Y SOLICITUDES TAB */}
-      {activeTab === "vehiculos" && <VehiculosYSolicitudes />}
     </ProfesorLayout>
   );
 };

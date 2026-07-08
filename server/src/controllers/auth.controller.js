@@ -78,20 +78,31 @@ export const login = async (req, res) => {
     // 💡 REMOVIDO DE AQUÍ: El token ahora se genera abajo para que recopile el estado real
 
     // Si es profesor, generar bloques automáticamente si no existen
+    let profesorId = null;
     if (user.rol === "profesor" && user.id) {
       try {
-        const disponibilidadRepository =
-          AppDataSource.getRepository(DisponibilidadSchema);
-        const bloquesExistentes = await disponibilidadRepository.findOne({
-          where: { profesorId: user.id },
-        });
+        // Buscar el profesor correspondiente a este usuario usando SQL crudo
+        const profesorResult = await AppDataSource.query(
+          "SELECT * FROM profesores WHERE id_user = $1",
+          [user.id]
+        );
 
-        if (!bloquesExistentes) {
-          const tipoContrato = user.tipo_contrato || "full_time";
-          console.log(
-            `📅 Generando bloques automáticos para profesor ${user.id} (${tipoContrato})`,
-          );
-          await generarBloquesDisponibilidad(user.id, tipoContrato);
+        if (profesorResult && profesorResult.length > 0) {
+          const profesor = profesorResult[0];
+          profesorId = profesor.id; // Guardar para devolverlo en la respuesta
+          const disponibilidadRepository =
+            AppDataSource.getRepository(DisponibilidadSchema);
+          const bloquesExistentes = await disponibilidadRepository.findOne({
+            where: { profesorId: profesor.id },
+          });
+
+          if (!bloquesExistentes) {
+            const tipoContrato = profesor.tipo_contrato || "full_time";
+            console.log(
+              `📅 Generando bloques automáticos para profesor ${profesor.id} (${tipoContrato})`,
+            );
+            await generarBloquesDisponibilidad(profesor.id, tipoContrato);
+          }
         }
       } catch (blockGenError) {
         console.error(
@@ -104,7 +115,8 @@ export const login = async (req, res) => {
     // Si es alumno, generar bloques automáticamente basado en su plan
     let alumnoId = null;
     let planInfo = null;
-    let estadoMatricula = "no_matriculado"; // 🔥 Estado por defecto seguro si es un alumno nuevo
+    let estadoMatricula = "no_matriculado";
+    // 🔥 Estado por defecto seguro si es un alumno nuevo
 
     if (user.rol === "alumno" && user.id) {
       try {
@@ -210,6 +222,7 @@ export const login = async (req, res) => {
         estado_matricula: estadoMatricula, // 🔥 NUEVO: Informamos al frontend el estado real de su ficha
         alumnoId: alumnoId,
         planInfo: planInfo,
+        profesorId: typeof profesorId !== 'undefined' ? profesorId : null,
       },
     });
   } catch (error) {
