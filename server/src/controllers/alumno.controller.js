@@ -48,10 +48,20 @@ export async function matricularNuevoAlumno(req, res) {
       data: alumno
     });
   } catch (error) {
-    console.error("Error al matricular alumno:", error);
+    console.error("Error al registrar alumno:", error);
+    
+    // Captura específica de errores de duplicidad de PostgreSQL (Unique Constraint)
+    if (error.code === '23505') {
+      const campoDuplicado = error.detail.includes('email') ? 'correo electrónico' : 'RUT';
+      return res.status(400).json({
+        success: false,
+        message: `El ${campoDuplicado} ingresado ya se encuentra registrado en el sistema.`
+      });
+    }
+
     res.status(500).json({
       success: false,
-      message: "Error al matricular alumno.",
+      message: "Error interno al registrar alumno.",
       error: error.message
     });
   }

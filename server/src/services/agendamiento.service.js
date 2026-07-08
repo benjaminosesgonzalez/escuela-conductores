@@ -3,8 +3,14 @@ import { HorarioSala } from "../entities/horario_psicotecnico.entity.js";
 import { ReservaPsicotecnico } from "../entities/reserva_psicotecnico.entity.js";
 
 //auxiliares para manejar el tiempo en minutos
-const timeToMinutes = (timeStr) => {
-    const [hours, minutes] = timeStr.split(":").map(Number);
+const timeToMinutes = (timeVal) => {
+    if (!timeVal) return 0;
+    // Forzamos a que sea un string seguro por si TypeORM devuelve un objeto
+    const timeStr = String(timeVal); 
+    const parts = timeStr.split(":");
+    if (parts.length < 2) return 0; // Fallback de seguridad
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
     return hours * 60 + minutes;
 };
 
@@ -16,13 +22,18 @@ const minutesToTimeStr = (totalMinutes) => {
 
 export async function configurarHorarioSalaService(datosHorario) {
     const horarioRepository = AppDataSource.getRepository(HorarioSala);
-    const { dia_semana, hora_inicio, hora_fin } = datosHorario;
+    const { fecha, hora_inicio, hora_fin } = datosHorario;
 
-    //eliminar configuracion previa a ese dia para evitar solapamientos
-    await horarioRepository.delete({ dia_semana });
+    // 1. Siempre eliminamos la configuración previa de ESA FECHA EXACTA
+    await horarioRepository.delete({ fecha });
 
+    // 2. Si el front envió horas vacías (deseleccionó todo el día), terminamos aquí. El día queda borrado.
+    if (!hora_inicio || !hora_fin) return null;
+
+    // 3. Si hay horas, creamos el nuevo registro
     const nuevoHorario = horarioRepository.create({
-        dia_semana,
+        fecha,
+        dia_semana: new Date(fecha + 'T00:00:00').getDay(),
         hora_inicio,
         hora_fin,
         activo: true
@@ -35,25 +46,19 @@ export async function obtenerDisponibilidadSalaService(fechaStr) {
     const horarioRepository = AppDataSource.getRepository(HorarioSala);
     const reservaRepository = AppDataSource.getRepository(ReservaPsicotecnico);
 
-    //1. Determinar el dia de la semana (0-6) a partir de la fecha
-    const fecha = new Date(fechaStr + 'T00:00:00'); // Convertir a objeto Date
-    const diaSemana = fecha.getDay();
-
-    //2. Obtener reglas de apertura configurado para ese dia
     const reglasConfig = await horarioRepository.createQueryBuilder("horario")
-    .where("horario.dia_semana = :dia", { dia: diaSemana })
+    .where("horario.fecha = :fechaExacta", { fechaExacta: fechaStr })
     .andWhere("horario.activo = :activo", { activo: true })
     .getOne();
 
-    if (!reglasConfig) return []; // Si no hay regla o está inactivo, retorna vacío (sala cerrada)
+    // Si no hay configuración, o los datos vienen corruptos, retornamos vacío
+    if (!reglasConfig || !reglasConfig.hora_inicio || !reglasConfig.hora_fin) return []; 
     
-    //3. obtener reservas ya existentes para esa fecha
     const reservasExistentes = await reservaRepository.createQueryBuilder("reserva")
     .where("reserva.fecha = :fecha", { fecha: fechaStr })
     .andWhere("reserva.estado = :estado", { estado: 'agendada' })
     .getMany();
 
-    //4. fragmentar el rango en bloques de 15mins
     const inicioMinutos = timeToMinutes(reglasConfig.hora_inicio);
     const finMinutos = timeToMinutes(reglasConfig.hora_fin);
     const bloques = [];
@@ -62,14 +67,13 @@ export async function obtenerDisponibilidadSalaService(fechaStr) {
         const bloqueInicio = minutesToTimeStr(min);
         const bloqueFin = minutesToTimeStr(min + 15);
 
-        //verificar si el bloque ya esta reservado
         const estaReservado = reservasExistentes.some(reserva => 
             reserva.hora_inicio === bloqueInicio ||
             (timeToMinutes(reserva.hora_inicio) < min + 15 && timeToMinutes(reserva.hora_fin) > min)
         );
 
         bloques.push({
-            hora_inicio: bloqueInicio.substring(0,5), // "HH:MM"
+            hora_inicio: bloqueInicio.substring(0,5),
             hora_fin: bloqueFin.substring(0,5),
             disponible: !estaReservado
         });

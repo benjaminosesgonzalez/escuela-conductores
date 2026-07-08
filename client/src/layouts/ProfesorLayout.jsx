@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, Calendar, Car, LogOut, FolderOpen } from 'lucide-react';
+import { Home, Users, Calendar, Car, LogOut, FolderOpen, BookOpen } from 'lucide-react';
 import { Layout } from '../components/shared/index.js';
 import { colors, spacing } from '../theme/index.js';
 import { authService } from '../services/authService.js';
@@ -18,7 +18,8 @@ const ProfesorLayout = ({ children, activeTab, onTabChange }) => {
   const menuItems = [
     { id: 'inicio', label: 'Inicio', icon: Home },
     { id: 'disponibilidad', label: 'Disponibilidad', icon: Calendar },
-    { id: 'misclases', label: 'Mis clases', icon: Car },
+    { id: 'misclases', label: 'Mis clases', icon: BookOpen },
+    { id: 'vehiculos', label: 'Solicitar Vehículo', icon: Car },
     { id: 'repositorio', label: 'Repositorio', icon: FolderOpen }
   ];
 

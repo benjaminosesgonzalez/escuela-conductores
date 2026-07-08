@@ -1,27 +1,65 @@
-import React from 'react';
-import { Users, TrendingUp, FileText, CalendarClock, UserPlus, Car } from 'lucide-react';
-import { Card } from '../../components/shared/index.js';
+import React, { useState, useEffect } from 'react';
+import { Users, CalendarClock, UserPlus, Car, Clock, Activity } from 'lucide-react';
+import { Card, Button } from '../../components/shared/index.js';
 import { colors, spacing } from '../../theme/index.js';
+import { authService } from '../../services/authService.js';
 
-const InicioView = ({ secretariaNombre, statsData, setActiveTab }) => {
+const InicioView = ({ secretariaNombre, statsData, setActiveTab, sedesDisponibles }) => {
+  const [solicitudesPendientes, setSolicitudesPendientes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSolicitudes = async () => {
+      if (!sedesDisponibles || sedesDisponibles.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const token = authService.getToken();
+        
+        const promises = sedesDisponibles.map(sede =>
+          fetch(`http://localhost:5000/api/solicitudes-auto/sede/${sede.id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }).then(res => res.json())
+        );
+
+        const results = await Promise.all(promises);
+        let allSolicitudes = [];
+
+        results.forEach(res => {
+          if (res.success && res.data) {
+            allSolicitudes = [...allSolicitudes, ...res.data];
+          }
+        });
+
+        const pendientes = allSolicitudes
+          .filter(sol => sol.estado === 'pendiente')
+          .slice(0, 5); 
+          
+        setSolicitudesPendientes(pendientes);
+      } catch (error) {
+        console.error("Error al cargar solicitudes pendientes:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSolicitudes();
+  }, [sedesDisponibles]);
+
   const stats = [
     { icon: Users, label: 'Alumnos registrados', value: statsData.totalAlumnos, color: '#3b82f6' },
     { icon: Users, label: 'Profesores activos', value: statsData.totalProfesores, color: '#10b981' },
-    { icon: TrendingUp, label: 'Clases completadas', value: statsData.totalClases, color: '#f59e0b' },
+    { icon: Car, label: 'Vehículos en flota', value: statsData.totalAutos, color: '#f59e0b' },
   ];
 
-  const actividadReciente = [
-    { id: 1, tipo: 'alumno', nombre: 'Juan García', accion: 'se registró', fecha: 'Hace 2 horas' },
-    { id: 2, tipo: 'clase', nombre: 'Clase Teórica', accion: 'fue completada por', fecha: 'Hace 1 hora', profesor: 'María López' },
-    { id: 3, tipo: 'alumno', nombre: 'Carlos Silva', accion: 'reservó una clase', fecha: 'Hace 30 minutos' },
+  // Definimos las tareas rápidas en un arreglo para mantener el código limpio (Estilo Profesor/Alumno)
+  const tareasRapidas = [
+    { id: 1, titulo: 'Ingresar alumno nuevo', icon: UserPlus, tab: 'alumnos', actionText: 'Registrar' },
+    { id: 2, titulo: 'Reservas de Vehículos', icon: Car, tab: 'vehiculos', actionText: 'Gestionar' },
+    { id: 3, titulo: 'Horario Sala Psicotécnica', icon: Activity, tab: 'psicotecnico', actionText: 'Configurar' }
   ];
-
-  const btnActionStyle = {
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: spacing.gap.large,
-    width: '100%', padding: '24px', backgroundColor: colors.white, border: `1px solid ${colors.borderLight}`,
-    borderRadius: spacing.radius.lg, color: colors.textPrimary, fontSize: '16px', fontWeight: '600',
-    cursor: 'pointer', transition: 'all 0.2s ease', marginBottom: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)'
-  };
 
   return (
     <div>
@@ -50,39 +88,104 @@ const InicioView = ({ secretariaNombre, statsData, setActiveTab }) => {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.gap.spacious }}>
-        <Card title="Actividad reciente" icon={FileText}>
+        
+        <Card title="Solicitudes de Vehículos Pendientes" icon={Car}>
           <div style={{ display: 'grid', gap: spacing.gap.normal }}>
-            {actividadReciente.map((evento) => (
-              <div key={evento.id} style={{ padding: spacing.padding.lg, backgroundColor: colors.background, borderRadius: spacing.radius.md, borderLeft: `4px solid ${colors.secretaria}`, transition: 'all 0.2s ease' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.borderLight} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.background}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                  <div>
-                    <p style={{ fontWeight: '600', fontSize: '15px', color: colors.textPrimary, margin: '0 0 4px 0' }}>{evento.nombre} {evento.accion} {evento.profesor && <span> {evento.profesor}</span>}</p>
-                    <p style={{ fontSize: '12px', color: colors.textTertiary, margin: 0 }}>{evento.fecha}</p>
+            {loading ? (
+              <p style={{ color: colors.textTertiary, textAlign: 'center', padding: '20px 0' }}>Consultando solicitudes...</p>
+            ) : solicitudesPendientes.length === 0 ? (
+              <p style={{ color: colors.textTertiary, textAlign: 'center', padding: '20px 0' }}>No hay solicitudes pendientes de asignación en ninguna sede.</p>
+            ) : (
+              solicitudesPendientes.map((sol) => (
+                <div key={sol.id} style={{ padding: spacing.padding.lg, backgroundColor: colors.background, borderRadius: spacing.radius.md, borderLeft: `4px solid #eab308`, transition: 'all 0.2s ease' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.borderLight} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.background}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                    <div>
+                      <p style={{ fontWeight: '600', fontSize: '15px', color: colors.textPrimary, margin: '0 0 4px 0', textTransform: 'capitalize' }}>
+                        Solicitud de {sol.tipo_solicitante}
+                      </p>
+                      <p style={{ fontSize: '13px', color: colors.textSecondary, margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Clock size={14}/> {sol.fecha_uso} ({sol.hora_uso} - {sol.hora_termino})
+                      </p>
+                      <p style={{ fontSize: '12px', color: colors.textTertiary, margin: 0 }}>
+                        Sede: <strong>{sol.sede?.nombre}</strong>
+                      </p>
+                    </div>
+                    <button 
+                      onClick={() => setActiveTab('vehiculos')}
+                      style={{ backgroundColor: colors.white, border: `1px solid ${colors.borderLight}`, padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', color: colors.secretaria, fontWeight: 'bold' }}
+                    >
+                      Revisar
+                    </button>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </Card>
 
+        {/* DISEÑO DE TAREAS RÁPIDAS HOMOLOGADO */}
         <Card title="Tareas Rápidas" icon={CalendarClock}>
-          <button 
-            style={btnActionStyle}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.secretaria + '15'; e.currentTarget.style.borderColor = colors.secretaria; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.white; e.currentTarget.style.borderColor = colors.borderLight; }}
-            onClick={() => setActiveTab('alumnos')}
-          >
-            <UserPlus size={20} color={colors.secretaria} />
-            Ingresar alumno nuevo
-          </button>
-          <button 
-            style={btnActionStyle}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.secretaria + '15'; e.currentTarget.style.borderColor = colors.secretaria; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.white; e.currentTarget.style.borderColor = colors.borderLight; }}
-          >
-            <Car size={20} color={colors.secretaria} />
-            Reservas de Vehículos
-          </button>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr',
+            gap: spacing.gap.normal
+          }}>
+            {tareasRapidas.map((tarea) => {
+              const TareaIcon = tarea.icon;
+              return (
+                <div
+                  key={tarea.id}
+                  onClick={() => setActiveTab(tarea.tab)} // <-- ESTO CAMBIA LA PESTAÑA AL HACER CLIC EN LA TARJETA
+                  style={{
+                    padding: spacing.padding.lg,
+                    backgroundColor: colors.background,
+                    borderRadius: spacing.radius.md,
+                    borderLeft: `4px solid ${colors.secretaria}`,
+                    transition: 'all 0.2s ease',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.borderLight;
+                    e.currentTarget.style.transform = 'translateX(4px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.background;
+                    e.currentTarget.style.transform = 'translateX(0)';
+                  }}
+                >
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: spacing.margin.sm
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: spacing.gap.normal }}>
+                      <TareaIcon size={20} color={colors.secretaria} />
+                      <p style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: colors.textPrimary,
+                        margin: 0
+                      }}>
+                        {tarea.titulo}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Button
+                    size="sm"
+                    fullWidth={true}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Evita que el clic en el botón dispare también el clic de la tarjeta
+                      setActiveTab(tarea.tab); // <-- ESTO CAMBIA LA PESTAÑA AL HACER CLIC EN EL BOTÓN
+                    }}
+                  >
+                    {tarea.actionText}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
         </Card>
       </div>
     </div>

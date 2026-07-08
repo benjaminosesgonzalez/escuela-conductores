@@ -42,3 +42,12 @@ export const asignarSedeMasivaProfesoresSchema = z.object({
     }).min(1, "Debe seleccionar al menos una sede."),
   }).strict(), //bloquea cualquier otro dato basura que envie el front
 });
+
+export const registroSecretariaSchema = z.object({
+  body: z.object({
+    email: z.string({ required_error: "El email es obligatorio." }).email("Debe ser un correo electrónico válido."),
+    password: z.string({ required_error: "La contraseña es obligatoria." }).min(6, "La contraseña debe tener al menos 6 caracteres."),
+    nombre: z.string({ required_error: "El nombre es obligatorio." }).min(3, "El nombre debe tener al menos 3 letras."),
+    telefono: z.string().min(8, "El teléfono debe tener al menos 8 dígitos numéricos.").optional().nullable(),
+  })
+});

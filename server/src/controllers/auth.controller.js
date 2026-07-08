@@ -269,7 +269,7 @@ export const registerStaff = async (req, res) => {
       });
     }
 
-    const rolesValidos = ["profesor", "administrador", "secretaria"];
+    const rolesValidos = ["profesor", "administracion", "secretaria"];
 
     if (!rolesValidos.includes(rol)) {
       return res.status(400).json({

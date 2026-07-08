@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
-import { Calendar, Save, CheckSquare, Square } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Calendar, Save, CheckSquare, Square, Loader } from 'lucide-react';
 import { Card, Button } from '../../components/shared/index.js';
 import { colors, spacing } from '../../theme/index.js';
 import { authService } from '../../services/authService.js';
 
-// Genera los bloques de 15 minutos desde 09:00 hasta 19:45
 const generateTimeSlots = () => {
   const slots = [];
   let hour = 9;
@@ -18,7 +17,6 @@ const generateTimeSlots = () => {
   return slots;
 };
 
-// Calcula la hora de fin sumando 15 mins (para el backend)
 const getHoraFin = (timeStr) => {
   let [h, m] = timeStr.split(':').map(Number);
   m += 15;
@@ -26,25 +24,75 @@ const getHoraFin = (timeStr) => {
   return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:00`;
 };
 
-const diasSemana = [
-  { id: 1, nombre: 'Lunes' },
-  { id: 2, nombre: 'Martes' },
-  { id: 3, nombre: 'Miércoles' },
-  { id: 4, nombre: 'Jueves' },
-  { id: 5, nombre: 'Viernes' }
-];
+const getTodayStr = () => new Date().toISOString().split('T')[0];
+
+const getDiasDeLaSemana = (fechaBaseStr) => {
+  const baseDate = new Date(fechaBaseStr + 'T12:00:00'); 
+  const day = baseDate.getDay();
+  const diff = baseDate.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(baseDate.setDate(diff));
+
+  const week = [];
+  const nombresDias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+  
+  for (let i = 0; i < 5; i++) {
+    const currentDate = new Date(monday);
+    currentDate.setDate(monday.getDate() + i);
+    week.push({
+      id: i + 1,
+      nombre: nombresDias[i],
+      fecha: currentDate.toISOString().split('T')[0] 
+    });
+  }
+  return week;
+};
 
 const timeSlots = generateTimeSlots();
 
 const SalaPsicotecnicaView = () => {
-  // Estado que guarda los bloques seleccionados por día { 1: ['09:00', '09:15'], 2: [] ... }
+  const [fechaBase, setFechaBase] = useState(getTodayStr());
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingWeek, setIsLoadingWeek] = useState(false);
   const [selectedBlocks, setSelectedBlocks] = useState({
     1: [], 2: [], 3: [], 4: [], 5: []
   });
 
-  const [isSaving, setIsSaving] = useState(false);
+  const diasSemana = useMemo(() => getDiasDeLaSemana(fechaBase), [fechaBase]);
 
-  // Seleccionar/Deseleccionar un bloque individual
+  // EFECTO MÁGICO: Carga los horarios guardados cada vez que cambias la semana
+  useEffect(() => {
+    const fetchSemana = async () => {
+      setIsLoadingWeek(true);
+      try {
+        const newSelectedBlocks = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+        const token = authService.getToken();
+
+        // Consultamos la disponibilidad de los 5 días en paralelo
+        const promises = diasSemana.map(async (dia) => {
+          const res = await fetch(`http://localhost:5000/api/agendamiento/disponibilidad-sala?fecha=${dia.fecha}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            // Si hay bloques configurados para ese día, extraemos sus horas de inicio
+            if (data.data && data.data.length > 0) {
+              newSelectedBlocks[dia.id] = data.data.map(b => b.hora_inicio);
+            }
+          }
+        });
+
+        await Promise.all(promises);
+        setSelectedBlocks(newSelectedBlocks); // Actualizamos la tabla
+      } catch (error) {
+        console.error("Error cargando la semana:", error);
+      } finally {
+        setIsLoadingWeek(false);
+      }
+    };
+
+    fetchSemana();
+  }, [fechaBase, diasSemana]);
+
   const toggleBlock = (diaId, timeStr) => {
     setSelectedBlocks(prev => {
       const dayBlocks = prev[diaId];
@@ -56,33 +104,33 @@ const SalaPsicotecnicaView = () => {
     });
   };
 
-  // Seleccionar/Deseleccionar el día completo
   const toggleDay = (diaId) => {
     setSelectedBlocks(prev => {
       if (prev[diaId].length === timeSlots.length) {
-        return { ...prev, [diaId]: [] }; // Deseleccionar todo
+        return { ...prev, [diaId]: [] }; 
       } else {
-        return { ...prev, [diaId]: [...timeSlots] }; // Seleccionar todo
+        return { ...prev, [diaId]: [...timeSlots] }; 
       }
     });
   };
 
   const handleConfirmar = async () => {
-    if (!window.confirm("¿Confirmas que deseas aplicar este horario para la sala psicotécnica?")) return;
+    if (!window.confirm("¿Confirmas que deseas aplicar este horario para la semana seleccionada?")) return;
     setIsSaving(true);
 
     try {
-      // Iteramos por cada día para enviar su rango
       const promises = diasSemana.map(async (dia) => {
         const blocks = selectedBlocks[dia.id];
         
-        // Si no hay bloques, no enviamos nada (o podrías hacer un endpoint para borrar, pero por ahora lo omitimos)
-        if (blocks.length === 0) return Promise.resolve();
-
-        // Ordenamos los tiempos para buscar el inicio y el fin
-        const sortedBlocks = [...blocks].sort();
-        const hora_inicio = `${sortedBlocks[0]}:00`;
-        const hora_fin = getHoraFin(sortedBlocks[sortedBlocks.length - 1]);
+        let hora_inicio = null;
+        let hora_fin = null;
+        
+        // Si hay bloques seleccionados, calculamos las horas. Si no, quedan en null.
+        if (blocks.length > 0) {
+          const sortedBlocks = [...blocks].sort();
+          hora_inicio = `${sortedBlocks[0]}:00`;
+          hora_fin = getHoraFin(sortedBlocks[sortedBlocks.length - 1]);
+        }
 
         return fetch('http://localhost:5000/api/agendamiento/configurar-sala', {
           method: 'POST',
@@ -91,7 +139,7 @@ const SalaPsicotecnicaView = () => {
             'Authorization': `Bearer ${authService.getToken()}`
           },
           body: JSON.stringify({ 
-            dia_semana: dia.id, 
+            fecha: dia.fecha,
             hora_inicio, 
             hora_fin 
           })
@@ -99,7 +147,7 @@ const SalaPsicotecnicaView = () => {
       });
 
       await Promise.all(promises);
-      alert("Horarios de la sala psicotécnica configurados exitosamente. Los alumnos ya pueden agendar.");
+      alert("Horarios guardados exitosamente.");
     } catch (error) {
       console.error("Error al configurar horario:", error);
       alert("Ocurrió un error al guardar los horarios.");
@@ -110,14 +158,39 @@ const SalaPsicotecnicaView = () => {
 
   return (
     <Card title="Configuración de Sala Psicotécnica" icon={Calendar}>
+      
+      <div style={{ display: 'flex', gap: spacing.gap.normal, alignItems: 'center', flexWrap: 'wrap', marginBottom: spacing.margin.large, padding: '15px', backgroundColor: '#f8fafc', borderRadius: '8px', border: `1px solid ${colors.borderLight}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Calendar size={20} color={colors.secretaria} />
+          <label style={{ fontWeight: 'bold' }}>Selecciona una fecha de la semana a configurar:</label>
+        </div>
+        <input 
+          type="date" 
+          value={fechaBase}
+          onChange={(e) => setFechaBase(e.target.value)}
+          style={{
+            padding: '10px', borderRadius: spacing.radius.md, border: `1px solid ${colors.borderLight}`,
+            fontSize: '15px', outline: 'none'
+          }}
+        />
+        {isLoadingWeek ? (
+           <span style={{ fontSize: '13px', color: colors.secretaria, display: 'flex', alignItems: 'center', gap: '5px' }}>
+             <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> Cargando horarios de la semana...
+           </span>
+        ) : (
+          <span style={{ fontSize: '13px', color: colors.textTertiary }}>
+            El sistema calculó los días de esta semana.
+          </span>
+        )}
+      </div>
+
       <div style={{ marginBottom: spacing.margin.large, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <p style={{ color: colors.textSecondary, margin: 0, fontSize: '14px', maxWidth: '600px' }}>
           Haz clic en las celdas para marcar los bloques de 15 minutos en los que la sala estará abierta. 
-          El sistema agrupará tu selección calculando la hora de apertura y cierre por cada día.
         </p>
         <Button 
           onClick={handleConfirmar} 
-          disabled={isSaving}
+          disabled={isSaving || isLoadingWeek}
           style={{ backgroundColor: colors.secretaria, display: 'flex', alignItems: 'center', gap: '8px' }}
         >
           <Save size={18} />
@@ -136,9 +209,11 @@ const SalaPsicotecnicaView = () => {
                 <th key={dia.id} style={{ padding: '12px', backgroundColor: '#f8fafc', borderBottom: `2px solid ${colors.borderLight}`, borderRight: `1px solid ${colors.borderLight}` }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontWeight: '600', color: colors.textPrimary }}>{dia.nombre}</span>
+                    <span style={{ fontSize: '12px', color: colors.textSecondary }}>{dia.fecha}</span>
                     <button 
                       onClick={() => toggleDay(dia.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.secretaria, display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}
+                      disabled={isLoadingWeek}
+                      style={{ background: 'none', border: 'none', cursor: isLoadingWeek ? 'not-allowed' : 'pointer', color: colors.secretaria, display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}
                     >
                       {selectedBlocks[dia.id].length === timeSlots.length ? <CheckSquare size={14} /> : <Square size={14} />}
                       Todo el día
@@ -159,20 +234,20 @@ const SalaPsicotecnicaView = () => {
                   return (
                     <td 
                       key={`${dia.id}-${time}`}
-                      onClick={() => toggleBlock(dia.id, time)}
+                      onClick={() => !isLoadingWeek && toggleBlock(dia.id, time)}
                       style={{ 
                         padding: '0', 
                         borderBottom: `1px solid ${colors.borderLight}`, 
                         borderRight: `1px solid ${colors.borderLight}`,
                         backgroundColor: isSelected ? '#dbeafe' : 'white',
-                        cursor: 'pointer',
+                        cursor: isLoadingWeek ? 'wait' : 'pointer',
                         transition: 'background-color 0.1s'
                       }}
                       onMouseEnter={(e) => {
-                        if (!isSelected) e.currentTarget.style.backgroundColor = '#f1f5f9';
+                        if (!isSelected && !isLoadingWeek) e.currentTarget.style.backgroundColor = '#f1f5f9';
                       }}
                       onMouseLeave={(e) => {
-                        if (!isSelected) e.currentTarget.style.backgroundColor = 'white';
+                        if (!isSelected && !isLoadingWeek) e.currentTarget.style.backgroundColor = 'white';
                       }}
                     >
                       <div style={{ height: '30px', width: '100%' }}></div>
@@ -184,6 +259,9 @@ const SalaPsicotecnicaView = () => {
           </tbody>
         </table>
       </div>
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
     </Card>
   );
 };

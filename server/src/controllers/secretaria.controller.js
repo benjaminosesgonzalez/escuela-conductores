@@ -21,6 +21,14 @@ export const registrarSecretaria = async (req, res) => {
     });
   } catch (error) {
     console.error("Error al registrar secretaria:", error);
+
+    if (error.code === '23505') {
+      return res.status(400).json({
+        success: false,
+        message: "El correo electrónico ingresado ya se encuentra registrado."
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: "Error al registrar secretaria.",

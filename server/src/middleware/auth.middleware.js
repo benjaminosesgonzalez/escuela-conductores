@@ -64,7 +64,7 @@ export const isSecretaria = (req, res, next) => {
 };
 
 export const isAdminOrSecretaria = (req, res, next) => {
-  const rolesPermitidos = ["administrador", "secretaria"];
+  const rolesPermitidos = ["administracion", "secretaria"];
   if (req.user && rolesPermitidos.includes(req.user.rol)) {
     next();
   } else {

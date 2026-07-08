@@ -9,6 +9,7 @@ import { Card } from '../../components/shared/index.js';
 import { colors, spacing } from '../../theme/index.js';
 import { authService } from '../../services/authService.js';
 import SalaPsicotecnicaView from './SalaPsicotecnicaView.jsx';
+import VehiculosView from './VehiculosView.jsx';
 
 const DashboardSecretaria = () => {
   const [activeTab, setActiveTab] = useState('inicio');
@@ -17,8 +18,8 @@ const DashboardSecretaria = () => {
   const [alumnos, setAlumnos] = useState([]);
   const [profesores, setProfesores] = useState([]);
   const [sedesDisponibles, setSedesDisponibles] = useState([]);
-  const [statsData, setStatsData] = useState({ totalAlumnos: 0, totalProfesores: 0, totalClases: 342 });
-
+  const [autos, setAutos] = useState([]);
+  const [statsData, setStatsData] = useState({ totalAlumnos: 0, totalProfesores: 0, totalAutos: 0 });
   const currentUser = authService.getCurrentUser();
   const secretariaNombre = currentUser?.nombre || 'Secretaria';
 
@@ -37,6 +38,7 @@ const DashboardSecretaria = () => {
 
         const alumnosData = await alumnosRes.json();
         const profesData = await profesRes.json();
+        const autosData = await autosRes.json();
 
         if (alumnosData.success) {
           setAlumnos(alumnosData.data);
@@ -46,6 +48,11 @@ const DashboardSecretaria = () => {
         if (profesData.success) {
           setProfesores(profesData.data);
           setStatsData(prev => ({ ...prev, totalProfesores: profesData.data.length }));
+        }
+
+         if (autosData.success) {
+          setAutos(autosData.data);
+          setStatsData(prev => ({ ...prev, totalAutos: autosData.data.length }));
         }
 
         if (sedesRes.ok) {
@@ -64,7 +71,12 @@ const DashboardSecretaria = () => {
     <SecretariaLayout activeTab={activeTab} onTabChange={setActiveTab}>
       
       {activeTab === 'inicio' && (
-        <InicioView secretariaNombre={secretariaNombre} statsData={statsData} setActiveTab={setActiveTab} />
+        <InicioView 
+          secretariaNombre={secretariaNombre} 
+          statsData={statsData} 
+          setActiveTab={setActiveTab} 
+          sedesDisponibles={sedesDisponibles} 
+        />
       )}
 
       {activeTab === 'alumnos' && (
@@ -80,8 +92,13 @@ const DashboardSecretaria = () => {
         <SalaPsicotecnicaView />
       )}
 
+      {/* VISTA DE VEHÍCULOS */}
+      {activeTab === 'vehiculos' && (
+        <VehiculosView autos={autos} setAutos={setAutos} sedesDisponibles={sedesDisponibles} setStatsData={setStatsData} />
+      )}
+
       {/* LOS DEMÁS MÓDULOS EN DESARROLLO */}
-      {(activeTab === 'vehiculos' || activeTab === 'reportes' || activeTab === 'configuracion') && (
+      {(activeTab === 'reportes' || activeTab === 'configuracion') && (
         <Card title={activeTab.toUpperCase()} icon={FileText}>
           <p style={{ color: colors.textSecondary, textAlign: 'center', padding: spacing.padding.xlarge }}>Módulo en desarrollo</p>
         </Card>
