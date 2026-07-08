@@ -5,6 +5,7 @@ import { User } from "../entities/user.entity.js";
 import { Administracion } from "../entities/administracion.entity.js";
 import { ClaseOnlineSchema } from "../entities/clase-online.entity.js";
 import { initializeTriggers } from "../services/triggers.service.js";
+import { runMigrations } from "../services/migrations.service.js";
 
 import bcrypt from "bcrypt";
 console.log("--- CARGANDO INSTANCIA DE DATASOURCE ---");
@@ -55,6 +56,7 @@ export async function connectDB() {
     await AppDataSource.initialize();
     console.log("=> Conexión exitosa a la base de datos PostgreSQL!");
 
+    await runMigrations(); // Ejecutar migraciones
     await seedAdmin(); // Ejecuta la creación del admin
     await initializeTriggers(); // Inicializar triggers de sincronización
   } catch (error) {
