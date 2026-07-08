@@ -9,6 +9,8 @@ import { authMiddleware, isAdmin } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
+// Público para usuarios logueados (para que alumnos y secretarias las listen)
+// GET /api/sedes
 router.get("/", authMiddleware, getSedes);
 
 router.post("/", authMiddleware, isAdmin, createSede);

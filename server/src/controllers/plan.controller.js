@@ -7,21 +7,45 @@ import {
 
 export async function createPlan(req, res) {
   try {
-    const planData = req.body;
-    const newPlan = await createPlanService(planData);
+    // 1. Extraemos las llaves en ESPAÑOL que vienen de Postman o el Frontend
+    const { 
+      nombre, 
+      precio, 
+      clases_totales, 
+      nivel_teorico, 
+      clases_simulador 
+    } = req.body;
 
-    if (!newPlan) {
-      return res.status(400).json({ message: "No se pudo crear el plan" });
+    // 2. Validación básica para evitar que lleguen vacíos
+    if (!nombre) {
+      return res.status(400).json({ message: "El nombre del plan es obligatorio" });
     }
 
-    res.status(201).json({
+    // 3. MAPEO: Traducimos del español al inglés que exige la Entidad/Base de datos
+    const planDataFormatTypeORM = {
+      name: nombre,
+      price: precio,
+      total_classes: clases_totales,
+      theoretical_level: nivel_teorico,
+      simulator_classes: clases_simulador
+    };
+
+    // 4. Enviamos el objeto ya traducido al servicio
+    const nuevoPlan = await createPlanService(planDataFormatTypeORM);
+
+    return res.status(201).json({ 
+      success: true, 
       message: "Plan creado exitosamente",
-      data: newPlan,
+      data: nuevoPlan 
     });
+
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error interno del servidor", error: error.message });
+    console.error("Error al crear plan:", error);
+    return res.status(400).json({ 
+      success: false, 
+      message: "No se pudo crear el plan", 
+      error: error.message 
+    });
   }
 }
 

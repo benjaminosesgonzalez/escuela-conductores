@@ -33,5 +33,13 @@ export const SolicitudAuto = new EntitySchema({
       type: "many-to-one",
       joinColumn: { name: "id_sede" },
     },
+    // NUEVA RELACIÓN AGREGADA AQUÍ
+    auto: {
+      // El vehículo físico asignado a la solicitud
+      target: "Auto",
+      type: "many-to-one",
+      joinColumn: { name: "id_auto" },
+      nullable: true, // Es fundamental que sea true, porque la solicitud nace sin auto asignado
+    },
   },
 });

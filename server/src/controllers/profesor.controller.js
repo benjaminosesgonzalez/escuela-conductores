@@ -71,3 +71,41 @@ export const deleteProfesor = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const eliminarProfesoresMasivo = async (req, res) => {
+  try {
+    const profesoresIds = req.body.profesoresIds || req.body.profesores_ids;
+
+    if (!profesoresIds || !Array.isArray(profesoresIds) || profesoresIds.length === 0) {
+      return res.status(400).json({ success: false, message: "Debe proporcionar un array de IDs de profesores." });
+    }
+
+    const cantidadEliminada = await profService.eliminarProfesoresPorIdsService(profesoresIds);
+
+    res.status(200).json({
+      success: true,
+      message: `Se han eliminado ${cantidadEliminada} profesor(es) correctamente.`
+    });
+  } catch (error) {
+    console.error("Error al eliminar profesores:", error);
+    res.status(500).json({ success: false, message: "Error interno al eliminar profesores." });
+  }
+};
+
+export const resetPasswordProfesor = async (req, res) => {
+  try {
+    const nuevaPassword = await profService.resetPasswordProfesorService(req.params.id);
+    
+    if (!nuevaPassword) {
+      return res.status(404).json({ success: false, message: "Profesor o usuario asociado no encontrado." });
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      message: `Contraseña reiniciada exitosamente a: ${nuevaPassword}` 
+    });
+  } catch (error) {
+    console.error("Error al reiniciar contraseña del profesor:", error);
+    res.status(500).json({ success: false, message: "Error interno del servidor" });
+  }
+};

@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Car,
-  Calendar,
   Clock,
   MapPin,
   AlertCircle,
@@ -65,24 +64,27 @@ export default function VehiculosYSolicitudes() {
   }, [sedeSeleccionadaFilter]);
 
   // 5. Funciones de conexión a la API (Backend)
-const cargarSedes = async () => {
+  const cargarSedes = async () => {
     try {
       const res = await fetch(`${backendUrl}/sedes`, {
-        headers: { 'Authorization': `Bearer ${userToken}` }
+        headers: { Authorization: `Bearer ${userToken}` },
       });
       const data = await res.json();
       // Tu backend maneja { success: true, data: [sedes] }
-      if (data.success) setSedes(data.data); 
+      if (data.success) setSedes(data.data);
     } catch (err) {
       console.error("Error al cargar sedes:", err);
     }
   };
 
-const cargarMisSolicitudes = async () => {
+  const cargarMisSolicitudes = async () => {
     try {
-      const res = await fetch(`${backendUrl}/solicitudes-auto/mis-solicitudes`, {
-        headers: { 'Authorization': `Bearer ${userToken}` }
-      });
+      const res = await fetch(
+        `${backendUrl}/solicitudes-auto/mis-solicitudes`,
+        {
+          headers: { Authorization: `Bearer ${userToken}` },
+        },
+      );
       const data = await res.json();
       // Tu controlador "listarMisSolicitudes" devuelve { success: true, count, data: solicitudes }
       if (data.success) setSolicitudes(data.data);
@@ -95,22 +97,26 @@ const cargarMisSolicitudes = async () => {
   const cargarSolicitudesPorSede = async (idSede) => {
     try {
       const res = await fetch(`${backendUrl}/solicitudes-auto/sede/${idSede}`, {
-        headers: { 'Authorization': `Bearer ${userToken}` }
+        headers: { Authorization: `Bearer ${userToken}` },
       });
       const data = await res.json();
       // Tu controlador "listarPorSede" devuelve { success: true, data: solicitudes }
       if (data.success) setSolicitudes(data.data);
-      
-      // 4. Monitorear los autos de la sede usando tu función "getDisponibilidadSede"
-      const resFlota = await fetch(`${backendUrl}/autos/disponibilidad/${idSede}`, {
-        headers: { 'Authorization': `Bearer ${userToken}` }
-      });
-      const dataFlota = await resFlota.json();
-      
-      if (dataFlota.success) {
 
+      // 4. Monitorear los autos de la sede usando tu función "getDisponibilidadSede"
+      const resFlota = await fetch(
+        `${backendUrl}/autos/disponibilidad/${idSede}`,
+        {
+          headers: { Authorization: `Bearer ${userToken}` },
+        },
+      );
+      const dataFlota = await resFlota.json();
+
+      if (dataFlota.success) {
         if (Array.isArray(dataFlota.data)) {
-          const autosDisponibles = dataFlota.data.filter(auto => auto.estado === 'disponible').length;
+          const autosDisponibles = dataFlota.data.filter(
+            (auto) => auto.estado === "disponible",
+          ).length;
           setDisponibilidadFlota({ totalDisponible: autosDisponibles });
         } else {
           // Si tu servicio ya calculaba el entero/objeto directamente:
@@ -297,241 +303,304 @@ const cargarMisSolicitudes = async () => {
           }}
         >
           {/* LADO IZQUIERDO: FORMULARIO DE RESERVA */}
-{userRol === 'alumno' && estadoMatricula !== 'finalizado' ? (
-      
-      // CASO A: PANTALLA DE BLOQUEO PARA ALUMNOS NO FINALIZADOS
-      <div style={{ 
-        backgroundColor: 'white', 
-        borderRadius: '12px', 
-        padding: '48px 32px', 
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)', 
-        border: '1px solid #f0f0f0',
-        textAlign: 'center'
-      }}>
-        <div style={{ fontSize: '54px', marginBottom: '16px' }}>🔒</div>
-        <h3 style={{ margin: '0 0 10px 0', fontSize: '22px', fontWeight: '700', color: '#333' }}>
-          Módulo de Reserva Bloqueado
-        </h3>
-        <p style={{ color: '#666', fontSize: '14px', maxWidth: '460px', margin: '0 auto 24px auto', lineHeight: '1.6' }}>
-          Para poder solicitar un vehículo con el fin de rendir tu examen de conducción en la municipalidad, primero debes haber completado y aprobado la totalidad de tu curso.
-        </p>
-        <div style={{ display: 'inline-block' }}>
-          <span style={{ 
-            fontSize: '12px', 
-            backgroundColor: '#fef3c7', 
-            color: '#92400e', 
-            padding: '6px 14px', 
-            borderRadius: '20px', 
-            fontWeight: '700',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
-          }}>
-            Estado de tu Curso: {estadoMatricula || 'Cargando...'}
-          </span>
-        </div>
-      </div>
-
-    ) : (
-
-      // CASO B: FORMULARIO NORMAL (Profesores o Alumnos ya Finalizados)
-      <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '32px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
-          <Car size={26} color="#7d88d1" />
-          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#333' }}>
-            Nueva Solicitud de Vehículo
-          </h2>
-        </div>
-
-        {userRol === 'alumno' && (
-          <p style={{ fontSize: '13px', color: '#666', marginTop: '-16px', marginBottom: '20px', backgroundColor: '#eff6ff', padding: '10px', borderRadius: '6px', borderLeft: '3px solid #3b82f6' }}>
-            ℹ️ Como alumno, esta solicitud está destinada para la reserva del auto de cara a tu <strong>examen de conducción municipal</strong>.
-          </p>
-        )}
-
-            <form
-              onSubmit={handleCrearSolicitud}
-              style={{ display: "flex", flexDirection: "column", gap: "20px" }}
+          {userRol === "alumno" && estadoMatricula !== "finalizado" ? (
+            // CASO A: PANTALLA DE BLOQUEO PARA ALUMNOS NO FINALIZADOS
+            <div
+              style={{
+                backgroundColor: "white",
+                borderRadius: "12px",
+                padding: "48px 32px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                border: "1px solid #f0f0f0",
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: "54px", marginBottom: "16px" }}>🔒</div>
+              <h3
+                style={{
+                  margin: "0 0 10px 0",
+                  fontSize: "22px",
+                  fontWeight: "700",
+                  color: "#333",
+                }}
+              >
+                Módulo de Reserva Bloqueado
+              </h3>
+              <p
+                style={{
+                  color: "#666",
+                  fontSize: "14px",
+                  maxWidth: "460px",
+                  margin: "0 auto 24px auto",
+                  lineHeight: "1.6",
+                }}
+              >
+                Para poder solicitar un vehículo con el fin de rendir tu examen
+                de conducción en la municipalidad, primero debes haber
+                completado y aprobado la totalidad de tu curso.
+              </p>
+              <div style={{ display: "inline-block" }}>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    backgroundColor: "#fef3c7",
+                    color: "#92400e",
+                    padding: "6px 14px",
+                    borderRadius: "20px",
+                    fontWeight: "700",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  Estado de tu Curso: {estadoMatricula || "Cargando..."}
+                </span>
+              </div>
+            </div>
+          ) : (
+            // CASO B: FORMULARIO NORMAL (Profesores o Alumnos ya Finalizados)
+            <div
+              style={{
+                backgroundColor: "white",
+                borderRadius: "12px",
+                padding: "32px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                border: "1px solid #f0f0f0",
+              }}
             >
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  marginBottom: "24px",
+                }}
+              >
+                <Car size={26} color="#7d88d1" />
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: "22px",
+                    fontWeight: "700",
+                    color: "#333",
+                  }}
+                >
+                  Nueva Solicitud de Vehículo
+                </h2>
+              </div>
+
+              {userRol === "alumno" && (
+                <p
+                  style={{
+                    fontSize: "13px",
+                    color: "#666",
+                    marginTop: "-16px",
+                    marginBottom: "20px",
+                    backgroundColor: "#eff6ff",
+                    padding: "10px",
+                    borderRadius: "6px",
+                    borderLeft: "3px solid #3b82f6",
+                  }}
+                >
+                  ℹ️ Como alumno, esta solicitud está destinada para la reserva
+                  del auto de cara a tu{" "}
+                  <strong>examen de conducción municipal</strong>.
+                </p>
+              )}
+
+              <form
+                onSubmit={handleCrearSolicitud}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
                   gap: "20px",
                 }}
               >
-                {/* Seleccionar Fecha */}
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: "#444",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    Seleccionar Fecha
-                  </label>
-                  <input
-                    type="date"
-                    value={fechaUso}
-                    min={new Date().toISOString().split("T")[0]} // No permitir fechas pasadas
-                    onChange={(e) => setFechaUso(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "12px",
-                      borderRadius: "8px",
-                      border: "1px solid #d1d5db",
-                      fontSize: "14px",
-                      boxSizing: "border-box",
-                    }}
-                    required
-                  />
-                </div>
-
-                {/* Seleccionar Sede (Enlace directo a Base de Datos) */}
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: "#444",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    Sede de Asignación
-                  </label>
-                  <select
-                    value={idSede}
-                    onChange={(e) => setIdSede(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "12px",
-                      borderRadius: "8px",
-                      border: "1px solid #d1d5db",
-                      fontSize: "14px",
-                      backgroundColor: "white",
-                      boxSizing: "border-box",
-                    }}
-                    required
-                  >
-                    <option value="">Selecciona una sucursal</option>
-                    {sedes.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.nombre} ({s.comuna})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Rango Horario */}
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    color: "#444",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Bloque de Horario (Inicio - Término)
-                </label>
                 <div
-                  style={{ display: "flex", alignItems: "center", gap: "12px" }}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "20px",
+                  }}
                 >
-                  <input
-                    type="time"
-                    value={horaUso}
-                    onChange={(e) => setHoraUso(e.target.value)}
+                  {/* Seleccionar Fecha */}
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        color: "#444",
+                        marginBottom: "8px",
+                      }}
+                    >
+                      Seleccionar Fecha
+                    </label>
+                    <input
+                      type="date"
+                      value={fechaUso}
+                      min={new Date().toISOString().split("T")[0]} // No permitir fechas pasadas
+                      onChange={(e) => setFechaUso(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "12px",
+                        borderRadius: "8px",
+                        border: "1px solid #d1d5db",
+                        fontSize: "14px",
+                        boxSizing: "border-box",
+                      }}
+                      required
+                    />
+                  </div>
+
+                  {/* Seleccionar Sede (Enlace directo a Base de Datos) */}
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        color: "#444",
+                        marginBottom: "8px",
+                      }}
+                    >
+                      Sede de Asignación
+                    </label>
+                    <select
+                      value={idSede}
+                      onChange={(e) => setIdSede(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "12px",
+                        borderRadius: "8px",
+                        border: "1px solid #d1d5db",
+                        fontSize: "14px",
+                        backgroundColor: "white",
+                        boxSizing: "border-box",
+                      }}
+                      required
+                    >
+                      <option value="">Selecciona una sucursal</option>
+                      {sedes.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.nombre} ({s.comuna})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Rango Horario */}
+                <div>
+                  <label
                     style={{
-                      flex: 1,
+                      display: "block",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: "#444",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Bloque de Horario (Inicio - Término)
+                  </label>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                    }}
+                  >
+                    <input
+                      type="time"
+                      value={horaUso}
+                      onChange={(e) => setHoraUso(e.target.value)}
+                      style={{
+                        flex: 1,
+                        padding: "12px",
+                        borderRadius: "8px",
+                        border: "1px solid #d1d5db",
+                        fontSize: "14px",
+                      }}
+                      required
+                    />
+                    <span style={{ color: "#999", fontWeight: "bold" }}>
+                      al
+                    </span>
+                    <input
+                      type="time"
+                      value={horaTermino}
+                      onChange={(e) => setHoraTermino(e.target.value)}
+                      style={{
+                        flex: 1,
+                        padding: "12px",
+                        borderRadius: "8px",
+                        border: "1px solid #d1d5db",
+                        fontSize: "14px",
+                      }}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Detalles / Propósito */}
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: "#444",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Destino o Propósito de la Solicitud
+                  </label>
+                  <textarea
+                    value={detalles}
+                    onChange={(e) => setDetalles(e.target.value)}
+                    placeholder="Ej: Ruta práctica San Pedro de la Paz o Examen Municipalidad Tomé..."
+                    style={{
+                      width: "100%",
                       padding: "12px",
                       borderRadius: "8px",
                       border: "1px solid #d1d5db",
                       fontSize: "14px",
+                      minHeight: "100px",
+                      resize: "none",
+                      boxSizing: "border-box",
                     }}
-                    required
-                  />
-                  <span style={{ color: "#999", fontWeight: "bold" }}>al</span>
-                  <input
-                    type="time"
-                    value={horaTermino}
-                    onChange={(e) => setHoraTermino(e.target.value)}
-                    style={{
-                      flex: 1,
-                      padding: "12px",
-                      borderRadius: "8px",
-                      border: "1px solid #d1d5db",
-                      fontSize: "14px",
-                    }}
-                    required
                   />
                 </div>
-              </div>
 
-              {/* Detalles / Propósito */}
-              <div>
-                <label
+                {/* Botón de Envío estilo Base Proyecto */}
+                <div
                   style={{
-                    display: "block",
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    color: "#444",
-                    marginBottom: "8px",
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    marginTop: "8px",
                   }}
                 >
-                  Destino o Propósito de la Solicitud
-                </label>
-                <textarea
-                  value={detalles}
-                  onChange={(e) => setDetalles(e.target.value)}
-                  placeholder="Ej: Ruta práctica San Pedro de la Paz o Examen Municipalidad Tomé..."
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    borderRadius: "8px",
-                    border: "1px solid #d1d5db",
-                    fontSize: "14px",
-                    minHeight: "100px",
-                    resize: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-
-              {/* Botón de Envío estilo Base Proyecto */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  marginTop: "8px",
-                }}
-              >
-                <button
-                  type="submit"
-                  disabled={cargando}
-                  style={{
-                    padding: "12px 32px",
-                    backgroundColor: "#7d88d1",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    cursor: cargando ? "not-allowed" : "pointer",
-                    transition: "all 0.2s ease",
-                    boxShadow: "0 4px 6px rgba(125,136,209,0.2)",
-                  }}
-                >
-                  {cargando ? "Procesando..." : "Enviar Solicitud"}
-                </button>
-              </div>
-            </form>
-          </div>
-          
+                  <button
+                    type="submit"
+                    disabled={cargando}
+                    style={{
+                      padding: "12px 32px",
+                      backgroundColor: "#7d88d1",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      cursor: cargando ? "not-allowed" : "pointer",
+                      transition: "all 0.2s ease",
+                      boxShadow: "0 4px 6px rgba(125,136,209,0.2)",
+                    }}
+                  >
+                    {cargando ? "Procesando..." : "Enviar Solicitud"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
           {/* LADO DERECHO: HISTORIAL PREVIO  */}
           <div
             style={{

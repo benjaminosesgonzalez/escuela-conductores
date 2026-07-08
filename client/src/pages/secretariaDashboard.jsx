@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 const SecretariaDashboard = () => {
@@ -51,7 +51,10 @@ const SecretariaDashboard = () => {
           <span>SECRETARÍA</span>
         </div>
         <nav style={styles.nav}>
-          <Link to="/secretaria" style={{ ...styles.navItem, ...styles.navItemActive }}>
+          <Link
+            to="/secretaria"
+            style={{ ...styles.navItem, ...styles.navItemActive }}
+          >
             <span>🏠</span> Inicio
           </Link>
           <div style={styles.navItem}>
@@ -151,12 +154,16 @@ const SecretariaDashboard = () => {
             <div style={styles.listCard}>
               <h2 style={styles.listHeader}>Reservas de vehículos</h2>
               <div style={styles.bookingItem}>
-                <div style={styles.bookingTimeTitle}>9:00 a.m. - Toyota Yaris</div>
+                <div style={styles.bookingTimeTitle}>
+                  9:00 a.m. - Toyota Yaris
+                </div>
                 <div style={styles.bookingDetail}>Instructor: Laura Rivera</div>
                 <div style={styles.bookingDetail}>Lugar: San Pedro</div>
               </div>
               <div style={styles.bookingItem}>
-                <div style={styles.bookingTimeTitle}>10:00 a.m. - Kia Morning</div>
+                <div style={styles.bookingTimeTitle}>
+                  10:00 a.m. - Kia Morning
+                </div>
                 <div style={styles.bookingDetail}>Instructor: Carlos Silva</div>
                 <div style={styles.bookingDetail}>Lugar: San Pedro</div>
               </div>

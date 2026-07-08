@@ -2,6 +2,7 @@ import { AppDataSource } from "../config/configDb.js";
 import { ProfesorSchema } from "../entities/profesor.entity.js";
 import { User } from "../entities/user.entity.js";
 import bcrypt from "bcrypt";
+import { In } from "typeorm";
 
 const profRepo = AppDataSource.getRepository(ProfesorSchema);
 const userRepo = AppDataSource.getRepository(User);
@@ -41,51 +42,72 @@ export const deleteProfesorService = async (id) => {
   return await profRepo.remove(profesor);
 };
 
-export const registrarProfesorService = async (datosProfesor) => {
-  const queryRunner = AppDataSource.createQueryRunner();
+export const asignarSedesMasivaProfesoresService = async (profesoresIdsArray, sedesIdsArray) => {
+  const profesores = await profRepo.find({
+    where: { id: In(profesoresIdsArray) },
+    relations: ["sedes"],
+  });
 
-  await queryRunner.connect();
-  await queryRunner.startTransaction();
+  //si la consulta no encuentra a nadie, cortamos la ejecucion
+  if (profesores.length === 0) return 0;
 
-  try {
-    const {
-      email,
-      password,
-      nombre,
-      telefono,
-      tipo_contrato = "full_time"
-    } = datosProfesor;
+  //mapeamos el arreglo numerico a un formato de entidades legibles
+  const nuevasSedes = sedesIdsArray.map((id) => ({ id }));
 
-    // 1. Encriptar la contraseña
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+  //iteramos sobre cada profesor y le asignamos las sedes
+  const profesoresActualizados = profesores.map((profesor) => {
+    profesor.sedes = nuevasSedes;
+    return profesor;
+  });
 
-    // 2. Crear y guardar el Usuario
-    const newUser = queryRunner.manager.create(User, {
-      email,
-      password: hashedPassword,
-      rol: "profesor"
-    });
-    const savedUser = await queryRunner.manager.save(User, newUser);
+  //guardamos todos los cambios en la base de datos
+  await profRepo.save(profesoresActualizados);
 
-    // 3. Crear y guardar el Profesor vinculado al Usuario
-    const newProfesor = queryRunner.manager.create(ProfesorSchema, {
-      email,
-      password: hashedPassword,
-      nombre,
-      telefono,
-      tipo_contrato
-    });
-    const savedProfesor = await queryRunner.manager.save(ProfesorSchema, newProfesor);
+  return profesoresActualizados.length;
+};
 
-    await queryRunner.commitTransaction();
+export const eliminarProfesoresPorIdsService = async (profesoresIdsArray) => {
+  const profRepository = AppDataSource.getRepository(Profesor);
+  const userRepository = AppDataSource.getRepository(User);
 
-    return savedProfesor;
-  } catch (error) {
-    await queryRunner.rollbackTransaction();
-    console.error("Error en la transacción de registro de profesor:", error);
-    throw error;
-  } finally {
-    await queryRunner.release();
-  }
+  const profesores = await profRepository.find({
+    where: { id: In(profesoresIdsArray) },
+    relations: ["user"]
+  });
+
+  if (profesores.length === 0) return 0;
+
+  const usersIds = profesores.map(prof => prof.user.id);
+
+  // Eliminamos primero a los profesores para evitar conflictos de llaves
+  await profRepository.delete(profesoresIdsArray);
+  await userRepository.delete(usersIds);
+
+  return profesores.length;
+};
+
+export const resetPasswordProfesorService = async (id) => {
+  const profRepository = AppDataSource.getRepository(Profesor);
+  const userRepository = AppDataSource.getRepository(User);
+
+  const profesor = await profRepository.findOne({
+    where: { id: parseInt(id) },
+    relations: ["user"]
+  });
+
+  if (!profesor || !profesor.user) return null;
+
+  // Extraemos los últimos 5 dígitos del RUT
+  const rutLimpio = profesor.rut.replace(/[^0-9kK]/g, '');
+  const nuevaPassword = rutLimpio.slice(-5);
+  
+  // Encriptamos
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(nuevaPassword, saltRounds);
+
+  // Guardamos SOLO en la tabla User (el profesor no tiene columna password)
+  profesor.user.password = hashedPassword;
+  await userRepository.save(profesor.user);
+
+  return nuevaPassword;
 };
