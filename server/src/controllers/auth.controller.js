@@ -356,7 +356,6 @@ export const registerStaff = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error en registro de staff:", error);
-
     return res.status(500).json({
       success: false,
       message: "Error al procesar el registro de staff",
