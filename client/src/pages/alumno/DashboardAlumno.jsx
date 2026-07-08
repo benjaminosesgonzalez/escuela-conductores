@@ -6,6 +6,8 @@ import { colors, spacing } from '../../theme/index.js';
 import { authService } from '../../services/authService.js';
 import ReservarClaseAlumno from './ReservarClaseAlumno.jsx';
 import MisClasesAlumno from './MisClasesAlumno.jsx';
+import SalaPsicotecnicaAlumno from './SalaPsicotecnicaAlumno.jsx';
+import SolicitarVehiculo from '../../components/shared/SolicitarVehiculo.jsx';
 
 const DashboardAlumno = () => {
   const [activeTab, setActiveTab] = useState('inicio');
@@ -192,6 +194,16 @@ const DashboardAlumno = () => {
       {/* MIS CLASES TAB */}
       {activeTab === 'misclases' && (
         <MisClasesAlumno />
+      )}
+
+      {/* SALA PSICOTÉCNICA TAB */}
+      {activeTab === 'psicotecnico' && (
+        <SalaPsicotecnicaAlumno />
+      )}
+
+      {/* VEHÍCULOS TAB */}
+      {activeTab === 'vehiculos' && (
+        <SolicitarVehiculo userRole="alumno" />
       )}
 
     </AlumnoLayout>

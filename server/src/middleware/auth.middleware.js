@@ -70,6 +70,6 @@ export const isAdminOrSecretaria = (req, res, next) => {
   } else {
     return res
       .status(403)
-      .json({ success: false, message: "Acceso restringido a Staff" });
+      .json({ success: false, message: "Acceso restringido a Staff únicamente" });
   }
 };

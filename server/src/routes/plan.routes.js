@@ -5,7 +5,7 @@ import {
   getPlanById,
   createPlan,
 } from "../controllers/plan.controller.js";
-import { authMiddleware, isAdmin } from "../middleware/auth.middleware.js";
+import { authMiddleware, isAdminOrSecretaria } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
@@ -15,6 +15,6 @@ router.get("/", getPlans);
 // obtener un plan por su ID: GET /api/plans/:id
 router.get("/:id", getPlanById);
 // crear plan: POST /api/plans
-router.post("/", authMiddleware, isAdmin, createPlan);
+router.post("/", authMiddleware, isAdminOrSecretaria, createPlan);
 
 export default router;

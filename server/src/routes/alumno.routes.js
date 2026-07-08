@@ -6,27 +6,34 @@ import {
   matricularNuevoAlumno,
   editarAlumno,
   autoRegistroAlumno,
-  asignarSedeMasiva
+  asignarSedeMasiva,
+  getAlumnos,
+  resetPasswordAlumno,
+  eliminarAlumnosMasivo
 } from "../controllers/alumno.controller.js";
-import { authMiddleware, isAdmin } from "../middleware/auth.middleware.js";
+//import { obtenerEstadoMatriculaService } from "../services/alumno.service.js";
+import {
+  authMiddleware,
+  isAdminOrSecretaria,
+} from "../middleware/auth.middleware.js";
+import { validateSchema } from "../middleware/validation.middleware.js";
+import { asignarSedeMasivaAlumnos } from "../controllers/secretaria.controller.js";
+import { asignarSedeMasivaIdsSchema } from "../validations/secretaria.validation.js";
+import { registroAlumnoSchema, editarAlumnoSchema } from "../validations/alumno.validation.js";
 
 const router = Router();
 
 // Matricular nuevo alumno (sin autenticación requerida para testing)
 // POST /api/alumnos/registro/nuevo
-router.post("/registro/nuevo", matricularNuevoAlumno);
-
+router.post("/registro/nuevo", authMiddleware, isAdminOrSecretaria, validateSchema(registroAlumnoSchema), matricularNuevoAlumno);
+// Obtener todos los alumnos
+// GET /api/alumnos
+router.get("/", authMiddleware, isAdminOrSecretaria, getAlumnos);
 // Auto-registro de alumno (sin autenticación)
 // POST /api/alumnos/registro/auto
-router.post("/registro/auto", autoRegistroAlumno);
+router.post("/registro/auto", validateSchema(registroAlumnoSchema), autoRegistroAlumno);
 
-// Editar alumno
-// PUT /api/alumnos/:id
-router.put("/:id", editarAlumno);
-
-// Asignar sede masiva
-// POST /api/alumnos/asignar-sede-masiva
-router.post("/asignar-sede-masiva", asignarSedeMasiva);
+router.delete("/eliminar", authMiddleware, isAdminOrSecretaria, eliminarAlumnosMasivo);
 
 // El alumno elige su preferencia
 // POST /api/alumnos/preferencia
@@ -34,6 +41,15 @@ router.post("/preferencia", authMiddleware, elegirPlanPreferencia);
 
 // La secretaría oficializa la matrícula
 // POST /api/alumnos/matricular
-router.post("/matricular", authMiddleware, isAdmin, oficializarMatricula);
+router.post("/matricular", authMiddleware, isAdminOrSecretaria, oficializarMatricula);
+
+//ruta para asignar sedes masivamente a alumnos POST /api/alumnos/sede-alumno
+router.put("/sede-alumno", authMiddleware, isAdminOrSecretaria, validateSchema(asignarSedeMasivaIdsSchema), asignarSedeMasivaAlumnos);
+
+// Editar alumno
+// PUT /api/alumnos/:id
+router.put("/:id", authMiddleware, isAdminOrSecretaria, validateSchema(editarAlumnoSchema), editarAlumno)
+// Agrega esta línea junto a tus otras rutas PUT
+router.put("/reset-password/:id", authMiddleware, isAdminOrSecretaria, resetPasswordAlumno);
 
 export default router;

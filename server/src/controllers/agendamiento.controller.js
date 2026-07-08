@@ -6,15 +6,17 @@ import{
 
 export async function configurarHorarioSala(req, res) {
     try {
-        const { dia_semana, hora_inicio, hora_fin } = req.body;
+        const { fecha, hora_inicio, hora_fin } = req.body;
 
-        if (dia_semana === undefined || hora_inicio === undefined || hora_fin === undefined) {
-            return res.status(400).json({ message: "Faltan campos requeridos: dia de la semana, hora de inicio y hora de fin" });
+        // Ahora SOLO exigimos la fecha. Si hora_inicio es null, el servicio borrará el día.
+        if (!fecha) {
+            return res.status(400).json({ message: "El campo fecha es requerido." });
         }
 
-        const configuracion = await configurarHorarioSalaService({ dia_semana, hora_inicio, hora_fin });
-        res.status(200).json({ message: "Horario de sala configurado exitosamente", data: configuracion });
+        const configuracion = await configurarHorarioSalaService({ fecha, hora_inicio, hora_fin });
+        res.status(200).json({ message: "Horario de sala procesado exitosamente", data: configuracion });
     } catch (error) {
+        console.error("Error al configurar sala:", error);
         return res.status(500).json({ message: "Error al configurar el horario de la sala", error: error.message });
     }
 }
@@ -40,7 +42,7 @@ export async function obtenerDisponibilidadSala(req, res) {
 export async function agendarBloque(req, res) {
     try {
         const { fecha, hora_inicio } = req.body;
-        const idAlumno = req.user.sub; // Obtener el ID del alumno desde el token
+        const idAlumno = req.user.id; // Obtener el ID del alumno desde el token
 
         if (!fecha || !hora_inicio) {
             return res.status(400).json({ message: "Fecha y hora de inicio son requeridos" });
