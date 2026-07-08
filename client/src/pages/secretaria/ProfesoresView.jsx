@@ -29,7 +29,7 @@ const ProfesoresView = ({ profesores, setProfesores, sedesDisponibles }) => {
 
   // --- LÓGICA DE FILTRADO ---
   const profesoresFiltrados = profesores.filter(prof => {
-    const matchSearch = prof.rut.toLowerCase().includes(searchTermProfes.toLowerCase()) || (prof.nombre && prof.nombre.toLowerCase().includes(searchTermProfes.toLowerCase()));
+    const matchSearch = (prof.rut && prof.rut.toLowerCase().includes(searchTermProfes.toLowerCase())) || (prof.nombre && prof.nombre.toLowerCase().includes(searchTermProfes.toLowerCase()));
     const matchSede = filterSedeProfes === '' || (prof.sedes && prof.sedes.some(s => s.id === Number(filterSedeProfes)));
     return matchSearch && matchSede;
   });

@@ -69,7 +69,7 @@ const MisDisponibilidadesAlumno = () => {
         // Obtener los detalles del plan
         if (data.data && data.data.id_plan_matriculado) {
           const planResponse = await fetch(
-            `http://localhost:5000/api/plans/${data.data.id_plan_matriculado}`
+            `http://localhost:5000/api/planes/${data.data.id_plan_matriculado}`
           );
           if (planResponse.ok) {
             const planData = await planResponse.json();

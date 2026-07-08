@@ -1,9 +1,20 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LandingPage from './LandingPage.jsx';
-import Login from './Login.jsx';
-import ProtectedRoute from '../routes/ProtectedRoute.jsx';
-import { DashboardProfesor, DashboardAlumno, DashboardSecretaria } from './index.js';
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import LandingPage from "./LandingPage.jsx";
+import Login from "./Login.jsx";
+import ProtectedRoute from "../routes/ProtectedRoute.jsx";
+import {
+  DashboardProfesor,
+  DashboardAlumno,
+  DashboardSecretaria,
+} from "./index.js";
+import Registro from "./alumno/Registro.jsx";
+import ConfirmarPlan from "./alumno/ConfirmarPlan.jsx";
 
 const App = () => {
   return (
@@ -14,6 +25,9 @@ const App = () => {
 
         {/* Ruta pública - Login */}
         <Route path="/login" element={<Login />} />
+
+        <Route path="/registro" element={<Registro />} />
+        <Route path="/confirmar-plan" element={<ConfirmarPlan />} />
 
         {/* Rutas protegidas por rol */}
         <Route
@@ -38,6 +52,15 @@ const App = () => {
           path="/secretaria"
           element={
             <ProtectedRoute requiredRole="secretaria">
+              <DashboardSecretaria />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/administracion"
+          element={
+            <ProtectedRoute requiredRole="administracion">
               <DashboardSecretaria />
             </ProtectedRoute>
           }

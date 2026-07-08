@@ -1,9 +1,15 @@
 import { AppDataSource } from "../config/configDb.js";
 import { ProfesorSchema } from "../entities/profesor.entity.js";
+<<<<<<< HEAD
 import { In } from "typeorm";
 import bcrypt from "bcrypt";
 import { User } from "../entities/user.entity.js";
 
+=======
+import { User } from "../entities/user.entity.js";
+import bcrypt from "bcrypt";
+import { In } from "typeorm";
+>>>>>>> origin
 
 const profRepo = AppDataSource.getRepository(ProfesorSchema);
 
@@ -69,7 +75,7 @@ export const asignarSedesMasivaProfesoresService = async (profesoresIdsArray, se
 };
 
 export const eliminarProfesoresPorIdsService = async (profesoresIdsArray) => {
-  const profRepository = AppDataSource.getRepository(Profesor);
+  const profRepository = AppDataSource.getRepository(ProfesorSchema);
   const userRepository = AppDataSource.getRepository(User);
 
   const profesores = await profRepository.find({
@@ -112,6 +118,7 @@ export const resetPasswordProfesorService = async (id) => {
   await userRepository.save(profesor.user);
 
   return nuevaPassword;
+<<<<<<< HEAD
 }; 
 
 export const registrarProfesorService = async (datosProfesor) => {
@@ -164,4 +171,6 @@ export const registrarProfesorService = async (datosProfesor) => {
   } finally {
     await queryRunner.release();
   }
+=======
+>>>>>>> origin
 };

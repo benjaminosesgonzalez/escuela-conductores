@@ -1,27 +1,27 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Home, Users, Calendar, Car, LogOut, FolderOpen, BookOpen, Video } from 'lucide-react';
-import { Layout } from '../components/shared/index.js';
-import { colors, spacing } from '../theme/index.js';
-import { authService } from '../services/authService.js';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {Home, Users, Calendar, Car, LogOut, FolderOpen, Video, BookOpen} from "lucide-react";
+import { Layout } from "../components/shared/index.js";
+import { colors, spacing } from "../theme/index.js";
+import { authService } from "../services/authService.js";
 
 const ProfesorLayout = ({ children, activeTab, onTabChange }) => {
   const navigate = useNavigate();
   const currentUser = authService.getCurrentUser();
-  const userEmail = currentUser?.nombre || currentUser?.email || 'Profesor';
+  const userEmail = currentUser?.nombre || currentUser?.email || "Profesor";
 
   const handleLogout = () => {
     authService.logout();
-    navigate('/');
+    navigate("/");
   };
 
   const menuItems = [
     { id: 'inicio', label: 'Inicio', icon: Home },
     { id: 'disponibilidad', label: 'Disponibilidad', icon: Calendar },
-    { id: 'vehiculos', label: 'Solicitar Vehículo', icon: Car },
     { id: 'clasesOnline', label: 'Clases Online', icon: Video },
     { id: 'misclases', label: 'Mis clases', icon: Car },
-    { id: 'repositorio', label: 'Repositorio', icon: FolderOpen }
+    { id: 'repositorio', label: 'Repositorio', icon: FolderOpen },
+    { id: "vehiculos", label: "Solicitar Vehículo", icon: Car },
   ];
 
   return (

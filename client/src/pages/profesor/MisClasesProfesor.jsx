@@ -6,7 +6,7 @@ import { authService } from '../../services/authService.js';
 
 const MisClasesProfesor = () => {
   const currentUser = authService.getCurrentUser();
-  const profesorId = currentUser?.id;
+  const profesorId = currentUser?.profesorId;
 
   const [disponibilidades, setDisponibilidades] = useState({});
   const [originalDisponibilidades, setOriginalDisponibilidades] = useState({});

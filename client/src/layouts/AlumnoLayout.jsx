@@ -8,21 +8,21 @@ import { authService } from '../services/authService.js';
 const AlumnoLayout = ({ children, activeTab, onTabChange }) => {
   const navigate = useNavigate();
   const currentUser = authService.getCurrentUser();
-  const userEmail = currentUser?.nombre || currentUser?.email || 'Alumno';
+  const userEmail = currentUser?.nombre || currentUser?.email || "Alumno";
 
   const handleLogout = () => {
     authService.logout();
-    navigate('/');
+    navigate("/");
   };
 
   const menuItems = [
     { id: 'inicio', label: 'Inicio', icon: Home },
     { id: 'misclases', label: 'Mis clases', icon: BookOpen },
-    { id: 'psicotecnico', label: 'Sala Psicotécnica', icon: Activity },
-    { id: 'vehiculos', label: 'Solicitar Vehículo', icon: Car },
     { id: 'clasesOnlineDisponibles', label: 'Reservar clases teóricas', icon: Video },
     { id: 'clasesPracticasDisponibles', label: 'Reservar clases prácticas', icon: Calendar },
-    { id: 'avance', label: 'Mi avance', icon: Award }
+    { id: 'avance', label: 'Mi avance', icon: Award },
+    { id: "psicotecnico", label: "Sala Psicotécnica", icon: Activity },
+    { id: "vehiculos", label: "Solicitar Vehículo", icon: Car },
   ];
 
   return (
