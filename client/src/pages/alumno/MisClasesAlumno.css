@@ -1,0 +1,43 @@
+.mis-clases-tabs {
+  display: flex;
+  gap: 10px;
+  border-bottom: 2px solid #f0f0f0;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  padding: 12px 16px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+}
+
+.tab-button:hover {
+  color: #333;
+  background-color: #f9f9f9;
+}
+
+.tab-button.active {
+  color: #667eea;
+  border-bottom-color: #667eea;
+  background-color: white;
+}
+
+@media (max-width: 768px) {
+  .mis-clases-tabs {
+    gap: 5px;
+  }
+
+  .tab-button {
+    padding: 10px 12px;
+    font-size: 12px;
+    flex: 1 0 45%;
+  }
+}

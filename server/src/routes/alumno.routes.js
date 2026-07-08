@@ -12,10 +12,7 @@ import {
   eliminarAlumnosMasivo,
 } from "../controllers/alumno.controller.js";
 //import { obtenerEstadoMatriculaService } from "../services/alumno.service.js";
-import {
-  authMiddleware,
-  isAdminOrSecretaria,
-} from "../middleware/auth.middleware.js";
+import {authMiddleware, isAdmin, isAdminOrSecretaria} from "../middleware/auth.middleware.js";
 import { validateSchema } from "../middleware/validation.middleware.js";
 import { asignarSedeMasivaAlumnos } from "../controllers/secretaria.controller.js";
 import { asignarSedeMasivaIdsSchema } from "../validations/secretaria.validation.js";
@@ -26,8 +23,10 @@ import {
 
 const router = Router();
 
-// Matricular nuevo alumno (sin autenticación requerida para testing)
+// Matricular nuevo alumno (solo secretaria/admin)
 // POST /api/alumnos/registro/nuevo
+  
+router.put("/:id", editarAlumno);
 router.post(
   "/registro/nuevo",
   authMiddleware,
@@ -44,6 +43,8 @@ router.post(
   "/registro/auto",
   validateSchema(registroAlumnoSchema),
   autoRegistroAlumno,
+  authMiddleware, 
+  isAdminOrSecretaria
 );
 
 router.delete(

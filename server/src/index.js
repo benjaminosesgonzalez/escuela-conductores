@@ -4,7 +4,7 @@ import morgan from "morgan";
 import cors from "cors";
 import { AppDataSource, connectDB } from "./config/configDb.js";
 import { routerApi } from "./routes/index.routes.js";
-import profesorRoutes from './routes/profesor.js';
+import { inicializarScheduler } from "./services/clase-online-scheduler.service.js";
 
 const app = express();
 
@@ -25,8 +25,6 @@ app.get("/", (req, res) => {
   res.send("¡Bienvenido a mi API REST con TypeORM!");
 });
 
-app.use('/api/profesor', profesorRoutes);
-
 // Cargar todas las rutas API
 routerApi(app);
 
@@ -34,7 +32,10 @@ routerApi(app);
 connectDB()
   .then(() => {
     console.log("✅ Conexión exitosa a la base de datos PostgreSQL!");
-    
+
+    // Inicializar scheduler de generación de clases
+    inicializarScheduler();
+
     // Levanta el servidor Express
     const PORT = process.env.PORT || 5000; // Cambié a 5000 como en tu frontend
     app.listen(PORT, () => {

@@ -7,7 +7,8 @@ const Header = ({
   onToggleSidebar,
   userEmail,
   onLogout,
-  title = 'ESCUELA DE CONDUCTORES'
+  title = 'ESCUELA DE CONDUCTORES',
+  roleLabel = 'Usuario'
 }) => {
   // Si userEmail contiene @, es un email, si no, es un nombre
   const userName = userEmail?.includes('@') ? userEmail?.split('@')[0] : (userEmail || 'Usuario');
@@ -100,7 +101,7 @@ const Header = ({
               color: colors.textTertiary,
               margin: 0
             }}>
-              Usuario
+              {roleLabel}
             </p>
           </div>
           <div style={{

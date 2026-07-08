@@ -1,9 +1,11 @@
 import { AppDataSource } from "../config/configDb.js";
 import { ProfesorSchema } from "../entities/profesor.entity.js";
-import { In } from "typeorm";
+import { User } from "../entities/user.entity.js";
 import bcrypt from "bcrypt";
+import { In } from "typeorm";
 
 const profRepo = AppDataSource.getRepository(ProfesorSchema);
+const userRepo = AppDataSource.getRepository(User);
 
 export const getProfesoresService = async () => {
   return await profRepo.find({

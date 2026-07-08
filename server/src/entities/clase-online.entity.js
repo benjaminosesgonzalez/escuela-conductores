@@ -1,39 +1,63 @@
 import { EntitySchema } from "typeorm";
 
-export const DisponibilidadSchema = new EntitySchema({
-  name: "Disponibilidad",
-  tableName: "disponibilidades_profesores",
+export const ClaseOnlineSchema = new EntitySchema({
+  name: "ClaseOnline",
+  tableName: "clases_online",
   columns: {
     id: {
       primary: true,
       type: "int",
-      generated: true,
+      generated: "increment",
     },
     profesorId: {
       type: "int",
       nullable: false,
     },
+    numeroTema: {
+      type: "int",
+      nullable: false, // 1-10
+    },
+    nombreTema: {
+      type: "varchar",
+      length: 255,
+      nullable: false,
+    },
     diaSemana: {
       type: "varchar",
-      length: 20, // 'lunes', 'martes', 'miércoles', 'jueves', 'viernes'
+      length: 20,
       nullable: false,
     },
     fecha: {
       type: "date",
-      nullable: true,
+      nullable: false,
     },
     horaInicio: {
-      type: "time",
+      type: "varchar",
+      length: 5,
       nullable: false,
     },
     horaFin: {
-      type: "time",
+      type: "varchar",
+      length: 5,
       nullable: false,
     },
-    disponible: {
-      type: "boolean",
-      default: true,
-      nullable: false,
+    capacidadMaxima: {
+      type: "int",
+      default: 30,
+    },
+    alumnosAgendados: {
+      type: "int",
+      default: 0,
+    },
+    linkZoom: {
+      type: "varchar",
+      length: 500,
+      nullable: true,
+    },
+    estado: {
+      type: "varchar",
+      length: 20,
+      default: "activa", // activa, completada, cancelada
     },
     tipoDisponibilidad: {
       type: "varchar",

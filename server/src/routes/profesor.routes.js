@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  registrarProfesor,
   getProfesores,
   updateProfesor,
   deleteProfesor,
@@ -8,6 +9,7 @@ import {
 } from "../controllers/profesor.controller.js";
 import {
   authMiddleware,
+  isAdmin,
   isAdminOrSecretaria,
 } from "../middleware/auth.middleware.js";
 import { asignarSedeMasivaProfesores } from "../controllers/secretaria.controller.js";
@@ -16,6 +18,10 @@ import { asignarSedeMasivaProfesoresSchema } from "../validations/secretaria.val
 
 const router = Router();
 
+// Registro de profesor (solo admin autorizado)
+router.post("/registro", authMiddleware, isAdmin, registrarProfesor);
+
+// Resto de rutas protegidas: admin o secretaria
 router.use(authMiddleware, isAdminOrSecretaria);
 router.delete("/eliminar", authMiddleware, isAdminOrSecretaria, eliminarProfesoresMasivo);
 router.get("/", getProfesores);

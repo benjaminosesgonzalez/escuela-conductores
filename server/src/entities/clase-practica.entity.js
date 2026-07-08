@@ -1,15 +1,15 @@
 import { EntitySchema } from "typeorm";
 
-export const DisponibilidadAlumno = new EntitySchema({
-  name: "DisponibilidadAlumno",
-  tableName: "disponibilidades_alumnos",
+export const ClasePracticaSchema = new EntitySchema({
+  name: "ClasePractica",
+  tableName: "clases_practicas",
   columns: {
     id: {
       primary: true,
       type: "int",
       generated: "increment",
     },
-    alumnoId: {
+    profesorId: {
       type: "int",
       nullable: false,
     },
@@ -20,7 +20,7 @@ export const DisponibilidadAlumno = new EntitySchema({
     },
     fecha: {
       type: "date",
-      nullable: true,
+      nullable: false,
     },
     horaInicio: {
       type: "varchar",
@@ -32,9 +32,15 @@ export const DisponibilidadAlumno = new EntitySchema({
       length: 5,
       nullable: false,
     },
-    disponible: {
-      type: "boolean",
-      default: true,
+    alumnoId: {
+      type: "int",
+      nullable: true,
+    },
+    estado: {
+      type: "varchar",
+      length: 20,
+      default: "disponible", // disponible, ocupada, completada, cancelada
+      nullable: false,
     },
     createdAt: {
       type: "timestamp",
@@ -48,11 +54,17 @@ export const DisponibilidadAlumno = new EntitySchema({
     },
   },
   relations: {
+    profesor: {
+      target: "Profesor",
+      type: "many-to-one",
+      joinColumn: { name: "profesorId" },
+      onDelete: "CASCADE",
+    },
     alumno: {
       target: "Alumno",
       type: "many-to-one",
       joinColumn: { name: "alumnoId" },
-      onDelete: "CASCADE",
+      onDelete: "SET NULL",
     },
   },
 });
