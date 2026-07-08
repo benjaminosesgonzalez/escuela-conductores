@@ -6,6 +6,7 @@ import './MisClasesAlumno.css';
 
 const MisClasesAlumno = ({ refreshTrigger = 0 }) => {
   const [clasesPresenciales, setClasesPresenciales] = useState([]);
+  const [clasesPracticas, setClasesPracticas] = useState([]);
   const [clasesOnline, setClasesOnline] = useState({
     proximas: [],
     completadas: [],
@@ -46,6 +47,17 @@ const MisClasesAlumno = ({ refreshTrigger = 0 }) => {
       if (responseOnline.ok) {
         const data = await responseOnline.json();
         setClasesOnline(data);
+      }
+
+      // Obtener clases prácticas
+      const responsePracticas = await fetch('/api/clases-practicas-alumno/mis-clases', {
+        headers: {
+          Authorization: `Bearer ${authService.getToken()}`,
+        },
+      });
+      if (responsePracticas.ok) {
+        const data = await responsePracticas.json();
+        setClasesPracticas(data.clases || []);
       }
 
       setLoading(false);
@@ -253,6 +265,12 @@ const MisClasesAlumno = ({ refreshTrigger = 0 }) => {
           📚 Clases Presenciales ({clasesPresenciales.length})
         </button>
         <button
+          className={`tab-button ${activeTab === 'practicasProximas' ? 'active' : ''}`}
+          onClick={() => setActiveTab('practicasProximas')}
+        >
+          🚗 Clases Prácticas Próximas ({clasesPracticas.length})
+        </button>
+        <button
           className={`tab-button ${activeTab === 'onlineProximas' ? 'active' : ''}`}
           onClick={() => setActiveTab('onlineProximas')}
         >
@@ -275,6 +293,9 @@ const MisClasesAlumno = ({ refreshTrigger = 0 }) => {
       <div style={{ marginTop: spacing.lg }}>
         {activeTab === 'presenciales' && (
           <TabContent titulo="Clases Presenciales" clases={clasesPresenciales} esPresencial={true} />
+        )}
+        {activeTab === 'practicasProximas' && (
+          <TabContent titulo="Clases Prácticas Próximas" clases={clasesPracticas} esPresencial={false} />
         )}
         {activeTab === 'onlineProximas' && (
           <TabContent titulo="Clases Online Próximas" clases={clasesOnline.proximas} esPresencial={false} />

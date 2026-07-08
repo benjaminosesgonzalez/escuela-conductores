@@ -81,6 +81,10 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
         });
         setInscripciones(new Set([...inscripciones, claseId]));
         setTimeout(() => cargarClasesDisponibles(), 500);
+        // Notificar al padre para refrescar "Mis clases"
+        if (onDesinscripcion) {
+          setTimeout(() => onDesinscripcion(), 600);
+        }
       } else {
         setMensaje({ tipo: "error", texto: data.message });
       }
