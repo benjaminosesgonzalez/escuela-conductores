@@ -25,7 +25,7 @@ export const enrollClasePractica = async (req, res) => {
     const { id: clasePracticaId } = req.params;
     const userId = req.user.id;
 
-    const resultado = await inscribirAlumnoEnClasePractica(clasePracticaId, userId);
+    const resultado = await inscribirAlumnoEnClasePractica(parseInt(clasePracticaId), userId);
 
     if (resultado.success) {
       res.json(resultado);
@@ -46,7 +46,7 @@ export const unenrollClasePractica = async (req, res) => {
     const { id: clasePracticaId } = req.params;
     const userId = req.user.id;
 
-    const resultado = await desinscribirAlumnoDeClasePractica(clasePracticaId, userId);
+    const resultado = await desinscribirAlumnoDeClasePractica(parseInt(clasePracticaId), userId);
 
     if (resultado.success) {
       res.json(resultado);
