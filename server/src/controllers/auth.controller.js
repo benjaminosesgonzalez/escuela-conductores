@@ -47,7 +47,7 @@ export const login = async (req, res) => {
     if (!user) {
       const result = await AppDataSource.query(
         "SELECT * FROM profesores WHERE email = $1",
-        [email]
+        [email],
       );
 
       if (result.length > 0) {
@@ -81,18 +81,24 @@ export const login = async (req, res) => {
     // Si es profesor, generar bloques automáticamente si no existen
     if (user.rol === "profesor" && user.id) {
       try {
-        const disponibilidadRepository = AppDataSource.getRepository(DisponibilidadSchema);
+        const disponibilidadRepository =
+          AppDataSource.getRepository(DisponibilidadSchema);
         const bloquesExistentes = await disponibilidadRepository.findOne({
-          where: { profesorId: user.id }
+          where: { profesorId: user.id },
         });
 
         if (!bloquesExistentes) {
           const tipoContrato = user.tipo_contrato || "full_time";
-          console.log(`📅 Generando bloques automáticos para profesor ${user.id} (${tipoContrato})`);
+          console.log(
+            `📅 Generando bloques automáticos para profesor ${user.id} (${tipoContrato})`,
+          );
           await generarBloquesDisponibilidad(user.id, tipoContrato);
         }
       } catch (blockGenError) {
-        console.error("⚠️ Error generando bloques automáticos:", blockGenError.message);
+        console.error(
+          "⚠️ Error generando bloques automáticos:",
+          blockGenError.message,
+        );
         // No fallar el login si hay error generando bloques
       }
     }
@@ -107,28 +113,42 @@ export const login = async (req, res) => {
         const alumno = await alumnoRepository.findOneBy({ id_user: user.id });
 
         if (!alumno) {
-          console.log(`⚠️ No se encontró registro de alumno para user.id: ${user.id}`);
+          console.log(
+            `⚠️ No se encontró registro de alumno para user.id: ${user.id}`,
+          );
         } else {
           alumnoId = alumno.id; // Guardar para devolverlo en la respuesta
-          console.log(`✅ Alumno encontrado: id=${alumno.id}, id_plan_matriculado=${alumno.id_plan_matriculado}`);
+          console.log(
+            `✅ Alumno encontrado: id=${alumno.id}, id_plan_matriculado=${alumno.id_plan_matriculado}`,
+          );
 
           if (alumno.id_plan_matriculado) {
-            const DisponibilidadAlumnoRepository = AppDataSource.getRepository(DisponibilidadAlumno);
+            const DisponibilidadAlumnoRepository =
+              AppDataSource.getRepository(DisponibilidadAlumno);
 
             // Verificar si tiene bloques completos (todos los 5 días)
             const bloquesActuales = await DisponibilidadAlumnoRepository.find({
-              where: { alumnoId: alumno.id }
+              where: { alumnoId: alumno.id },
             });
 
-            const diasConBloques = new Set(bloquesActuales.map(b => b.diaSemana));
-            const diasEsperados = new Set(["lunes", "martes", "miércoles", "jueves", "viernes"]);
-            const tieneBloquesCompletos = diasConBloques.size === 5 &&
-                                           [...diasEsperados].every(dia => diasConBloques.has(dia));
+            const diasConBloques = new Set(
+              bloquesActuales.map((b) => b.diaSemana),
+            );
+            const diasEsperados = new Set([
+              "lunes",
+              "martes",
+              "miércoles",
+              "jueves",
+              "viernes",
+            ]);
+            const tieneBloquesCompletos =
+              diasConBloques.size === 5 &&
+              [...diasEsperados].every((dia) => diasConBloques.has(dia));
 
             // Obtener información del plan
             const planResponse = await AppDataSource.query(
               "SELECT * FROM plans WHERE id = $1",
-              [alumno.id_plan_matriculado]
+              [alumno.id_plan_matriculado],
             );
 
             if (planResponse.length > 0) {
@@ -136,21 +156,35 @@ export const login = async (req, res) => {
               const totalClases = planInfo.total_classes;
 
               if (tieneBloquesCompletos) {
-                console.log(`ℹ️ Bloques completos ya existen para alumno ${alumno.id}`);
+                console.log(
+                  `ℹ️ Bloques completos ya existen para alumno ${alumno.id}`,
+                );
               } else {
-                console.log(`📅 Generando/actualizando bloques para alumno ${alumno.id} (${totalClases} clases)`);
-                await generarBloquesDisponibilidadAlumnoService(alumno.id, totalClases);
-                console.log(`✅ Bloques generados exitosamente para alumno ${alumno.id}`);
+                console.log(
+                  `📅 Generando/actualizando bloques para alumno ${alumno.id} (${totalClases} clases)`,
+                );
+                await generarBloquesDisponibilidadAlumnoService(
+                  alumno.id,
+                  totalClases,
+                );
+                console.log(
+                  `✅ Bloques generados exitosamente para alumno ${alumno.id}`,
+                );
               }
             } else {
-              console.log(`⚠️ No se encontró plan para id: ${alumno.id_plan_matriculado}`);
+              console.log(
+                `⚠️ No se encontró plan para id: ${alumno.id_plan_matriculado}`,
+              );
             }
           } else {
             console.log(`⚠️ Alumno ${alumno.id} no tiene plan matriculado`);
           }
         }
       } catch (blockGenError) {
-        console.error("⚠️ Error generando bloques automáticos para alumno:", blockGenError);
+        console.error(
+          "⚠️ Error generando bloques automáticos para alumno:",
+          blockGenError,
+        );
         console.error("Stack:", blockGenError.stack);
       }
     }
@@ -163,10 +197,10 @@ export const login = async (req, res) => {
         id: user.id,
         email: user.email,
         rol: user.rol,
-        nombre: user.nombre || user.email.split('@')[0],
+        nombre: user.nombre || user.email.split("@")[0],
         created_at: user.created_at,
         alumnoId: alumnoId, // Incluir alumnoId para alumnos
-        planInfo: planInfo // Incluir planInfo para alumnos
+        planInfo: planInfo, // Incluir planInfo para alumnos
       },
     });
   } catch (error) {
@@ -240,27 +274,18 @@ export const register = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error en registro:", error);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error en el servidor",
-        error: error.message,
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Error en el servidor",
+      error: error.message,
+    });
   }
 };
 
 // REGISTER STAFF (solo admin)
 export const registerStaff = async (req, res) => {
   try {
-    const {
-      nombre,
-      email,
-      rut,
-      rol,
-      telefono,
-      id_sedes
-    } = req.body;
+    const { nombre, email, rut, rol, telefono, id_sedes } = req.body;
 
     if (!nombre || !email || !rut || !rol) {
       return res.status(400).json({
@@ -314,9 +339,7 @@ export const registerStaff = async (req, res) => {
     if (rol === "profesor") {
       const profRepo = AppDataSource.getRepository(ProfesorSchema);
 
-      const sedesCargadas = id_sedes
-        ? id_sedes.map((id) => ({ id }))
-        : [];
+      const sedesCargadas = id_sedes ? id_sedes.map((id) => ({ id })) : [];
 
       await profRepo.save(
         profRepo.create({
@@ -325,13 +348,12 @@ export const registerStaff = async (req, res) => {
           rut,
           id_user: savedUser.id,
           sedes: sedesCargadas,
-        })
+        }),
       );
     }
 
     if (rol === "secretaria") {
-      const secretariaRepo =
-        AppDataSource.getRepository(Secretaria);
+      const secretariaRepo = AppDataSource.getRepository(Secretaria);
 
       await secretariaRepo.save(
         secretariaRepo.create({
@@ -339,7 +361,7 @@ export const registerStaff = async (req, res) => {
           telefono: telefono || "Sin teléfono",
           rut,
           id_user: savedUser.id,
-        })
+        }),
       );
     }
 
