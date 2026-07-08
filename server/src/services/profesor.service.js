@@ -1,15 +1,9 @@
 import { AppDataSource } from "../config/configDb.js";
 import { ProfesorSchema } from "../entities/profesor.entity.js";
-<<<<<<< HEAD
 import { In } from "typeorm";
 import bcrypt from "bcrypt";
 import { User } from "../entities/user.entity.js";
 
-=======
-import { User } from "../entities/user.entity.js";
-import bcrypt from "bcrypt";
-import { In } from "typeorm";
->>>>>>> origin
 
 const profRepo = AppDataSource.getRepository(ProfesorSchema);
 
@@ -118,7 +112,6 @@ export const resetPasswordProfesorService = async (id) => {
   await userRepository.save(profesor.user);
 
   return nuevaPassword;
-<<<<<<< HEAD
 }; 
 
 export const registrarProfesorService = async (datosProfesor) => {
@@ -171,6 +164,4 @@ export const registrarProfesorService = async (datosProfesor) => {
   } finally {
     await queryRunner.release();
   }
-=======
->>>>>>> origin
 };

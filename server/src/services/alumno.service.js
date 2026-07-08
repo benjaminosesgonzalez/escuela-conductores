@@ -2,7 +2,6 @@
 import { AppDataSource } from "../config/configDb.js";
 import { Alumno } from "../entities/alumno.entity.js";
 import { User } from "../entities/user.entity.js";
-<<<<<<< HEAD
 import { Sede } from "../entities/sede.entity.js";
 import bcrypt from "bcrypt";
 import { In } from "typeorm";
@@ -10,12 +9,6 @@ import { DisponibilidadAlumno } from "../entities/disponibilidad-alumno.entity.j
 
 
 const alumnoRepo = AppDataSource.getRepository(Alumno);
-=======
-import { DisponibilidadAlumno } from "../entities/disponibilidad-alumno.entity.js";
-import bcrypt from "bcrypt";
-import { In } from "typeorm";
-import { Sede } from "../entities/sede.entity.js";
->>>>>>> origin
 
 // Función auxiliar para generar bloques de disponibilidad
 const minutosAHora = (minutos) => {
