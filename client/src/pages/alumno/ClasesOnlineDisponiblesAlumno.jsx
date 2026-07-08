@@ -9,6 +9,7 @@ const ClasesOnlineDisponiblesAlumno = ({ onDesinscripcion }) => {
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState(null);
   const [filtroProfesor, setFiltroProfesor] = useState("");
+  const [tipoClase, setTipoClase] = useState("teorica");
 
   useEffect(() => {
     cargarClasesDisponibles();
@@ -133,11 +134,12 @@ const ClasesOnlineDisponiblesAlumno = ({ onDesinscripcion }) => {
     setTimeout(() => setMensaje(null), 3000);
   };
 
-  const claseFiltradas = filtroProfesor
-    ? clases.filter((c) =>
-        c.nombreProfesor?.toLowerCase().includes(filtroProfesor.toLowerCase())
-      )
-    : clases;
+  const claseFiltradas = clases.filter((c) => {
+    const coincideProfesor = !filtroProfesor ||
+      c.nombreProfesor?.toLowerCase().includes(filtroProfesor.toLowerCase());
+    const coincideTipo = (c.tipoDisponibilidad || 'teorica') === tipoClase;
+    return coincideProfesor && coincideTipo;
+  });
 
   const profesores = [...new Set(clases.map((c) => c.nombreProfesor))];
 
@@ -167,6 +169,46 @@ const ClasesOnlineDisponiblesAlumno = ({ onDesinscripcion }) => {
     <div className="clases-online-disponibles-container">
       <div className="header-clases">
         <h2>📚 Clases Online Disponibles</h2>
+
+        {/* Pestañas de Tipo */}
+        <div style={{
+          display: 'flex',
+          gap: '10px',
+          marginBottom: '20px',
+          borderBottom: '2px solid #e5e7eb'
+        }}>
+          <button
+            onClick={() => setTipoClase('teorica')}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: tipoClase === 'teorica' ? '#22c55e' : 'transparent',
+              color: tipoClase === 'teorica' ? 'white' : '#666',
+              border: 'none',
+              borderBottom: tipoClase === 'teorica' ? '3px solid #22c55e' : 'none',
+              cursor: 'pointer',
+              fontWeight: '600',
+              fontSize: '16px'
+            }}
+          >
+            📚 Clases Teóricas
+          </button>
+          <button
+            onClick={() => setTipoClase('practica')}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: tipoClase === 'practica' ? '#a855f7' : 'transparent',
+              color: tipoClase === 'practica' ? 'white' : '#666',
+              border: 'none',
+              borderBottom: tipoClase === 'practica' ? '3px solid #a855f7' : 'none',
+              cursor: 'pointer',
+              fontWeight: '600',
+              fontSize: '16px'
+            }}
+          >
+            🚗 Clases Prácticas
+          </button>
+        </div>
+
         <div className="controles-semana">
           <button
             onClick={() => setSemanaActual(Math.max(0, semanaActual - 1))}

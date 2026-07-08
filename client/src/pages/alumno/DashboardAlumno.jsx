@@ -4,7 +4,6 @@ import AlumnoLayout from '../../layouts/AlumnoLayout.jsx';
 import { Card, Button } from '../../components/shared/index.js';
 import { colors, spacing } from '../../theme/index.js';
 import { authService } from '../../services/authService.js';
-import ReservarClaseAlumno from './ReservarClaseAlumno.jsx';
 import MisClasesAlumno from './MisClasesAlumno.jsx';
 import ClasesOnlineDisponiblesAlumno from './ClasesOnlineDisponiblesAlumno.jsx';
 
@@ -189,11 +188,6 @@ const DashboardAlumno = () => {
             </Button>
           </Card>
         </div>
-      )}
-
-      {/* RESERVAR CLASE TAB */}
-      {activeTab === 'reservar' && (
-        <ReservarClaseAlumno />
       )}
 
       {/* MIS CLASES TAB */}
