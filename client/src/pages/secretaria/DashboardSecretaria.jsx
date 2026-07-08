@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Users, FileText, TrendingUp } from "lucide-react";
 import SecretariaLayout from "../../layouts/SecretariaLayout.jsx";
 import AgendarClasesSecretaria from "./AgendarClasesSecretaria.jsx";
-import { Card, Button } from "../../components/shared/index.js";
+import Interesados from "./Interesados.jsx";
+import { Card } from "../../components/shared/index.js";
 import { colors, spacing } from "../../theme/index.js";
 import { authService } from "../../services/authService.js";
-import VehiculosYSolicitudes from "./autos.jsx";
+import VehiculosYSolicitudes from "../autos.jsx";
 
 const DashboardSecretaria = () => {
   const [activeTab, setActiveTab] = useState("inicio");
@@ -263,6 +264,7 @@ const DashboardSecretaria = () => {
       )}
       {/* VEHÍCULOS Y SOLICITUDES TAB */}
       {activeTab === "vehiculos-solicitudes" && <VehiculosYSolicitudes />}
+      {activeTab === "interesados" && <Interesados />}
     </SecretariaLayout>
   );
 };

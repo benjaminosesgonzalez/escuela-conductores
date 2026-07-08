@@ -6,7 +6,7 @@ import {
   matricularNuevoAlumno,
   editarAlumno,
   autoRegistroAlumno,
-  asignarSedeMasiva
+  asignarSedeMasiva,
 } from "../controllers/alumno.controller.js";
 import { authMiddleware, isAdmin } from "../middleware/auth.middleware.js";
 
@@ -32,8 +32,7 @@ router.post("/asignar-sede-masiva", asignarSedeMasiva);
 // POST /api/alumnos/preferencia
 router.post("/preferencia", authMiddleware, elegirPlanPreferencia);
 
-// La secretaría oficializa la matrícula
 // POST /api/alumnos/matricular
-router.post("/matricular", authMiddleware, isAdmin, oficializarMatricula);
+router.post("/matricular", authMiddleware, oficializarMatricula);
 
 export default router;

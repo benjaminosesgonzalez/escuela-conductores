@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-// 🔴 CAMBIO 1: Importar authService centralizado
 import { authService } from "../services/authService";
 
 const Login = () => {
@@ -15,9 +14,11 @@ const Login = () => {
     setError("");
     setLoading(true);
 
+    const backendUrl = "http://localhost:5000/api";
+
     if (!email.trim()) {
       setError("Por favor ingresa tu correo");
-      setLoading(false);
+      loading(false);
       return;
     }
 
@@ -36,16 +37,56 @@ const Login = () => {
         const rol = result.user.rol;
         console.log(`Rol detectado: ${rol}`);
 
-        // Mapear roles a rutas
+        // Mapear roles a rutas base
         const rutasPorRol = {
           profesor: "/profesor",
-          alumno: "/alumno",
           secretaria: "/secretaria",
-          administracion: "/secretaria" // Administradores ven secretaria
+          administracion: "/administracion", // Administradores ven secretaria
         };
 
-        const ruta = rutasPorRol[rol] || "/";
-        navigate(ruta);
+        // ================================================================
+        // 🛡️ INTERCEPCIÓN DE FLUJO PARA EL ALUMNO (MURO DE PAGO)
+        // ================================================================
+        if (rol === "alumno") {
+          const planPendiente = localStorage.getItem("plan_pendiente");
+
+          if (planPendiente) {
+            console.log(`Desviando alumno al pago del plan: ${planPendiente}`);
+
+            // 🔥 NUEVO: Avisamos al backend el plan de interés por si el alumno no termina el pago
+            fetch(`${backendUrl}/alumnos/seleccionar-interes`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                // El authService.login ya guardó el token en el localStorage, lo extraemos de ahí
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+              body: JSON.stringify({ idPlan: planPendiente }),
+            }).catch((err) =>
+              console.error(
+                "Error al registrar plan de interés en segundo plano:",
+                err,
+              ),
+            );
+
+            // Sigue su camino normal hacia la caja de confirmación y pago simulado
+            navigate(`/confirmar-plan?planId=${planPendiente}`);
+          } else if (result.user.estado_matricula !== "matriculado") {
+            // Caso 2: No tiene plan guardado y NO está matriculado -> Va a la landing a elegir uno
+            alert(
+              "Detectamos que aún no tienes un plan contratado. Elige uno para continuar.",
+            );
+            navigate("/");
+          } else {
+            // Caso 3: Ya pagó y está matriculado -> Entra directo a su Dashboard institucional
+            navigate("/alumno");
+          }
+        } else {
+          // Flujo normal para profesores, secretarias y administradores
+          const ruta = rutasPorRol[rol] || "/";
+          navigate(ruta);
+        }
+        // ================================================================
       } else {
         setError(result.error || "Email o contraseña incorrectos");
       }
@@ -104,8 +145,8 @@ const Login = () => {
               />
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               style={{
                 ...styles.loginButton,
                 opacity: loading ? 0.7 : 1,
@@ -116,11 +157,11 @@ const Login = () => {
               {loading ? "Cargando..." : "Iniciar sesión"}
             </button>
 
-            <button 
-              type="button" 
+            <button
+              type="button"
               style={styles.registerButton}
               disabled={loading}
-              onClick={() => alert("Función de registro aún no implementada")}
+              onClick={() => navigate("/registro")} // Redirigimos a la ruta de registro
             >
               Registrarse
             </button>
@@ -128,9 +169,15 @@ const Login = () => {
 
           <div style={styles.testCredentials}>
             <p style={styles.smallText}>Credenciales de prueba:</p>
-            <p style={styles.smallText}>👨‍🏫 Profesor - profesor@escuela.com / profesor123</p>
-            <p style={styles.smallText}>👨‍🎓 Alumno - alumno@escuela.com / alumno123</p>
-            <p style={styles.smallText}>📋 Secretaria - secretaria@escuela.com / secretaria123</p>
+            <p style={styles.smallText}>
+              👨‍🏫 Profesor - profesor@escuela.com / profesor123
+            </p>
+            <p style={styles.smallText}>
+              👨‍🎓 Alumno - alumno@escuela.com / alumno123
+            </p>
+            <p style={styles.smallText}>
+              📋 Secretaria - secretaria@escuela.com / secretaria123
+            </p>
           </div>
         </section>
       </main>

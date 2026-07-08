@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Users, Calendar, Car, Clock, MapPin } from "lucide-react";
 import ProfesorLayout from "../../layouts/ProfesorLayout.jsx";
 import { Card, Button } from "../../components/shared/index.js";
@@ -7,7 +7,7 @@ import { authService } from "../../services/authService.js";
 import MisClasesProfesor from "./MisClasesProfesor.jsx";
 import ClasesConfirmadasProfesor from "./ClasesConfirmadasProfesor.jsx";
 import RepositorioProfesor from "./RepositorioProfesor.jsx";
-import VehiculosYSolicitudes from "./autos.jsx";
+import VehiculosYSolicitudes from "../autos.jsx";
 
 const DashboardProfesor = () => {
   const [activeTab, setActiveTab] = useState("inicio");

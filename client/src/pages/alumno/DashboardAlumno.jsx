@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { BookOpen, Calendar, CheckCircle, Clock } from "lucide-react";
 import AlumnoLayout from "../../layouts/AlumnoLayout.jsx";
 import { Card, Button } from "../../components/shared/index.js";
@@ -6,7 +6,7 @@ import { colors, spacing } from "../../theme/index.js";
 import { authService } from "../../services/authService.js";
 import ReservarClaseAlumno from "./ReservarClaseAlumno.jsx";
 import MisClasesAlumno from "./MisClasesAlumno.jsx";
-import VehiculosYSolicitudes from "./autos.jsx";
+import VehiculosYSolicitudes from "../autos.jsx";
 
 const DashboardAlumno = () => {
   const [activeTab, setActiveTab] = useState("inicio");
