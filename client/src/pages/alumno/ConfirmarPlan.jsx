@@ -26,11 +26,13 @@ const ConfirmarPlan = () => {
       return;
     }
 
-    fetch(`${backendUrl}/planes`)
+    fetch(`${backendUrl}/plans`)
       .then((res) => res.json())
       .then((data) => {
         const listaPlanes = data.data || data;
-        const planEncontrado = listaPlanes.find((p) => p.id === Number(planId));
+        const planEncontrado = listaPlanes.find(
+          (p) => String(p.id) === String(planId),
+        );
 
         if (planEncontrado) {
           setPlanInfo(planEncontrado);

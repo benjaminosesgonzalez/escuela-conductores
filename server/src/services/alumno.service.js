@@ -66,7 +66,7 @@ export async function matricularNuevoAlumnoService(datosGenerales) {
   try {
     const {
       email,
-      password, // Viene generada desde el controlador
+      password,
       nombre,
       rut,
       telefono,
@@ -89,20 +89,28 @@ export async function matricularNuevoAlumnoService(datosGenerales) {
     const savedUser = await queryRunner.manager.save(User, newUser);
 
     // 3. Crear y guardar el Alumno vinculado al Usuario
-    // NOTA ARQUITECTÓNICA: Solo guardamos los datos de la entidad Alumno.
     const newAlumno = queryRunner.manager.create(Alumno, {
       email,
-      password: hashedPassword, // Guardamos la contraseña hasheada en la entidad Alumno
+      password: hashedPassword,
       nombre,
       rut,
       telefono,
       sexo,
       comuna,
-      id_sede: sede, // Asegúrate de que coincida con tu entidad (id_sede vs sede)
-      id_user: savedUser.id,
-      id_plan_matriculado,
+      
+      // CORRECCIÓN 1: La entidad dice 'sede', no 'id_sede'. Pasamos el objeto relacional.
+      sede: sede ? { id: sede } : null, 
+      
+      // Vinculamos el usuario recién creado
+      user: savedUser,
+      
+      // CORRECCIÓN 2: Usamos el nombre exacto de la relación ('planMatriculado') 
+      // y le pasamos el objeto relacional para que TypeORM lo guarde sí o sí.
+      planMatriculado: id_plan_matriculado ? { id: id_plan_matriculado } : null,
+      
       estado_matricula: "matriculado"
     });
+    
     const savedAlumno = await queryRunner.manager.save(Alumno, newAlumno);
 
     // Generar bloques de disponibilidad automáticamente

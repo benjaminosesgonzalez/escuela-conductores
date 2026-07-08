@@ -4,8 +4,13 @@ import {
   getPlans,
   getPlanById,
   createPlan,
+  updatePlan,
+  deletePlan,
 } from "../controllers/plan.controller.js";
-import { authMiddleware, isAdminOrSecretaria } from "../middleware/auth.middleware.js";
+import {
+  authMiddleware,
+  isAdminOrSecretaria,
+} from "../middleware/auth.middleware.js";
 
 const router = Router();
 
@@ -16,5 +21,8 @@ router.get("/", getPlans);
 router.get("/:id", getPlanById);
 // crear plan: POST /api/plans
 router.post("/", authMiddleware, isAdminOrSecretaria, createPlan);
+
+router.put("/:id", authMiddleware, updatePlan); // PUT /api/planes/:id
+router.delete("/:id", authMiddleware, deletePlan);
 
 export default router;
