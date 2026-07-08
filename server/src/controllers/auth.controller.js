@@ -75,7 +75,8 @@ export const login = async (req, res) => {
       });
     }
 
-    // 💡 REMOVIDO DE AQUÍ: El token ahora se genera abajo para que recopile el estado real
+    // Generar token
+    const token = generateToken(user);
 
     // Si es profesor, generar bloques automáticamente si no existen
     let profesorId = null;
@@ -109,15 +110,13 @@ export const login = async (req, res) => {
           "⚠️ Error generando bloques automáticos:",
           blockGenError.message,
         );
+        // No fallar el login si hay error generando bloques
       }
     }
 
     // Si es alumno, generar bloques automáticamente basado en su plan
     let alumnoId = null;
     let planInfo = null;
-    let estadoMatricula = "no_matriculado";
-    // 🔥 Estado por defecto seguro si es un alumno nuevo
-
     if (user.rol === "alumno" && user.id) {
       try {
         console.log(`🔍 Buscando alumno para user.id: ${user.id}`);
@@ -129,15 +128,9 @@ export const login = async (req, res) => {
             `⚠️ No se encontró registro de alumno para user.id: ${user.id}`,
           );
         } else {
-          alumnoId = alumno.id;
-          // 🚀 CAPTURAMOS EL ESTADO REAL GUARDADO EN TU POSTGRESQL
-          estadoMatricula = alumno.estado_matricula || "no_matriculado";
-
-          // Inyectamos el estado directo en el objeto 'user' por si tu función generateToken lee propiedades dinámicas
-          user.estado_matricula = estadoMatricula;
-
+          alumnoId = alumno.id; // Guardar para devolverlo en la respuesta
           console.log(
-            `✅ Alumno encontrado: id=${alumno.id}, estado=${estadoMatricula}, id_plan_matriculado=${alumno.id_plan_matriculado}`,
+            `✅ Alumno encontrado: id=${alumno.id}, id_plan_matriculado=${alumno.id_plan_matriculado}`,
           );
 
           if (alumno.id_plan_matriculado) {
@@ -203,11 +196,9 @@ export const login = async (req, res) => {
           "⚠️ Error generando bloques automáticos para alumno:",
           blockGenError,
         );
+        console.error("Stack:", blockGenError.stack);
       }
     }
-
-    // 🔥 ENTRADA TRIUNFAL: Generamos el token aquí, asegurando que 'user' ya tenga todas sus propiedades mapeadas
-    const token = generateToken(user);
 
     return res.status(200).json({
       success: true,
@@ -219,10 +210,9 @@ export const login = async (req, res) => {
         rol: user.rol,
         nombre: user.nombre || user.email.split("@")[0],
         created_at: user.created_at,
-        estado_matricula: estadoMatricula, // 🔥 NUEVO: Informamos al frontend el estado real de su ficha
-        alumnoId: alumnoId,
-        planInfo: planInfo,
-        profesorId: typeof profesorId !== 'undefined' ? profesorId : null,
+        alumnoId: alumnoId, // Incluir alumnoId para alumnos
+        planInfo: planInfo, // Incluir planInfo para alumnos
+        profesorId: profesorId, // Incluir profesorId para profesores
       },
     });
   } catch (error) {
