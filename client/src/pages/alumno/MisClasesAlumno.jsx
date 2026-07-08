@@ -5,7 +5,6 @@ import { authService } from '../../services/authService.js';
 import './MisClasesAlumno.css';
 
 const MisClasesAlumno = ({ refreshTrigger = 0 }) => {
-  const [clasesPresenciales, setClasesPresenciales] = useState([]);
   const [clasesPracticas, setClasesPracticas] = useState([]);
   const [clasesOnline, setClasesOnline] = useState({
     proximas: [],
@@ -13,7 +12,7 @@ const MisClasesAlumno = ({ refreshTrigger = 0 }) => {
     canceladas: [],
   });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('presenciales');
+  const [activeTab, setActiveTab] = useState('practicasProximas');
   const [copiado, setCopiado] = useState(null);
   const currentUser = authService.getCurrentUser();
 
@@ -29,13 +28,6 @@ const MisClasesAlumno = ({ refreshTrigger = 0 }) => {
         console.error('No alumnoId found');
         setLoading(false);
         return;
-      }
-
-      // Obtener clases presenciales
-      const responsePresenciales = await fetch(`/api/clases/${currentUser.alumnoId}`);
-      if (responsePresenciales.ok) {
-        const data = await responsePresenciales.json();
-        setClasesPresenciales(data.data || []);
       }
 
       // Obtener clases online
@@ -259,12 +251,6 @@ const MisClasesAlumno = ({ refreshTrigger = 0 }) => {
 
       <div className="mis-clases-tabs">
         <button
-          className={`tab-button ${activeTab === 'presenciales' ? 'active' : ''}`}
-          onClick={() => setActiveTab('presenciales')}
-        >
-          📚 Clases Presenciales ({clasesPresenciales.length})
-        </button>
-        <button
           className={`tab-button ${activeTab === 'practicasProximas' ? 'active' : ''}`}
           onClick={() => setActiveTab('practicasProximas')}
         >
@@ -291,9 +277,6 @@ const MisClasesAlumno = ({ refreshTrigger = 0 }) => {
       </div>
 
       <div style={{ marginTop: spacing.lg }}>
-        {activeTab === 'presenciales' && (
-          <TabContent titulo="Clases Presenciales" clases={clasesPresenciales} esPresencial={true} />
-        )}
         {activeTab === 'practicasProximas' && (
           <TabContent titulo="Clases Prácticas Próximas" clases={clasesPracticas} esPresencial={false} />
         )}
