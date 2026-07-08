@@ -6,7 +6,7 @@ import { authService } from '../../services/authService.js';
 
 const MisClasesConInscriptosProfesor = () => {
   const currentUser = authService.getCurrentUser();
-  const profesorId = currentUser?.id;
+  const profesorId = currentUser?.profesorId;
 
   const [clasesOnline, setClasesOnline] = useState({});
   const [selectedDay, setSelectedDay] = useState('lunes');

@@ -18,6 +18,7 @@ export const ProfesorSchema = new EntitySchema({
       type: "varchar",
       length: 12,
       unique: true,
+      nullable: true,
     },  
     telefono: {
       type: "varchar",
