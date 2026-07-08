@@ -1,8 +1,10 @@
 import { AppDataSource } from "../config/configDb.js";
 import { ClaseOnlineSchema } from "../entities/clase-online.entity.js";
+import { ClasePracticaSchema } from "../entities/clase-practica.entity.js";
 import { obtenerTemaPorDia } from "../config/temas.js";
 
 const claseOnlineRepository = AppDataSource.getRepository(ClaseOnlineSchema);
+const clasePracticaRepository = AppDataSource.getRepository(ClasePracticaSchema);
 
 export const generarClasesOnlineService = async (profesorId) => {
   try {
@@ -38,11 +40,13 @@ export const generarClasesOnlineService = async (profesorId) => {
       };
     }
 
-    // Eliminar clases online previas para este profesor para regenerarlas
+    // Eliminar clases online y prácticas previas para este profesor para regenerarlas
     await claseOnlineRepository.delete({ profesorId });
-    console.log(`🗑️ Clases online anteriores eliminadas`);
+    await clasePracticaRepository.delete({ profesorId });
+    console.log(`🗑️ Clases anteriores eliminadas (online y prácticas)`);
 
     const clasesOnline = [];
+    const clasesPracticas = [];
 
     // Generar una clase online por cada disponibilidad
     for (const disp of disponibilidades) {
@@ -104,35 +108,62 @@ export const generarClasesOnlineService = async (profesorId) => {
         const horaInicio = String(disp.horaInicio).substring(0, 5);
         const horaFin = String(disp.horaFin).substring(0, 5);
 
-        const claseOnline = claseOnlineRepository.create({
-          profesorId,
-          numeroTema: tema.numero,
-          nombreTema: tema.nombre,
-          diaSemana: disp.diaSemana,
-          fecha: fechaStr,
-          horaInicio,
-          horaFin,
-          capacidadMaxima: 30,
-          alumnosAgendados: 0,
-          linkZoom: null,
-          estado: "activa",
-          tipoDisponibilidad: disp.tipoDisponibilidad || "teorica",
-        });
-
-        clasesOnline.push(claseOnline);
-        console.log(`✅ Clase creada: ${tema.nombre} - ${disp.diaSemana} ${fechaStr} ${horaInicio}-${horaFin}`);
+        // Separar clases teóricas (online) de prácticas
+        if (disp.tipoDisponibilidad === 'practica') {
+          // Crear clase práctica (capacidad 1, sin alumno inicial)
+          const clasePractica = clasePracticaRepository.create({
+            profesorId,
+            diaSemana: disp.diaSemana,
+            fecha: fechaStr,
+            horaInicio,
+            horaFin,
+            alumnoId: null,
+            estado: "disponible",
+          });
+          clasesPracticas.push(clasePractica);
+          console.log(`✅ Clase Práctica creada: ${disp.diaSemana} ${fechaStr} ${horaInicio}-${horaFin}`);
+        } else {
+          // Crear clase online (teórica, capacidad 30)
+          const claseOnline = claseOnlineRepository.create({
+            profesorId,
+            numeroTema: tema.numero,
+            nombreTema: tema.nombre,
+            diaSemana: disp.diaSemana,
+            fecha: fechaStr,
+            horaInicio,
+            horaFin,
+            capacidadMaxima: 30,
+            alumnosAgendados: 0,
+            linkZoom: null,
+            estado: "activa",
+            tipoDisponibilidad: "teorica",
+          });
+          clasesOnline.push(claseOnline);
+          console.log(`✅ Clase Online creada: ${tema.nombre} - ${disp.diaSemana} ${fechaStr} ${horaInicio}-${horaFin}`);
+        }
       } catch (itemError) {
         console.error(`❌ Error procesando disponibilidad:`, itemError);
       }
     }
 
-    // Guardar todas las clases online
+    // Guardar todas las clases online (teóricas)
     if (clasesOnline.length > 0) {
       try {
         await claseOnlineRepository.save(clasesOnline);
-        console.log(`💾 ${clasesOnline.length} clases online guardadas en la BD`);
+        console.log(`💾 ${clasesOnline.length} clases online (teóricas) guardadas en la BD`);
       } catch (saveError) {
         console.error(`❌ Error al guardar clases online:`, saveError);
+        throw saveError;
+      }
+    }
+
+    // Guardar todas las clases prácticas
+    if (clasesPracticas.length > 0) {
+      try {
+        await clasePracticaRepository.save(clasesPracticas);
+        console.log(`💾 ${clasesPracticas.length} clases prácticas guardadas en la BD`);
+      } catch (saveError) {
+        console.error(`❌ Error al guardar clases prácticas:`, saveError);
         throw saveError;
       }
     }
