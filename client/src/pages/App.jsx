@@ -57,6 +57,15 @@ const App = () => {
           }
         />
 
+        <Route
+          path="/administracion"
+          element={
+            <ProtectedRoute requiredRole="administracion">
+              <DashboardSecretaria />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Ruta por defecto */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
