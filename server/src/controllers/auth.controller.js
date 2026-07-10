@@ -117,6 +117,7 @@ export const login = async (req, res) => {
     // Si es alumno, generar bloques automáticamente basado en su plan
     let alumnoId = null;
     let planInfo = null;
+    let estadoMatricula = null;
     if (user.rol === "alumno" && user.id) {
       try {
         console.log(`🔍 Buscando alumno para user.id: ${user.id}`);
@@ -129,8 +130,9 @@ export const login = async (req, res) => {
           );
         } else {
           alumnoId = alumno.id; // Guardar para devolverlo en la respuesta
+          estadoMatricula = alumno.estado_matricula; // Guardar estado_matricula
           console.log(
-            `✅ Alumno encontrado: id=${alumno.id}, id_plan_matriculado=${alumno.id_plan_matriculado}`,
+            `✅ Alumno encontrado: id=${alumno.id}, id_plan_matriculado=${alumno.id_plan_matriculado}, estado=${estadoMatricula}`,
           );
 
           if (alumno.id_plan_matriculado) {
@@ -213,6 +215,7 @@ export const login = async (req, res) => {
         alumnoId: alumnoId, // Incluir alumnoId para alumnos
         planInfo: planInfo, // Incluir planInfo para alumnos
         profesorId: profesorId, // Incluir profesorId para profesores
+        estado_matricula: estadoMatricula, // Incluir estado_matricula para alumnos
       },
     });
   } catch (error) {
