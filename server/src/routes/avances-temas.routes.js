@@ -7,7 +7,7 @@ import {
   verificar_puede_reservar,
   obtener_clases_completadas,
 } from "../controllers/avances-temas.controller.js";
-import { authMiddleware } from "../middlewares/authMiddleware.js";
+import { authMiddleware } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
