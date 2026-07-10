@@ -18,6 +18,7 @@ const SecretariaLayout = ({ children, activeTab, onTabChange }) => {
   const navigate = useNavigate();
   const currentUser = authService.getCurrentUser();
   const userEmail = currentUser?.nombre || currentUser?.email || "Secretaria";
+  const userRoleLabel = currentUser?.rol === 'secretaria' ? 'Secretaria' : 'Usuario';
 
   const handleLogout = () => {
     authService.logout();
@@ -45,6 +46,7 @@ const SecretariaLayout = ({ children, activeTab, onTabChange }) => {
       onLogout={handleLogout}
       roleColor={colors.secretaria}
       roleIcon={FileText}
+      roleLabel={userRoleLabel}
       title={`${userEmail.toUpperCase()} - ESCUELA`}
     >
       {children}
