@@ -32,16 +32,10 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
   const [sedeFiltroSolicitud, setSedeFiltroSolicitud] = useState("");
   const [loadingSolicitudes, setLoadingSolicitudes] = useState(false);
 
-  const [modalAsignacion, setModalAsignacion] = useState(null);
+  const [modalAsignacion, setModalAsignacion] = useState(null); // Guarda la solicitud que se está aprobando
   const [autosDisponiblesModal, setAutosDisponiblesModal] = useState([]);
   const [autoSeleccionadoId, setAutoSeleccionadoId] = useState("");
   const [cargandoAutos, setCargandoAutos] = useState(false);
-
-  // --- LÓGICA DE FILTRADO DE SOLICITUDES EN EL FRONTEND ---
-  const solicitudesFiltradas = solicitudes.filter(sol => {
-    const matchFecha = fechaFiltroSolicitud === '' || sol.fecha_uso === fechaFiltroSolicitud;
-    return matchFecha;
-  });
 
   // --- LÓGICA DE INVENTARIO (CRUD) ---
   const handleCrearAuto = async (e) => {
@@ -202,7 +196,7 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
       if (response.ok) {
         alert(`Solicitud ${estadoAccion} correctamente`);
         setModalAsignacion(null);
-        fetchSolicitudes(sedeFiltroSolicitud); // Recargar la tabla
+        fetchSolicitudes(sedeFiltroSolicitud); // Recargar
       } else {
         alert(data.message);
       }
@@ -690,22 +684,6 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
                         >
                           {sol.estado.toUpperCase()}
                         </span>
-                        {/* Aquí mostramos el motivo si fue rechazado */}
-                        {sol.estado === 'rechazado' && sol.detalles && (
-                          <div style={{ fontSize: '11px', color: '#7f1d1d', marginTop: '6px', maxWidth: '150px', fontStyle: 'italic' }}>
-                            {sol.detalles}
-                          </div>
-                        )}
-                      </td>
-                      
-                      <td style={{ padding: '12px' }}>
-                        {autoAsignado ? (
-                          <span style={{ fontWeight: '500', color: colors.textPrimary }}>
-                            {autoAsignado.patente} <br/> <span style={{ fontSize: '12px', color: colors.textSecondary }}>({autoAsignado.modelo})</span>
-                          </span>
-                        ) : (
-                          <span style={{ color: colors.textTertiary, fontSize: '13px' }}>Sin asignar</span>
-                        )}
                       </td>
                       <td style={{ padding: "12px" }}>
                         {sol.estado === "pendiente" ? (
@@ -749,7 +727,7 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
                         )}
                       </td>
                     </tr>
-                  )})
+                  ))
                 )}
               </tbody>
             </table>
