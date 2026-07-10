@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Car, Plus, Edit, Trash2, CheckCircle, XCircle, List, Activity } from 'lucide-react';
+import { Car, Plus, Edit, Trash2, CheckCircle, XCircle, List, Activity, Search } from 'lucide-react';
 import { Card, Button } from '../../components/shared/index.js';
 import { colors, spacing } from '../../theme/index.js';
 import { authService } from '../../services/authService.js';
 
 const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
-  const [subTab, setSubTab] = useState('inventario'); // 'inventario', 'crear', 'editar', 'solicitudes'
+  const [subTab, setSubTab] = useState('inventario'); 
   
   // ESTADOS PARA INVENTARIO
   const [autoEditando, setAutoEditando] = useState(null);
@@ -14,12 +14,19 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
   // ESTADOS PARA SOLICITUDES
   const [solicitudes, setSolicitudes] = useState([]);
   const [sedeFiltroSolicitud, setSedeFiltroSolicitud] = useState('');
+  const [fechaFiltroSolicitud, setFechaFiltroSolicitud] = useState(''); 
   const [loadingSolicitudes, setLoadingSolicitudes] = useState(false);
 
-  const [modalAsignacion, setModalAsignacion] = useState(null); // Guarda la solicitud que se está aprobando
+  const [modalAsignacion, setModalAsignacion] = useState(null);
   const [autosDisponiblesModal, setAutosDisponiblesModal] = useState([]);
   const [autoSeleccionadoId, setAutoSeleccionadoId] = useState('');
   const [cargandoAutos, setCargandoAutos] = useState(false);
+
+  // --- LÓGICA DE FILTRADO DE SOLICITUDES EN EL FRONTEND ---
+  const solicitudesFiltradas = solicitudes.filter(sol => {
+    const matchFecha = fechaFiltroSolicitud === '' || sol.fecha_uso === fechaFiltroSolicitud;
+    return matchFecha;
+  });
 
   // --- LÓGICA DE INVENTARIO (CRUD) ---
   const handleCrearAuto = async (e) => {
@@ -84,7 +91,6 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
     if (!idSede) { setSolicitudes([]); return; }
     setLoadingSolicitudes(true);
     try {
-      // Ajusta esta ruta a como la hayas nombrado en tu app.js (ej. /api/solicitudes-auto)
       const res = await fetch(`http://localhost:5000/api/solicitudes-auto/sede/${idSede}`, { 
         headers: { 'Authorization': `Bearer ${authService.getToken()}` } 
       });
@@ -93,8 +99,6 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
     } catch (error) { console.error(error); }
     finally { setLoadingSolicitudes(false); }
   };
-
-
 
   useEffect(() => {
     if(subTab === 'solicitudes') fetchSolicitudes(sedeFiltroSolicitud);
@@ -119,26 +123,37 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
     }
   };
 
+  // ✅ NUEVA LÓGICA PARA MANEJAR EL MOTIVO DE RECHAZO
   const handleResponderSolicitud = async (idSolicitud, estadoAccion, idAuto = null) => {
-    if (estadoAccion === 'rechazado' && !window.confirm(`¿Confirmas que deseas rechazar esta solicitud?`)) return;
+    let motivoRechazo = null;
+
+    if (estadoAccion === 'rechazado') {
+      motivoRechazo = window.prompt("Por favor, ingresa el motivo del rechazo (ej. 'Sin vehículos disponibles', 'Horario no válido'):");
+      
+      // Si la secretaria presiona cancelar o lo deja vacío, se aborta la acción
+      if (motivoRechazo === null || motivoRechazo.trim() === '') {
+        alert("Debes ingresar un motivo para poder rechazar la solicitud.");
+        return;
+      }
+    }
 
     try {
       const response = await fetch(`http://localhost:5000/api/solicitudes-auto/${idSolicitud}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authService.getToken()}` },
-        body: JSON.stringify({ estado: estadoAccion, id_auto: idAuto })
+        // Enviamos el motivo al backend
+        body: JSON.stringify({ estado: estadoAccion, id_auto: idAuto, motivo_rechazo: motivoRechazo })
       });
       const data = await response.json();
       if(response.ok) {
         alert(`Solicitud ${estadoAccion} correctamente`);
         setModalAsignacion(null);
-        fetchSolicitudes(sedeFiltroSolicitud); // Recargar
+        fetchSolicitudes(sedeFiltroSolicitud); // Recargar la tabla
       } else {
         alert(data.message);
       }
     } catch (error) { console.error(error); }
   };
-
 
   return (
     <div>
@@ -213,36 +228,30 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
       {(subTab === 'crear' || subTab === 'editar') && (
         <Card title={subTab === 'editar' ? "Editar Vehículo" : "Ingresar Nuevo Vehículo"} icon={subTab === 'editar' ? Edit : Plus}>
           <form onSubmit={subTab === 'editar' ? handleEditarAuto : handleCrearAuto} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.gap.large }}>
-            
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <label>Patente</label>
               <input required type="text" value={formData.patente} onChange={e => setFormData({...formData, patente: e.target.value.toUpperCase()})} placeholder="Ej: ABCD12" style={{ padding: '10px', borderRadius: '6px', border: `1px solid ${colors.borderLight}` }}/>
             </div>
-
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <label>Marca</label>
               <input required type="text" value={formData.marca} onChange={e => setFormData({...formData, marca: e.target.value})} placeholder="Ej: Kia" style={{ padding: '10px', borderRadius: '6px', border: `1px solid ${colors.borderLight}` }}/>
             </div>
-
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <label>Modelo</label>
               <input required type="text" value={formData.modelo} onChange={e => setFormData({...formData, modelo: e.target.value})} placeholder="Ej: Morning" style={{ padding: '10px', borderRadius: '6px', border: `1px solid ${colors.borderLight}` }}/>
             </div>
-
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <label>Año</label>
               <input required type="number" min="1990" max="2030" value={formData.anio} onChange={e => setFormData({...formData, anio: e.target.value})} style={{ padding: '10px', borderRadius: '6px', border: `1px solid ${colors.borderLight}` }}/>
             </div>
-
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <label>Estado Técnico</label>
               <select value={formData.estado} onChange={e => setFormData({...formData, estado: e.target.value})} style={{ padding: '10px', borderRadius: '6px', border: `1px solid ${colors.borderLight}`, backgroundColor: 'white' }}>
                 <option value="disponible">Disponible / Operativo</option>
-                <option value="en_mantencion">En Mantención</option>
-                <option value="fuera_de_servicio">Fuera de Servicio</option>
+                <option value="mantenimiento">En Mantención</option>
+                <option value="en_uso">En uso</option>
               </select>
             </div>
-
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <label>Sede Asignada</label>
               <select required value={formData.id_sede} onChange={e => setFormData({...formData, id_sede: e.target.value})} style={{ padding: '10px', borderRadius: '6px', border: `1px solid ${colors.borderLight}`, backgroundColor: 'white' }}>
@@ -252,7 +261,6 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
                 ))}
               </select>
             </div>
-
             <div style={{ gridColumn: 'span 2', display: 'flex', gap: '10px', marginTop: '20px' }}>
               <Button type="submit" style={{ backgroundColor: colors.secretaria }}>Guardar Vehículo</Button>
               <Button type="button" onClick={() => setSubTab('inventario')} style={{ backgroundColor: '#64748b' }}>Cancelar</Button>
@@ -264,22 +272,40 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
       {/* VISTA 3: SOLICITUDES DE ASIGNACIÓN */}
       {subTab === 'solicitudes' && (
         <Card title="Gestión de Solicitudes de Vehículos" icon={Activity}>
-          <div style={{ marginBottom: spacing.margin.large, padding: '15px', backgroundColor: '#f8fafc', borderRadius: '8px', border: `1px solid ${colors.borderLight}` }}>
-            <label style={{ fontWeight: 'bold', marginRight: '15px' }}>Selecciona una Sede para ver sus solicitudes:</label>
-            <select 
-              value={sedeFiltroSolicitud} 
-              onChange={e => setSedeFiltroSolicitud(e.target.value)} 
-              style={{ padding: '8px', borderRadius: '6px', minWidth: '200px' }}
-            >
-              <option value="">Elegir Sede...</option>
-              {sedesDisponibles.map(sede => (
-                <option key={sede.id} value={sede.id}>{sede.nombre}</option>
-              ))}
-            </select>
+          <div style={{ display: 'flex', gap: spacing.gap.normal, marginBottom: spacing.margin.large, padding: '15px', backgroundColor: '#f8fafc', borderRadius: '8px', border: `1px solid ${colors.borderLight}`, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '200px' }}>
+              <label style={{ fontWeight: 'bold' }}>Sede:</label>
+              <select 
+                value={sedeFiltroSolicitud} 
+                onChange={e => setSedeFiltroSolicitud(e.target.value)} 
+                style={{ flex: 1, padding: '8px', borderRadius: '6px', border: `1px solid ${colors.borderLight}` }}
+              >
+                <option value="">Elegir Sede...</option>
+                {sedesDisponibles.map(sede => (
+                  <option key={sede.id} value={sede.id}>{sede.nombre}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '200px' }}>
+              <label style={{ fontWeight: 'bold' }}>Filtrar por Fecha:</label>
+              <input 
+                type="date" 
+                value={fechaFiltroSolicitud}
+                onChange={e => setFechaFiltroSolicitud(e.target.value)}
+                style={{ flex: 1, padding: '8px', borderRadius: '6px', border: `1px solid ${colors.borderLight}` }}
+              />
+            </div>
+            
+            {fechaFiltroSolicitud && (
+              <Button onClick={() => setFechaFiltroSolicitud('')} style={{ backgroundColor: colors.borderLight, color: colors.textPrimary, padding: '8px 12px' }}>
+                Limpiar Fecha
+              </Button>
+            )}
           </div>
 
           {!sedeFiltroSolicitud ? (
-            <p style={{ textAlign: 'center', color: colors.textSecondary }}>Por favor, selecciona una sede arriba para comenzar.</p>
+            <p style={{ textAlign: 'center', color: colors.textSecondary }}>Por favor, selecciona una sede en el buscador superior para comenzar.</p>
           ) : loadingSolicitudes ? (
             <p style={{ textAlign: 'center', color: colors.textTertiary }}>Cargando solicitudes...</p>
           ) : (
@@ -290,14 +316,23 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
                   <th style={{ padding: '12px' }}>Horario</th>
                   <th style={{ padding: '12px' }}>Solicitante</th>
                   <th style={{ padding: '12px' }}>Estado Técnico</th>
+                  <th style={{ padding: '12px' }}>Vehículo</th>
                   <th style={{ padding: '12px' }}>Acción</th>
                 </tr>
               </thead>
               <tbody>
-                {solicitudes.length === 0 ? (
-                  <tr><td colSpan="5" style={{ padding: '20px', textAlign: 'center', color: colors.textSecondary }}>No hay solicitudes para esta sede.</td></tr>
+                {solicitudesFiltradas.length === 0 ? (
+                  <tr><td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: colors.textSecondary }}>No hay solicitudes que coincidan con los filtros.</td></tr>
                 ) : (
-                  solicitudes.map((sol) => (
+                  solicitudesFiltradas.map((sol) => {
+                    
+                    //  BÚSQUEDA EXHAUSTIVA DE VEHÍCULO (A prueba de balas)
+                    // Si el backend manda el objeto completo, lo usamos.
+                    // Si manda solo el ID (bajo cualquier nombre), lo buscamos en el inventario global.
+                    const autoId = sol.id_auto || sol.autoId || sol.vehiculo_id || sol.id_vehiculo;
+                    const autoAsignado = sol.auto || sol.vehiculo || (autoId ? autos.find(a => a.id === Number(autoId)) : null);
+                    
+                    return (
                     <tr key={sol.id} style={{ borderBottom: `1px solid ${colors.borderLight}` }}>
                       <td style={{ padding: '12px', fontWeight: 'bold' }}>{sol.fecha_uso}</td>
                       <td style={{ padding: '12px' }}>{sol.hora_uso} a {sol.hora_termino}</td>
@@ -306,21 +341,38 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
                           {sol.tipo_solicitante}
                         </span>
                       </td>
+                      
+                      {/* CELDA DE ESTADO CON MOTIVO DE RECHAZO */}
                       <td style={{ padding: '12px' }}>
                         <span style={{ 
-                          padding: '4px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold',
+                          padding: '4px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold', display: 'inline-block',
                           backgroundColor: sol.estado === 'pendiente' ? '#fef08a' : sol.estado === 'aceptado' ? '#dcfce7' : '#fee2e2',
                           color: sol.estado === 'pendiente' ? '#854d0e' : sol.estado === 'aceptado' ? '#166534' : '#991b1b'
                          }}>
                           {sol.estado.toUpperCase()}
                         </span>
+                        {/* Aquí mostramos el motivo si fue rechazado */}
+                        {sol.estado === 'rechazado' && sol.detalles && (
+                          <div style={{ fontSize: '11px', color: '#7f1d1d', marginTop: '6px', maxWidth: '150px', fontStyle: 'italic' }}>
+                            {sol.detalles}
+                          </div>
+                        )}
                       </td>
+                      
+                      <td style={{ padding: '12px' }}>
+                        {autoAsignado ? (
+                          <span style={{ fontWeight: '500', color: colors.textPrimary }}>
+                            {autoAsignado.patente} <br/> <span style={{ fontSize: '12px', color: colors.textSecondary }}>({autoAsignado.modelo})</span>
+                          </span>
+                        ) : (
+                          <span style={{ color: colors.textTertiary, fontSize: '13px' }}>Sin asignar</span>
+                        )}
+                      </td>
+
                       <td style={{ padding: '12px' }}>
                         {sol.estado === 'pendiente' ? (
                           <div style={{ display: 'flex', gap: '10px' }}>
-                            {/* ESTE BOTÓN AHORA ABRE EL MODAL */}
                             <button onClick={() => abrirModalAsignacion(sol)} title="Asignar Vehículo" style={{ cursor: 'pointer', border: 'none', background: 'none', color: '#10b981' }}><CheckCircle size={22} /></button>
-                            {/* RECHAZAR SIGUE SIENDO DIRECTO */}
                             <button onClick={() => handleResponderSolicitud(sol.id, 'rechazado')} title="Rechazar (Sin cupo)" style={{ cursor: 'pointer', border: 'none', background: 'none', color: '#ef4444' }}><XCircle size={22} /></button>
                           </div>
                         ) : (
@@ -328,7 +380,7 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
                         )}
                       </td>
                     </tr>
-                  ))
+                  )})
                 )}
               </tbody>
             </table>
@@ -381,7 +433,6 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

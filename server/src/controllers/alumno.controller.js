@@ -204,7 +204,7 @@ export async function asignarSedeMasiva(req, res) {
   try {
     // 1. Extraemos de forma inteligente (aceptamos snake_case del front o camelCase del back)
     const alumnosIds = req.body.alumnosIds || req.body.alumnos_ids;
-    const idSede = req.body.idSede || req.body.id_sede;
+    const idSede = req.body.idSede || req.body.sede;
 
     // 2. Validación estricta
     if (!alumnosIds || !Array.isArray(alumnosIds) || !idSede) {

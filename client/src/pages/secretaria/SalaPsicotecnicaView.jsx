@@ -59,7 +59,7 @@ const SalaPsicotecnicaView = () => {
 
   const diasSemana = useMemo(() => getDiasDeLaSemana(fechaBase), [fechaBase]);
 
-  // EFECTO MÁGICO: Carga los horarios guardados cada vez que cambias la semana
+  // Carga los horarios guardados cada vez que cambias la semana
   useEffect(() => {
     const fetchSemana = async () => {
       setIsLoadingWeek(true);

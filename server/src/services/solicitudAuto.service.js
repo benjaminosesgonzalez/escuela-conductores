@@ -33,7 +33,7 @@ export const crearSolicitudService = async (idUser, rol, data) => {
 export const getSolicitudesPorSedeService = async (idSede) => {
   return await solicitudRepo.find({
     where: { sede: { id: idSede } },
-    relations: ["user", "sede"],
+    relations: ["user", "sede","auto"],
     order: { fecha_creacion: "DESC" },
   });
 };
@@ -80,16 +80,25 @@ export const getAutosDisponiblesParaBloqueService = async (idSolicitud) => {
   return autosSede.filter(auto => !autosOcupadosIds.includes(auto.id));
 };
 
-// MODIFICAR FUNCIÓN EXISTENTE: Para que acepte el idAuto
-export const responderSolicitudService = async (idSolicitud, nuevoEstado, idAuto = null) => {
+
+export const responderSolicitudService = async (idSolicitud, estado, idAuto = null, motivoRechazo = null) => {
   const solicitudRepo = AppDataSource.getRepository("SolicitudAuto");
   const solicitud = await solicitudRepo.findOneBy({ id: parseInt(idSolicitud) });
+  
   if (!solicitud) return null;
 
-  solicitud.estado = nuevoEstado;
+  // Asignamos el estado
+  solicitud.estado = estado;
   
-  if (nuevoEstado === "aceptado" && idAuto) {
-    solicitud.auto = { id: parseInt(idAuto) }; // Asignamos el vehículo físico
+  // Lógica si es aceptado
+  if (estado === "aceptado" && idAuto) {
+    solicitud.auto = { id: parseInt(idAuto) }; 
+  }
+  
+  // Lógica si es rechazado (Reutilizando la columna 'detalles' de forma segura)
+  if (estado === "rechazado" && motivoRechazo) {
+    const textoAnterior = solicitud.detalles ? `${solicitud.detalles} | ` : "";
+    solicitud.detalles = `${textoAnterior}Motivo de rechazo: ${motivoRechazo}`;
   }
   
   return await solicitudRepo.save(solicitud);
@@ -140,7 +149,7 @@ export const getSolicitudByIdService = async (id) => {
 export const getSolicitudesByUserService = async (idUser) => {
   return await solicitudRepo.find({
     where: { user: { id: idUser } },
-    relations: ["sede"],
+    relations: ["sede", "auto"],
     order: { fecha_creacion: "DESC" },
   });
 };
