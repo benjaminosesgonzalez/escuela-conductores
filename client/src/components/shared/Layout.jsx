@@ -38,7 +38,7 @@ const Layout = ({
       {/* MAIN CONTENT */}
       <div
         style={{
-          marginLeft: sidebarOpen ? "280px" : "80px",
+          marginLeft: sidebarOpen ? "340px" : "80px",
           flex: 1,
           transition: "margin-left 0.3s ease",
           display: "flex",

@@ -47,10 +47,13 @@ export const obtenerTemaPorDia = (numeroSemana, diaSemana) => {
 
   if (indiceDia === -1) return null;
 
-  // Cada semana tiene 5 días, en 2 semanas tenemos 10 temas
+  // Cada 2 semanas se repite el ciclo de 10 temas
   // Semana 0: temas 1-5
   // Semana 1: temas 6-10
-  const numeroTema = numeroSemana * 5 + indiceDia + 1;
+  // Semana 2: temas 1-5 (vuelve a repetir)
+  // Semana 3: temas 6-10
+  const cicloSemana = numeroSemana % 2; // 0 o 1
+  const numeroTema = cicloSemana * 5 + indiceDia + 1;
 
   if (numeroTema > 10) return null;
 

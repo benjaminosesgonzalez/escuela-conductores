@@ -42,6 +42,10 @@ export const ClasePracticaSchema = new EntitySchema({
       default: "disponible", // disponible, ocupada, completada, cancelada
       nullable: false,
     },
+    sedeId: {
+      type: "int",
+      nullable: true,
+    },
     createdAt: {
       type: "timestamp",
       createDate: true,
@@ -64,6 +68,12 @@ export const ClasePracticaSchema = new EntitySchema({
       target: "Alumno",
       type: "many-to-one",
       joinColumn: { name: "alumnoId" },
+      onDelete: "SET NULL",
+    },
+    sede: {
+      target: "Sede",
+      type: "many-to-one",
+      joinColumn: { name: "sedeId" },
       onDelete: "SET NULL",
     },
   },

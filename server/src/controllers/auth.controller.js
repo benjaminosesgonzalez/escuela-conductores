@@ -43,21 +43,6 @@ export const login = async (req, res) => {
       where: { email: email },
     });
 
-    // 🔴 Si no está, buscar en tabla profesores usando AppDataSource
-    if (!user) {
-      const result = await AppDataSource.query(
-        "SELECT * FROM profesores WHERE email = $1",
-        [email],
-      );
-
-      if (result.length > 0) {
-        user = result[0];
-        if (!user.rol) {
-          user.rol = "profesor";
-        }
-      }
-    }
-
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -79,17 +64,19 @@ export const login = async (req, res) => {
 
     // Si es profesor, generar bloques automáticamente si no existen
     let profesorId = null;
+    let profesorNombre = null;
     if (user.rol === "profesor" && user.id) {
       try {
         // Buscar el profesor correspondiente a este usuario usando SQL crudo
         const profesorResult = await AppDataSource.query(
           "SELECT * FROM profesores WHERE id_user = $1",
-          [user.id]
+          [user.id],
         );
 
         if (profesorResult && profesorResult.length > 0) {
           const profesor = profesorResult[0];
           profesorId = profesor.id; // Guardar para devolverlo en la respuesta
+          profesorNombre = profesor.nombre; // Guardar nombre del profesor
           const disponibilidadRepository =
             AppDataSource.getRepository(DisponibilidadSchema);
           const bloquesExistentes = await disponibilidadRepository.findOne({
@@ -115,9 +102,7 @@ export const login = async (req, res) => {
     // Si es alumno, generar bloques automáticamente basado en su plan
     let alumnoId = null;
     let planInfo = null;
-    let estadoMatricula = "no_matriculado";
-    // 🔥 Estado por defecto seguro si es un alumno nuevo
-
+    let estadoMatricula = null;
     if (user.rol === "alumno" && user.id) {
       try {
         console.log(`🔍 Buscando alumno para user.id: ${user.id}`);
@@ -129,15 +114,10 @@ export const login = async (req, res) => {
             `⚠️ No se encontró registro de alumno para user.id: ${user.id}`,
           );
         } else {
-          alumnoId = alumno.id;
-          // 🚀 CAPTURAMOS EL ESTADO REAL GUARDADO EN TU POSTGRESQL
-          estadoMatricula = alumno.estado_matricula || "no_matriculado";
-
-          // Inyectamos el estado directo en el objeto 'user' por si tu función generateToken lee propiedades dinámicas
-          user.estado_matricula = estadoMatricula;
-
+          alumnoId = alumno.id; // Guardar para devolverlo en la respuesta
+          estadoMatricula = alumno.estado_matricula; // Guardar estado_matricula
           console.log(
-            `✅ Alumno encontrado: id=${alumno.id}, estado=${estadoMatricula}, id_plan_matriculado=${alumno.id_plan_matriculado}`,
+            `✅ Alumno encontrado: id=${alumno.id}, id_plan_matriculado=${alumno.id_plan_matriculado}, estado=${estadoMatricula}`,
           );
 
           if (alumno.id_plan_matriculado) {
@@ -217,12 +197,15 @@ export const login = async (req, res) => {
         id: user.id,
         email: user.email,
         rol: user.rol,
-        nombre: user.nombre || user.email.split("@")[0],
+        nombre:
+          user.rol === "profesor"
+            ? profesorNombre || user.email.split("@")[0]
+            : user.nombre || user.email.split("@")[0],
         created_at: user.created_at,
         estado_matricula: estadoMatricula, // 🔥 NUEVO: Informamos al frontend el estado real de su ficha
         alumnoId: alumnoId,
         planInfo: planInfo,
-        profesorId: typeof profesorId !== 'undefined' ? profesorId : null,
+        profesorId: typeof profesorId !== "undefined" ? profesorId : null,
       },
     });
   } catch (error) {

@@ -237,10 +237,12 @@ export const obtenerMisClasesOnlineAlumno = async (userId) => {
         co."linkZoom",
         co.estado,
         coa.estado as "estadoInscripcion",
-        p.nombre as "nombreProfesor"
+        p.nombre as "nombreProfesor",
+        CASE WHEN rac.id IS NOT NULL THEN 'completada' ELSE co.estado END as "estadoAlumno"
       FROM clase_online_alumno coa
       JOIN clases_online co ON coa."claseOnlineId" = co.id
       LEFT JOIN profesores p ON co."profesorId" = p.id
+      LEFT JOIN registros_asistencia_clases_online rac ON co.id = rac."claseOnlineId" AND rac."alumnoId" = $1
       WHERE coa."alumnoId" = $1
       ORDER BY co.fecha, co."horaInicio"`,
       [alumnoId]
@@ -283,10 +285,10 @@ export const obtenerMisClasesOnlineAlumno = async (userId) => {
           0
         );
 
-        if (fecha > ahora && clase.estado === "activa") {
-          agrupado.proximas.push(clase);
-        } else if (clase.estado === "completada") {
+        if (clase.estadoAlumno === "completada") {
           agrupado.completadas.push(clase);
+        } else if (fecha > ahora && clase.estado === "activa") {
+          agrupado.proximas.push(clase);
         } else if (clase.estado === "cancelada") {
           agrupado.canceladas.push(clase);
         }

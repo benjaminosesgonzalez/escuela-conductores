@@ -3,9 +3,10 @@ import { AppDataSource } from "../config/configDb.js";
 import { Alumno } from "../entities/alumno.entity.js";
 import { User } from "../entities/user.entity.js";
 import { Sede } from "../entities/sede.entity.js";
+import { DisponibilidadAlumno } from "../entities/disponibilidad-alumno.entity.js";
+import { AvancesTemasSchema } from "../entities/AvancesTemas.js";
 import bcrypt from "bcrypt";
 import { In } from "typeorm";
-import { DisponibilidadAlumno } from "../entities/disponibilidad-alumno.entity.js";
 
 const alumnoRepo = AppDataSource.getRepository(Alumno);
 
@@ -59,6 +60,29 @@ const generarBloquesAlumnoAutomaticamente = async (queryRunner, alumnoId) => {
   const alumnoRepo = AppDataSource.getRepository(Alumno);
 };
 
+const generarAvancesTemasAlumno = async (queryRunner, alumnoId) => {
+  try {
+    const avancesRepository =
+      queryRunner.manager.getRepository(AvancesTemasSchema);
+    const avances = [];
+
+    for (let tema = 1; tema <= 10; tema++) {
+      const avance = queryRunner.manager.create(AvancesTemasSchema, {
+        id_alumno: alumnoId,
+        id_tema: tema,
+        completado: false,
+      });
+      avances.push(avance);
+    }
+
+    await queryRunner.manager.save(AvancesTemasSchema, avances);
+    return avances.length;
+  } catch (error) {
+    console.error("Error generando avances de temas:", error);
+    throw error;
+  }
+};
+
 export async function matricularNuevoAlumnoService(datosGenerales) {
   const queryRunner = AppDataSource.createQueryRunner();
 
@@ -109,6 +133,9 @@ export async function matricularNuevoAlumnoService(datosGenerales) {
 
     // Generar bloques de disponibilidad automáticamente
     await generarBloquesAlumnoAutomaticamente(queryRunner, savedAlumno.id);
+
+    // Generar avances de temas automáticamente
+    await generarAvancesTemasAlumno(queryRunner, savedAlumno.id);
 
     await queryRunner.commitTransaction();
 
@@ -246,6 +273,9 @@ export async function autoRegistroAlumnoService(datosRegistro) {
 
     // Generar bloques de disponibilidad automáticamente
     await generarBloquesAlumnoAutomaticamente(queryRunner, savedAlumno.id);
+
+    // Generar avances de temas automáticamente
+    await generarAvancesTemasAlumno(queryRunner, savedAlumno.id);
 
     await queryRunner.commitTransaction();
     return savedAlumno;

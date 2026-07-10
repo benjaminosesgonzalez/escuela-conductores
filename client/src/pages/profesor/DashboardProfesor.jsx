@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, Calendar, Car, Clock, MapPin } from 'lucide-react';
 import ProfesorLayout from '../../layouts/ProfesorLayout.jsx';
 import { Card, Button } from '../../components/shared/index.js';
@@ -7,50 +7,76 @@ import { authService } from '../../services/authService.js';
 import MisClasesProfesor from './MisClasesProfesor.jsx';
 import ClasesConfirmadasProfesor from './ClasesConfirmadasProfesor.jsx';
 import RepositorioProfesor from './RepositorioProfesor.jsx';
+import RegistrarAvanceProfesor from './RegistrarAvanceProfesor.jsx';
 import MisClasesOnlineProfesor from './MisClasesOnlineProfesor.jsx';
 import MisClasesConInscriptosProfesor from './MisClasesConInscriptosProfesor.jsx';
+import EvaluacionPracticaProfesor from './EvaluacionPracticaProfesor.jsx';
 import SolicitarVehiculo from "../../components/shared/SolicitarVehiculo.jsx";
 
 const DashboardProfesor = () => {
   const [activeTab, setActiveTab] = useState("inicio");
+  const [disponibilidadView, setDisponibilidadView] = useState("configurar"); // "configurar" o "verclases"
   const currentUser = authService.getCurrentUser();
   const profesorNombre = currentUser?.nombre || "Profesor";
+  const profesorId = currentUser?.profesorId;
+
+  const [alumnosCount, setAlumnosCount] = useState(0);
+  const [clasesTodayCount, setClasesTodayCount] = useState(0);
+  const [vehiculosCount, setVehiculosCount] = useState(0);
+  const [clasesDelDia, setClasesDelDia] = useState([]);
+
+  useEffect(() => {
+    if (profesorId) {
+      cargarDatos();
+    }
+  }, [profesorId]);
+
+  const cargarDatos = async () => {
+    try {
+      const token = authService.getToken();
+
+      // Cargar alumnos distintos inscritos
+      const resAlumnos = await fetch(
+        `http://localhost:5000/api/profesores/${profesorId}/alumnos-inscritos`,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      const dataAlumnos = await resAlumnos.json();
+      setAlumnosCount(dataAlumnos.count || 0);
+
+      // Cargar clases de hoy
+      const resClasesHoy = await fetch(
+        `http://localhost:5000/api/profesores/${profesorId}/clases-hoy`,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      const dataClasesHoy = await resClasesHoy.json();
+      setClasesTodayCount(dataClasesHoy.count || 0);
+
+      // Cargar detalle de clases del día
+      const resClasesDetalle = await fetch(
+        `http://localhost:5000/api/profesores/${profesorId}/clases-detalle-hoy`,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      const dataClasesDetalle = await resClasesDetalle.json();
+      setClasesDelDia(dataClasesDetalle.clases || []);
+
+      // Cargar vehículos reservados
+      const resVehiculos = await fetch(
+        `http://localhost:5000/api/profesores/${profesorId}/vehiculos-reservados`,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      const dataVehiculos = await resVehiculos.json();
+      setVehiculosCount(dataVehiculos.count || 0);
+    } catch (error) {
+      console.error('Error cargando datos del dashboard:', error);
+    }
+  };
 
   const stats = [
-    { icon: Users, label: "Alumnos a cargo", value: "9", color: "#5a68d8" },
-    { icon: Calendar, label: "Clases hoy", value: "4", color: "#6366f1" },
-    { icon: Car, label: "Vehículos", value: "2", color: "#06b6d4" },
+    { icon: Users, label: "Alumnos a cargo", value: String(alumnosCount), color: "#5a68d8" },
+    { icon: Calendar, label: "Clases hoy", value: String(clasesTodayCount), color: "#6366f1" },
+    { icon: Car, label: "Vehículos", value: String(vehiculosCount), color: "#06b6d4" },
   ];
 
-  const clases = [
-    {
-      id: 1,
-      hora: "9:00 am - 9:30 am",
-      alumno: "Carlos Silva",
-      tipo: "Teórica",
-      codigo: "S03",
-      ubicacion: "Zoom",
-      tipo_label: "teórica",
-    },
-    {
-      id: 2,
-      hora: "12:00 pm - 12:30 pm",
-      alumno: "Andres Ruiz",
-      tipo: "Teórica",
-      codigo: "S04",
-      ubicacion: "Zoom",
-      tipo_label: "teórica",
-    },
-    {
-      id: 3,
-      hora: "13:30 pm - 14:30 pm",
-      alumno: "Pablo López",
-      tipo: "Práctica",
-      codigo: "1",
-      ubicacion: "San Pedro",
-      tipo_label: "práctica",
-    },
-  ];
 
   const tareasRapidas = [
     { id: 1, titulo: "Evaluaciones pendientes", icon: Calendar, count: 3 },
@@ -145,250 +171,156 @@ const DashboardProfesor = () => {
             })}
           </div>
 
-          {/* CLASES Y TAREAS - LADO A LADO */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: spacing.gap.spacious,
-              marginBottom: spacing.margin.xlarge,
-              "@media (max-width: 1024px)": {
-                gridTemplateColumns: "1fr",
-              },
-            }}
-          >
-            {/* CLASES DEL DÍA */}
-            <Card title="Clases del día" icon={Clock}>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: spacing.gap.normal,
-                }}
-              >
-                {clases.map((clase) => (
+          {/* CLASES DEL DÍA */}
+          <Card title="Clases del día" icon={Clock} style={{ marginBottom: spacing.margin.xlarge }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: spacing.gap.normal,
+              }}
+            >
+              {clasesDelDia.map((clase) => (
+                <div
+                  key={clase.id}
+                  style={{
+                    padding: spacing.padding.lg,
+                    borderLeft: `4px solid ${colors.primary}`,
+                    borderRadius: spacing.radius.md,
+                    backgroundColor: colors.background,
+                    transition: "all 0.2s ease",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor =
+                      colors.borderLight)
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor =
+                      colors.background)
+                  }
+                >
                   <div
-                    key={clase.id}
                     style={{
-                      padding: spacing.padding.lg,
-                      borderLeft: `4px solid ${colors.primary}`,
-                      borderRadius: spacing.radius.md,
-                      backgroundColor: colors.background,
-                      transition: "all 0.2s ease",
-                      cursor: "pointer",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "start",
+                      marginBottom: spacing.margin.sm,
                     }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        colors.borderLight)
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        colors.background)
-                    }
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "start",
-                        marginBottom: spacing.margin.sm,
-                      }}
-                    >
-                      <div>
-                        <p
-                          style={{
-                            fontWeight: "600",
-                            fontSize: "16px",
-                            color: colors.textPrimary,
-                            margin: "0 0 4px 0",
-                          }}
-                        >
-                          {clase.hora}
-                        </p>
-                        <p
-                          style={{
-                            fontSize: "13px",
-                            color: colors.textSecondary,
-                            margin: 0,
-                          }}
-                        >
-                          Alumno: <strong>{clase.alumno}</strong>
-                        </p>
-                      </div>
-                      <span
+                    <div>
+                      <p
                         style={{
-                          padding: `6px 12px`,
-                          borderRadius: spacing.radius.full,
-                          fontSize: "12px",
                           fontWeight: "600",
-                          backgroundColor:
-                            clase.tipo_label === "teórica"
-                              ? "#dbeafe"
-                              : "#dcfce7",
-                          color:
-                            clase.tipo_label === "teórica"
-                              ? "#1e40af"
-                              : "#166534",
-                          whiteSpace: "nowrap",
+                          fontSize: "16px",
+                          color: colors.textPrimary,
+                          margin: "0 0 4px 0",
                         }}
                       >
-                        {clase.tipo} {clase.codigo}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: spacing.gap.tight,
-                        color: colors.textSecondary,
-                        fontSize: "13px",
-                      }}
-                    >
-                      <MapPin size={16} />
-                      <span>{clase.ubicacion}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            {/* TAREAS RÁPIDAS */}
-            <Card title="Tareas rápidas" icon={Calendar}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr",
-                  gap: spacing.gap.normal,
-                }}
-              >
-                {tareasRapidas.map((tarea) => {
-                  const TareaIcon = tarea.icon;
-                  return (
-                    <div
-                      key={tarea.id}
-                      style={{
-                        padding: spacing.padding.lg,
-                        backgroundColor: colors.background,
-                        borderRadius: spacing.radius.md,
-                        borderLeft: `4px solid ${colors.primary}`,
-                        transition: "all 0.2s ease",
-                        cursor: "pointer",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor =
-                          colors.borderLight;
-                        e.currentTarget.style.transform = "translateX(4px)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor =
-                          colors.background;
-                        e.currentTarget.style.transform = "translateX(0)";
-                      }}
-                    >
-                      <div
+                        {clase.hora}
+                      </p>
+                      <p
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          marginBottom: spacing.margin.sm,
+                          fontSize: "13px",
+                          color: colors.textSecondary,
+                          margin: 0,
                         }}
                       >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: spacing.gap.normal,
-                          }}
-                        >
-                          <TareaIcon size={20} color={colors.primary} />
-                          <p
-                            style={{
-                              fontSize: "14px",
-                              fontWeight: "600",
-                              color: colors.textPrimary,
-                              margin: 0,
-                            }}
-                          >
-                            {tarea.titulo}
-                          </p>
-                        </div>
-                        {tarea.count !== undefined && (
-                          <p
-                            style={{
-                              fontSize: "20px",
-                              fontWeight: "bold",
-                              color: colors.primary,
-                              margin: 0,
-                            }}
-                          >
-                            {tarea.count}
-                          </p>
-                        )}
-                      </div>
-
-                      <Button variant="primary" size="sm" fullWidth={true}>
-                        {tarea.id === 1
-                          ? "Ver"
-                          : tarea.id === 2
-                            ? "Agendar"
-                            : "Reservar"}
-                      </Button>
+                        Alumno: <strong>{clase.alumno}</strong>
+                      </p>
                     </div>
-                  );
-                })}
-              </div>
-            </Card>
-          </div>
-
-          {/* PRÓXIMA CLASE */}
-          <Card
-            style={{
-              borderLeft: `4px solid ${colors.warning}`,
-              backgroundColor: `${colors.warning}10`,
-            }}
-          >
-            <h4
-              style={{
-                fontSize: "14px",
-                fontWeight: "600",
-                color: colors.textPrimary,
-                margin: "0 0 12px 0",
-              }}
-            >
-              ⏰ Próxima clase
-            </h4>
-            <p
-              style={{
-                fontSize: "13px",
-                color: colors.textSecondary,
-                margin: "0 0 16px 0",
-                lineHeight: "1.5",
-              }}
-            >
-              Carlos Silva en 2 horas - Teórica S03 (Zoom)
-            </p>
-            <Button variant="warning">Recordatorio en 30 min</Button>
+                    <span
+                      style={{
+                        padding: `6px 12px`,
+                        borderRadius: spacing.radius.full,
+                        fontSize: "12px",
+                        fontWeight: "600",
+                        backgroundColor:
+                          clase.tipo_label === "teórica"
+                            ? "#dbeafe"
+                            : "#dcfce7",
+                        color:
+                          clase.tipo_label === "teórica"
+                            ? "#1e40af"
+                            : "#166534",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {clase.tipo} {clase.codigo}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: spacing.gap.tight,
+                      color: colors.textSecondary,
+                      fontSize: "13px",
+                    }}
+                  >
+                    <MapPin size={16} />
+                    <span>{clase.ubicacion}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </Card>
         </div>
       )}
 
       {/* DISPONIBILIDAD TAB */}
-      {activeTab === "disponibilidad" && <MisClasesProfesor />}
-
-      {/* MIS CLASES TAB */}
-      {activeTab === 'misclases' && (
-        <MisClasesConInscriptosProfesor />
+      {activeTab === "disponibilidad" && (
+        <div>
+          <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => setDisponibilidadView("configurar")}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: disponibilidadView === "configurar" ? '#5a68d8' : '#e0e0e0',
+                color: disponibilidadView === "configurar" ? 'white' : '#333',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: disponibilidadView === "configurar" ? 'bold' : 'normal',
+              }}
+            >
+              ⚙️ Configurar disponibilidad
+            </button>
+            <button
+              onClick={() => setDisponibilidadView("verclases")}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: disponibilidadView === "verclases" ? '#5a68d8' : '#e0e0e0',
+                color: disponibilidadView === "verclases" ? 'white' : '#333',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: disponibilidadView === "verclases" ? 'bold' : 'normal',
+              }}
+            >
+              📅 Ver clases online
+            </button>
+          </div>
+          {disponibilidadView === "configurar" ? (
+            <MisClasesProfesor />
+          ) : (
+            <MisClasesOnlineProfesor />
+          )}
+        </div>
       )}
 
-      {/* CLASES ONLINE TAB */}
-      {activeTab === 'clasesOnline' && (
-        <MisClasesOnlineProfesor />
+      {/* REGISTRAR AVANCE TAB */}
+      {activeTab === 'misclases' && (
+        <RegistrarAvanceProfesor />
       )}
       {/* VEHÍCULOS TAB */}
       {activeTab === "vehiculos" && <SolicitarVehiculo userRole="profesor" />}
 
       {/* REPOSITORIO TAB */}
       {activeTab === "repositorio" && <RepositorioProfesor />}
+
+      {/* EVALUACIÓN PRÁCTICA TAB */}
+      {activeTab === "evaluacion" && <EvaluacionPracticaProfesor />}
     </ProfesorLayout>
   );
 };

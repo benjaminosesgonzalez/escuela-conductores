@@ -15,7 +15,7 @@ const Sidebar = ({
       left: 0,
       top: 0,
       height: '100vh',
-      width: isOpen ? '280px' : '80px',
+      width: isOpen ? '340px' : '80px',
       backgroundColor: roleColor,
       color: colors.white,
       transition: 'width 0.3s ease',
