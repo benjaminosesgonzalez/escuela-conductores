@@ -1,9 +1,9 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Home, Calendar, BookOpen, Award, Clock, Activity, Car, Video } from 'lucide-react';
-import { Layout } from '../components/shared/index.js';
-import { colors } from '../theme/index.js';
-import { authService } from '../services/authService.js';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { Home, Calendar, BookOpen, Award, Clock, Activity, Car, Video } from "lucide-react";
+import { Layout } from "../components/shared/index.js";
+import { colors } from "../theme/index.js";
+import { authService } from "../services/authService.js";
 
 const AlumnoLayout = ({ children, activeTab, onTabChange }) => {
   const navigate = useNavigate();

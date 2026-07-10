@@ -29,7 +29,7 @@ export const listarPorSede = async (req, res) => {
 export const responderSolicitud = async (req, res) => {
   try {
     const { id } = req.params;
-    const { estado, id_auto, motivo_rechazo } = req.body; 
+    const { estado, id_auto } = req.body; // AHORA RECIBE id_auto
 
     const solicitud = await solicitudService.getSolicitudByIdService(id);
     if (!solicitud) {
@@ -40,8 +40,7 @@ export const responderSolicitud = async (req, res) => {
       return res.status(400).json({ success: false, message: "Debe seleccionar un vehículo para aprobar la solicitud." });
     }
 
-    const result = await solicitudService.responderSolicitudService(id, estado, id_auto, motivo_rechazo);
-    
+    const result = await solicitudService.responderSolicitudService(id, estado, id_auto);
     res.json({ success: true, data: result });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

@@ -2,8 +2,7 @@ import { Router } from "express";
 import {
     configurarHorarioSala,
     obtenerDisponibilidadSala,
-    agendarBloque,
-    obtenerMisReservasPsicotecnico
+    agendarBloque
 
 } from "../controllers/agendamiento.controller.js";
 import { authMiddleware, isAdminOrSecretaria } from "../middleware/auth.middleware.js";
@@ -18,8 +17,5 @@ router.get("/disponibilidad-sala", authMiddleware, obtenerDisponibilidadSala);
 
 //3. alumno selecciona y reserva su bloque 
 router.post("/agendar-bloque", authMiddleware, agendarBloque);
-
-//4 ver mis reservas de las sala psicotecnica
-router.get("/mis-reservas-psicotecnico", authMiddleware, obtenerMisReservasPsicotecnico);
 
 export default router;

@@ -9,6 +9,17 @@ export const Alumno = new EntitySchema({
       type: "int",
       generated: "increment",
     },
+    email: {
+      type: "varchar",
+      length: 100,
+      unique: true,
+      nullable: false,
+    },
+    password: {
+      type: "varchar",
+      length: 255,
+      nullable: false,
+    },
     nombre: {
       type: "varchar",
       length: 150,
@@ -55,6 +66,10 @@ export const Alumno = new EntitySchema({
       length: 20,
       default: "pendiente",
     },
+    id_sede: {
+      type: "int",
+      nullable: true,
+    },
   },
   relations: {
     user: {
@@ -76,7 +91,7 @@ export const Alumno = new EntitySchema({
     sede: {
       target: "Sede",
       type: "many-to-one",
-      joinColumn: { name: "sede" },
+      joinColumn: { name: "id_sede" },
       onDelete: "SET NULL",
     },
   },
