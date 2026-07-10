@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Users, Mail, Percent, BarChart3 } from "lucide-react";
+// Importamos los íconos necesarios
+import { Users, Mail, Percent, BarChart3, Phone } from "lucide-react";
 import { Card, Button } from "../../components/shared/index.js";
 import { colors } from "../../theme/index.js";
 
@@ -7,6 +8,9 @@ const Interesados = () => {
   const [prospectos, setProspectos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [mensaje, setMensaje] = useState("");
+
+  // Estado para controlar el porcentaje seleccionado por cada alumno individualmente
+  const [descuentos, setDescuentos] = useState({});
 
   const backendUrl = "http://localhost:5000/api";
   const userToken = localStorage.getItem("token");
@@ -33,10 +37,15 @@ const Interesados = () => {
       .finally(() => setCargando(false));
   }, [userToken]);
 
+  // Manejador para cambiar el porcentaje de una fila específica
+  const handlePorcentajeChange = (id, valor) => {
+    setDescuentos((prev) => ({ ...prev, [id]: valor }));
+  };
+
   // 2. Simulación de Envío de Oferta Especial
-  const handleEnviarOferta = (email, planNombre) => {
+  const handleEnviarOferta = (email, planNombre, porcentaje) => {
     setMensaje(
-      `¡Oferta enviada con éxito a ${email}! Se despachó un cupón del 10% para el curso ${planNombre}.`,
+      `¡Oferta enviada con éxito a ${email}! Se despachó un cupón del ${porcentaje}% para el curso ${planNombre}.`,
     );
     setTimeout(() => setMensaje(""), 4000);
   };
@@ -179,82 +188,154 @@ const Interesados = () => {
                   <th style={{ padding: "12px 8px" }}>Contacto</th>
                   <th style={{ padding: "12px 8px" }}>Plan de Interés</th>
                   <th style={{ padding: "12px 8px", textAlign: "right" }}>
-                    Gestión Comercial
+                    Acciones
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {prospectos.map((alumno) => (
-                  <tr
-                    key={alumno.id}
-                    style={{
-                      borderBottom: "1px solid #edf2f7",
-                      transition: "background 0.2s",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor = "#f8fafc")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor = "transparent")
-                    }
-                  >
-                    <td
+                {prospectos.map((alumno) => {
+                  // 🚀 EXTRACCIÓN REAL DE RELACIÓN 1:1 DESDE USER:
+                  // Buscamos dinámicamente tanto 'email' como 'correo' dentro del objeto anidado 'user'
+                  const alumnoEmail =
+                    alumno.user?.email ||
+                    alumno.user?.correo ||
+                    alumno.email ||
+                    "Sin correo registrado";
+
+                  return (
+                    <tr
+                      key={alumno.id}
                       style={{
-                        padding: "16px 8px",
-                        fontWeight: "600",
-                        color: "#333",
-                        textTransform: "capitalize",
+                        borderBottom: "1px solid #edf2f7",
+                        transition: "background 0.2s",
                       }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.backgroundColor = "#f8fafc")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.backgroundColor = "transparent")
+                      }
                     >
-                      {alumno.nombre}
-                    </td>
-
-                    <td style={{ padding: "16px 8px", color: "#555" }}>
-                      <div
+                      <td
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
+                          padding: "16px 8px",
+                          fontWeight: "600",
+                          color: "#333",
+                          textTransform: "capitalize",
                         }}
                       >
-                        <Mail size={14} color="#7d88d1" />
-                        <span>{alumno.email}</span>
-                      </div>
-                    </td>
+                        {alumno.nombre} {alumno.apellido || ""}
+                      </td>
 
-                    <td style={{ padding: "16px 8px" }}>
-                      <span
-                        style={{
-                          backgroundColor: "#fef3c7",
-                          color: "#d97706",
-                          padding: "4px 10px",
-                          borderRadius: "12px",
-                          fontSize: "12px",
-                          fontWeight: "700",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {alumno.id_plan_interes}
-                      </span>
-                    </td>
+                      {/* Renderizado de Datos de Contacto */}
+                      <td style={{ padding: "16px 8px", color: "#555" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "6px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                            }}
+                          >
+                            <Mail size={14} color="#7d88d1" />
+                            <span style={{ fontSize: "13px" }}>
+                              {alumnoEmail}
+                            </span>
+                          </div>
+                          {alumno.telefono && (
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                color: "#718096",
+                                fontSize: "13px",
+                              }}
+                            >
+                              <Phone size={14} color="#22c55e" />
+                              <span>{alumno.telefono}</span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
 
-                    <td style={{ padding: "16px 8px", textAlign: "right" }}>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() =>
-                          handleEnviarOferta(
-                            alumno.email,
-                            alumno.id_plan_interes,
-                          )
-                        }
-                        style={{ backgroundColor: "#4c5fd5", fontSize: "12px" }}
-                      >
-                        Enviar Descuento
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+                      <td style={{ padding: "16px 8px" }}>
+                        <span
+                          style={{
+                            backgroundColor: "#fef3c7",
+                            color: "#d97706",
+                            padding: "4px 10px",
+                            borderRadius: "12px",
+                            fontSize: "12px",
+                            fontWeight: "700",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          {alumno.id_plan_interes}
+                        </span>
+                      </td>
+
+                      {/* Selector de Porcentaje + Botón de Envío */}
+                      <td style={{ padding: "16px 8px", textAlign: "right" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "flex-end",
+                            gap: "10px",
+                          }}
+                        >
+                          <select
+                            value={descuentos[alumno.id] || "10"}
+                            onChange={(e) =>
+                              handlePorcentajeChange(alumno.id, e.target.value)
+                            }
+                            style={{
+                              padding: "6px 10px",
+                              borderRadius: "6px",
+                              border: "1px solid #cbd5e0",
+                              fontSize: "13px",
+                              backgroundColor: "white",
+                              cursor: "pointer",
+                              outline: "none",
+                              color: "#4a5568",
+                              fontWeight: "600",
+                            }}
+                          >
+                            <option value="10">10% Desc</option>
+                            <option value="15">15% Desc</option>
+                            <option value="20">20% Desc</option>
+                            <option value="25">25% Desc</option>
+                          </select>
+
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() =>
+                              handleEnviarOferta(
+                                alumnoEmail,
+                                alumno.id_plan_interes,
+                                descuentos[alumno.id] || "10",
+                              )
+                            }
+                            style={{
+                              backgroundColor: "#4c5fd5",
+                              fontSize: "12px",
+                            }}
+                          >
+                            Enviar Descuento
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

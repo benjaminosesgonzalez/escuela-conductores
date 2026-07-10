@@ -8,19 +8,21 @@ const LandingPage = () => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [hoveredPlan, setHoveredPlan] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const [errorConexion, setErrorConexion] = useState(null);
 
-  // 1. Asegúrate de tener definidos estos tres estados arriba en tu componente:
-  //  const [planes, setPlanes] = useState([]);
-  // const [cargando, setCargando] = useState(true);
-  const [errorConexion, setErrorConexion] = useState(null); // 🔥 Nuevo: Para rastrear bloqueos
+  const [usuario, setUsuario] = useState(null);
 
   useEffect(() => {
     setCargando(true);
     setErrorConexion(null);
 
+    const usuarioActivo = authService.getCurrentUser();
+    if (usuarioActivo) {
+      setUsuario(usuarioActivo);
+    }
+
     fetch("http://localhost:5000/api/plans")
       .then((res) => {
-        // Si el servidor responde con un estatus de error (404, 500, etc.), disparamos una alerta
         if (!res.ok) {
           throw new Error(
             `Servidor fuera de línea o ruta inválida (Status: ${res.status})`,
@@ -29,7 +31,7 @@ const LandingPage = () => {
         return res.json();
       })
       .then((data) => {
-        console.log("🤖 DATA INTERNA RECIBIDA EN LANDING:", data);
+        console.log("DATA INTERNA RECIBIDA EN LANDING:", data);
 
         // Desempaquetamos con máxima seguridad según el formato que venga
         if (data && Array.isArray(data.data)) {
@@ -45,9 +47,16 @@ const LandingPage = () => {
         setErrorConexion(err.message); // Guardamos el error real para mostrarlo
       })
       .finally(() => {
-        setCargando(false); // 🔥 EL APAGADOR CRUCIAL: Pase lo que pase, se detiene la carga
+        setCargando(false); // EL APAGADOR CRUCIAL: Pase lo que pase, se detiene la carga
       });
   }, []);
+
+  // 🚀 NUEVO: Función para destruir la sesión de forma limpia
+  const handleCerrarSesion = () => {
+    authService.logout(); // Limpia los tokens y el user del localStorage
+    setUsuario(null); // Reseteamos el estado para refrescar el Header al instante
+    navigate("/"); // Forzamos la permanencia en la Landing
+  };
 
   // 2. Lógica de Redirección Inteligente al seleccionar un Plan
   const handleElegirPlan = (idPlan) => {
@@ -67,28 +76,45 @@ const LandingPage = () => {
     }
   };
 
-  const getCardStyle = (planId) => ({
-    backgroundColor: selectedPlan === planId ? "#ff6b35" : "#3c47a1",
-    padding: "24px 20px",
-    borderRadius: "16px",
-    textAlign: "center",
-    cursor: "pointer",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    transform:
-      selectedPlan === planId
-        ? "scale(1.03)"
-        : hoveredPlan === planId
-          ? "translateY(-4px)"
-          : "scale(1)",
-    boxShadow:
-      selectedPlan === planId
-        ? "0 8px 24px rgba(255, 107, 53, 0.3)"
-        : hoveredPlan === planId
-          ? "0 4px 16px rgba(0,0,0,0.15)"
+  // 🔥 MODIFICADO: Ahora recibe el objeto 'plan' completo para evaluar si está cerrado
+  const getCardStyle = (plan) => {
+    const estaCerrado = plan.inscripciones_abiertas === false;
+    const esSeleccionado = selectedPlan === plan.id;
+    const esHovered = hoveredPlan === plan.id;
+
+    return {
+      backgroundColor: estaCerrado
+        ? "#4a526d"
+        : esSeleccionado
+          ? "#ff6b35"
+          : "#3c47a1", // Gris azulado opaco si está cerrado
+      opacity: estaCerrado ? 0.7 : 1,
+      padding: "24px 20px",
+      borderRadius: "16px",
+      textAlign: "center",
+      cursor: estaCerrado ? "not-allowed" : "pointer",
+      pointerEvents: estaCerrado ? "none" : "auto", // 🔥 Bloquea clics accidentales en la tarjeta
+      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+      transform: estaCerrado
+        ? "scale(1)"
+        : esSeleccionado
+          ? "scale(1.03)"
+          : esHovered
+            ? "translateY(-4px)"
+            : "scale(1)",
+      boxShadow: estaCerrado
+        ? "none"
+        : esSeleccionado
+          ? "0 8px 24px rgba(255, 107, 53, 0.3)"
+          : esHovered
+            ? "0 4px 16px rgba(0,0,0,0.15)"
+            : "none",
+      border:
+        !estaCerrado && esSeleccionado
+          ? "2px solid rgba(255,255,255,0.3)"
           : "none",
-    border:
-      selectedPlan === planId ? "2px solid rgba(255,255,255,0.3)" : "none",
-  });
+    };
+  };
 
   return (
     <div
@@ -108,13 +134,17 @@ const LandingPage = () => {
           cursor: pointer;
         }
 
-        .action-btn:hover {
+        .action-btn:hover:not(:disabled) {
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
-        .action-btn:active {
+        .action-btn:active:not(:disabled) {
           transform: translateY(0);
+        }
+          
+        .action-btn:disabled {
+          cursor: not-allowed;
         }
 
         @media (max-width: 1024px) {
@@ -150,41 +180,72 @@ const LandingPage = () => {
           ESCUELA DE CONDUCTORES
         </div>
 
-        <div style={{ display: "flex", gap: "16px" }}>
-          <button
-            onClick={() => navigate("/login")}
-            className="action-btn"
-            style={{
-              backgroundColor: "#5a68d8",
-              color: "white",
-              border: "none",
-              padding: "12px 28px",
-              borderRadius: "8px",
-              fontWeight: "600",
-              fontSize: "14px",
-              cursor: "pointer",
-            }}
-          >
-            Iniciar sesión
-          </button>
+        {/* Renderizado condicional según el estado de autenticación */}
+        {usuario ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+            <span
+              style={{ color: "white", fontSize: "15px", fontWeight: "600" }}
+            >
+              Hola,{" "}
+              <strong style={{ textTransform: "capitalize" }}>
+                {usuario.nombre}
+              </strong>
+            </span>
 
-          <button
-            onClick={() => navigate("/registro")}
-            className="action-btn"
-            style={{
-              backgroundColor: "#ff6b35",
-              color: "white",
-              border: "none",
-              padding: "12px 28px",
-              borderRadius: "8px",
-              fontWeight: "600",
-              fontSize: "14px",
-              cursor: "pointer",
-            }}
-          >
-            Registrarse
-          </button>
-        </div>
+            <button
+              onClick={handleCerrarSesion}
+              className="action-btn"
+              style={{
+                backgroundColor: "transparent",
+                color: "white",
+                border: "2px solid white",
+                padding: "12px 24px",
+                borderRadius: "8px",
+                fontWeight: "600",
+                fontSize: "14px",
+                cursor: "pointer",
+              }}
+            >
+              Cerrar sesión
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", gap: "16px" }}>
+            <button
+              onClick={() => navigate("/login")}
+              className="action-btn"
+              style={{
+                backgroundColor: "#5a68d8",
+                color: "white",
+                border: "none",
+                padding: "12px 28px",
+                borderRadius: "8px",
+                fontWeight: "600",
+                fontSize: "14px",
+                cursor: "pointer",
+              }}
+            >
+              Iniciar sesión
+            </button>
+
+            <button
+              onClick={() => navigate("/registro")}
+              className="action-btn"
+              style={{
+                backgroundColor: "#ff6b35",
+                color: "white",
+                border: "none",
+                padding: "12px 28px",
+                borderRadius: "8px",
+                fontWeight: "600",
+                fontSize: "14px",
+                cursor: "pointer",
+              }}
+            >
+              Registrarse
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Contenido principal */}
@@ -357,7 +418,7 @@ const LandingPage = () => {
                         onClick={() => setSelectedPlan(plan.id)}
                         onMouseEnter={() => setHoveredPlan(plan.id)}
                         onMouseLeave={() => setHoveredPlan(null)}
-                        style={getCardStyle(plan.id)}
+                        style={getCardStyle(plan)} // 🔥 Cambio: Pasamos el objeto plan completo
                       >
                         <h3
                           style={{
@@ -425,6 +486,24 @@ const LandingPage = () => {
                             ✓ {plan.clases_simulador || 0} de simulador
                           </li>
                         </ul>
+
+                        {/* 🔥 NUEVO: Mensaje visual si las inscripciones están cerradas */}
+                        {plan.inscripciones_abiertas === false && (
+                          <div
+                            style={{
+                              backgroundColor: "rgba(220, 38, 38, 0.25)",
+                              color: "#ffcbd4",
+                              padding: "8px 10px",
+                              borderRadius: "6px",
+                              marginTop: "16px",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              border: "1px solid rgba(220, 38, 38, 0.4)",
+                            }}
+                          >
+                            🚫 Periodo de inscripciones cerrado
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -441,20 +520,33 @@ const LandingPage = () => {
                       <button
                         key={`btn-${plan.id}`}
                         onClick={() => handleElegirPlan(plan.id)}
+                        disabled={plan.inscripciones_abiertas === false} // 🔥 NUEVO: Atributo nativo disabled
                         className="action-btn"
                         style={{
                           backgroundColor:
-                            selectedPlan === plan.id ? "#ff6b35" : "#4c5fd5",
+                            plan.inscripciones_abiertas === false
+                              ? "#6b7280" // Botón gris si está cerrado
+                              : selectedPlan === plan.id
+                                ? "#ff6b35"
+                                : "#4c5fd5",
                           color: "white",
                           border: "none",
                           padding: "12px 16px",
                           borderRadius: "8px",
                           fontWeight: "700",
                           fontSize: "13px",
-                          cursor: "pointer",
+                          cursor:
+                            plan.inscripciones_abiertas === false
+                              ? "not-allowed"
+                              : "pointer",
+                          opacity:
+                            plan.inscripciones_abiertas === false ? 0.8 : 1,
                         }}
                       >
-                        Elegir plan
+                        {/* 🔥 NUEVO: Texto dinámico según disponibilidad */}
+                        {plan.inscripciones_abiertas === false
+                          ? "Inscripción cerrada"
+                          : "Elegir plan"}
                       </button>
                     ))}
                   </div>

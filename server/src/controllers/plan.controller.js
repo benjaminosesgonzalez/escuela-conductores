@@ -6,7 +6,8 @@ import {
   updatePlanService,
   deletePlanService,
 } from "../services/plan.service.js";
-
+import { Plan } from "../entities/plan.entity.js";
+import { AppDataSource } from "../config/configDb.js";
 /**
  * 🔄 FUNCIÓN AUXILIAR: Traduce el objeto de la BD (inglés)
  * al formato exacto que espera tu Frontend (español).
@@ -20,6 +21,7 @@ function formatPlanToFrontend(plan) {
     clases_practicas: plan.total_classes,
     nivel_teorico: plan.theoretical_level,
     clases_simulador: plan.simulator_classes,
+    inscripciones_abiertas: plan.inscripciones_abiertas !== false,
   };
 }
 
@@ -91,6 +93,35 @@ export async function getPlans(req, res) {
   }
 }
 
+export const toggleInscripcionesPlan = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const planRepository = AppDataSource.getRepository(Plan);
+
+    const plan = await planRepository.findOneBy({ id: Number(id) });
+    if (!plan) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Plan no encontrado" });
+    }
+
+    // Invertimos el estado actual
+    plan.inscripciones_abiertas = !plan.inscripciones_abiertas;
+    await planRepository.save(plan);
+
+    return res.status(200).json({
+      success: true,
+      message: `Inscripciones ${plan.inscripciones_abiertas ? "abiertas" : "cerradas"} para el plan ${plan.nombre}`,
+      data: plan,
+    });
+  } catch (error) {
+    console.error("Error al modificar estado del plan:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Error interno del servidor" });
+  }
+};
+
 export async function getPlanById(req, res) {
   try {
     const { id } = req.params;
@@ -110,7 +141,7 @@ export async function getPlanById(req, res) {
   }
 }
 
-// 🚀 NUEVO: Controlador para procesar actualizaciones (PUT)
+// NUEVO: Controlador para procesar actualizaciones (PUT)
 export async function updatePlan(req, res) {
   try {
     const { id } = req.params;

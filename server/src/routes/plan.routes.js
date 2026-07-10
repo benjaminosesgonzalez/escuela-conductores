@@ -6,6 +6,7 @@ import {
   createPlan,
   updatePlan,
   deletePlan,
+  toggleInscripcionesPlan,
 } from "../controllers/plan.controller.js";
 import { authMiddleware, isAdmin } from "../middleware/auth.middleware.js";
 
@@ -18,6 +19,13 @@ router.get("/", getPlans);
 router.get("/:id", getPlanById);
 // crear plan: POST /api/plans
 router.post("/", authMiddleware, isAdmin, createPlan);
+
+router.patch(
+  "/:id/toggle-enrollment",
+  authMiddleware,
+  isAdmin,
+  toggleInscripcionesPlan,
+);
 
 router.put("/:id", authMiddleware, isAdmin, updatePlan); // PUT /api/plans/:id
 router.delete("/:id", authMiddleware, isAdmin, deletePlan);
