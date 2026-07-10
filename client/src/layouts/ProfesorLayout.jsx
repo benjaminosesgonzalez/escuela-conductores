@@ -1,25 +1,27 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Home, Users, Calendar, Car, LogOut, FolderOpen } from 'lucide-react';
-import { Layout } from '../components/shared/index.js';
-import { colors, spacing } from '../theme/index.js';
-import { authService } from '../services/authService.js';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {Home, Users, Calendar, Car, LogOut, FolderOpen, Video, BookOpen, CheckSquare} from "lucide-react";
+import { Layout } from "../components/shared/index.js";
+import { colors, spacing } from "../theme/index.js";
+import { authService } from "../services/authService.js";
 
 const ProfesorLayout = ({ children, activeTab, onTabChange }) => {
   const navigate = useNavigate();
   const currentUser = authService.getCurrentUser();
-  const userEmail = currentUser?.nombre || currentUser?.email || 'Profesor';
+  const userEmail = currentUser?.nombre || currentUser?.email || "Profesor";
 
   const handleLogout = () => {
     authService.logout();
-    navigate('/');
+    navigate("/");
   };
 
   const menuItems = [
     { id: 'inicio', label: 'Inicio', icon: Home },
-    { id: 'disponibilidad', label: 'Disponibilidad', icon: Calendar },
-    { id: 'misclases', label: 'Mis clases', icon: Car },
-    { id: 'repositorio', label: 'Repositorio', icon: FolderOpen }
+    { id: 'disponibilidad', label: 'Disponibilidad', icon: Calendar, hasSubmenu: true },
+    { id: 'misclases', label: 'Registrar Avance', icon: Video },
+    { id: 'evaluacion', label: 'Evaluación Práctica', icon: CheckSquare },
+    { id: 'repositorio', label: 'Repositorio', icon: FolderOpen },
+    { id: "vehiculos", label: "Solicitar Vehículo", icon: Car },
   ];
 
   return (
@@ -31,6 +33,7 @@ const ProfesorLayout = ({ children, activeTab, onTabChange }) => {
       onLogout={handleLogout}
       roleColor={colors.profesor}
       roleIcon={Car}
+      roleLabel="Profesor"
       title={`${userEmail.toUpperCase()} - ESCUELA`}
     >
       {children}

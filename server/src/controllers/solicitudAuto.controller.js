@@ -29,37 +29,21 @@ export const listarPorSede = async (req, res) => {
 export const responderSolicitud = async (req, res) => {
   try {
     const { id } = req.params;
-    const { estado } = req.body;
+    const { estado, id_auto, motivo_rechazo } = req.body; 
 
     const solicitud = await solicitudService.getSolicitudByIdService(id);
-
     if (!solicitud) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Solicitud no encontrada" });
+      return res.status(404).json({ success: false, message: "Solicitud no encontrada" });
     }
 
-    if (estado === "aceptado") {
-      const disponibilidad =
-        await solicitudService.verificarDisponibilidadBloque(
-          solicitud.sede.id,
-          solicitud.fecha_uso,
-          solicitud.hora_uso,
-          solicitud.hora_termino,
-        );
-
-      if (!disponibilidad.hayCupo) {
-        return res.status(400).json({
-          success: false,
-          message: `No hay autos disponibles. Ocupados: ${disponibilidad.ocupados}/${disponibilidad.total}`,
-        });
-      }
+    if (estado === "aceptado" && !id_auto) {
+      return res.status(400).json({ success: false, message: "Debe seleccionar un vehículo para aprobar la solicitud." });
     }
 
-    const result = await solicitudService.responderSolicitudService(id, estado);
+    const result = await solicitudService.responderSolicitudService(id, estado, id_auto, motivo_rechazo);
+    
     res.json({ success: true, data: result });
   } catch (error) {
-    console.error("❌ Error al responder solicitud:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -98,3 +82,14 @@ export const cancelarSolicitud = async (req, res) => {
     });
   }
 };
+
+export const obtenerAutosParaSolicitud = async (req, res) => {
+  try {
+    const autosLibres = await solicitudService.getAutosDisponiblesParaBloqueService(req.params.id);
+    res.json({ success: true, data: autosLibres });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+

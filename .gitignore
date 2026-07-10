@@ -1,35 +1,53 @@
 # Environment variables
 .env
 .env.local
-.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+server/.env
+server/.env.local
+client/.env
+client/.env.local
+.vite/
 
 # Dependencies
 node_modules/
+/node_modules
+client/node_modules/
+server/node_modules/
 package-lock.json
+package-lock.json/
 yarn.lock
 
 # Build outputs
-dist/
-build/
-.next/
+client/dist/
+client/build/
+client/out/
+client/.eslintcache
 
 # IDE
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 *~
 .DS_Store
 
 # Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
 # OS
-Thumbs.db
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.swp
 
 # Misc
 .cache/

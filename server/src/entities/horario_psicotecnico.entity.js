@@ -24,6 +24,10 @@ export const HorarioSala = new EntitySchema({
     activo: {
       type: 'boolean',
       default: true
+    },
+    fecha: {
+      type: 'date',
+      nullable: false,
     }
   }
 });

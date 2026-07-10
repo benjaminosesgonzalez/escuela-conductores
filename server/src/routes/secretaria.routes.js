@@ -10,8 +10,8 @@ import { authMiddleware, isAdmin } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-// Registro de secretaria (sin autenticación requerida para testing)
-router.post("/registro", registrarSecretaria);
+// Registro de secretaria (solo admin autorizado)
+router.post("/registro", authMiddleware, isAdmin, registrarSecretaria);
 
 // Resto de rutas protegidas: solo admin
 router.use(authMiddleware, isAdmin);

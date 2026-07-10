@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, CheckCircle, Circle, Save, Settings, AlertCircle, Loader } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, Circle, Save, AlertCircle, Loader, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, Button } from '../../components/shared/index.js';
 import { colors, spacing } from '../../theme/index.js';
 import { authService } from '../../services/authService.js';
 
 const MisClasesProfesor = () => {
   const currentUser = authService.getCurrentUser();
-  const profesorId = currentUser?.id;
+  const profesorId = currentUser?.profesorId;
 
   const [disponibilidades, setDisponibilidades] = useState({});
   const [originalDisponibilidades, setOriginalDisponibilidades] = useState({});
@@ -16,8 +16,38 @@ const MisClasesProfesor = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [diasConCambios, setDiasConCambios] = useState([]);
+  const [semanaActual, setSemanaActual] = useState(0);
+  const [tipoDisponibilidad, setTipoDisponibilidad] = useState('teorica');
 
   const diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
+
+  // Calcular fecha de inicio de la semana
+  const obtenerFechasDelaSemana = (semanaOffset = 0) => {
+    const hoy = new Date();
+    const diaSemana = hoy.getDay();
+    const diasAlLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() + diasAlLunes + (semanaOffset * 7));
+
+    const viernes = new Date(lunes);
+    viernes.setDate(lunes.getDate() + 4);
+
+    return { lunes, viernes };
+  };
+
+  const formatearFecha = (fecha) => {
+    return fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  };
+
+  const obtenerFechaDelDia = (nombreDia) => {
+    const { lunes } = obtenerFechasDelaSemana(semanaActual);
+    const indice = diasSemana.indexOf(nombreDia);
+    const fecha = new Date(lunes);
+    fecha.setDate(lunes.getDate() + indice);
+    return fecha.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+  };
+
+  const { lunes, viernes } = obtenerFechasDelaSemana(semanaActual);
 
   const cargarDisponibilidades = async () => {
     try {
@@ -40,8 +70,34 @@ const MisClasesProfesor = () => {
       const data = await response.json();
 
       if (data.success) {
-        setDisponibilidades(data.data || {});
-        setOriginalDisponibilidades(JSON.parse(JSON.stringify(data.data || {})));
+        // Filtrar bloques por la semana actual usando formato LOCAL (no UTC)
+        const { lunes, viernes } = obtenerFechasDelaSemana(semanaActual);
+
+        const lunesStr = String(lunes.getFullYear()) + '-' +
+                         String(lunes.getMonth() + 1).padStart(2, '0') + '-' +
+                         String(lunes.getDate()).padStart(2, '0');
+        const viernesStr = String(viernes.getFullYear()) + '-' +
+                           String(viernes.getMonth() + 1).padStart(2, '0') + '-' +
+                           String(viernes.getDate()).padStart(2, '0');
+
+        const bloquesFiltrados = {};
+
+        if (data.data) {
+          Object.keys(data.data).forEach(dia => {
+            bloquesFiltrados[dia] = data.data[dia].filter(bloque => {
+              // Si tiene fecha, filtrar por rango
+              if (bloque.fecha) {
+                return bloque.fecha >= lunesStr && bloque.fecha <= viernesStr;
+              }
+              // Si no tiene fecha, mostrar los bloques si es la semana actual (semana 0)
+              // Los bloques sin fecha son bloques antiguos de antes de la actualización
+              return semanaActual === 0;
+            });
+          });
+        }
+
+        setDisponibilidades(bloquesFiltrados);
+        setOriginalDisponibilidades(JSON.parse(JSON.stringify(bloquesFiltrados)));
         setError(null);
         setDiasConCambios([]);
       } else {
@@ -74,12 +130,15 @@ const MisClasesProfesor = () => {
         return;
       }
 
+      const fecha = obtenerFechaDelDia(selectedDay);
       const idsYEstados = bloquesDelDia.map(b => ({
         id: b.id,
-        disponible: b.disponible
+        disponible: b.disponible,
+        fecha: fecha,
+        tipoDisponibilidad: b.tipoDisponibilidad || tipoDisponibilidad
       }));
 
-      console.log('📝 Guardando cambios:', { profesorId, día: selectedDay, bloques: idsYEstados });
+      console.log('📝 Guardando cambios:', { profesorId, día: selectedDay, fecha, bloques: idsYEstados });
 
       const token = authService.getToken();
 
@@ -131,53 +190,26 @@ const MisClasesProfesor = () => {
     }
   };
 
-  const generarBloques = async () => {
-    try {
-      setSaving(true);
-      if (!profesorId) {
-        setError('No se pudo identificar al profesor');
-        return;
-      }
-
-      const token = authService.getToken();
-      const response = await fetch(
-        `http://localhost:5000/api/disponibilidades/${profesorId}/generar`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            diasLaboral: ['lunes', 'martes', 'miércoles', 'jueves', 'viernes']
-          })
-        }
-      );
-
-      const data = await response.json();
-
-      if (data.success) {
-        await cargarDisponibilidades();
-        setSuccess('Bloques generados correctamente');
-        setTimeout(() => setSuccess(null), 3000);
-      } else {
-        setError(data.message || 'Error al generar bloques');
-      }
-    } catch (err) {
-      setError('Error al generar bloques');
-      console.error(err);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const toggleBloque = (bloqueId) => {
     setDisponibilidades(prev => {
       const actualizado = {
         ...prev,
-        [selectedDay]: prev[selectedDay].map(bloque =>
-          bloque.id === bloqueId ? { ...bloque, disponible: !bloque.disponible } : bloque
-        )
+        [selectedDay]: prev[selectedDay].map(bloque => {
+          if (bloque.id !== bloqueId) return bloque;
+
+          const esDelTipoActual = bloque.tipoDisponibilidad === tipoDisponibilidad;
+
+          // Ciclo de estados:
+          // Si es del tipo actual y disponible → pasa a no disponible
+          // Si es del tipo actual y no disponible → pasa a disponible del tipo actual
+          // Si es de otro tipo → pasa a disponible del tipo actual
+          if (esDelTipoActual && bloque.disponible) {
+            return { ...bloque, disponible: false };
+          } else {
+            return { ...bloque, disponible: true, tipoDisponibilidad };
+          }
+        })
       };
 
       // Verificar si hay cambios en este día
@@ -192,14 +224,14 @@ const MisClasesProfesor = () => {
     });
   };
 
-  const toggleTodosDelDia = () => {
-    const todosDisponibles = disponibilidades[selectedDay]?.every(b => b.disponible);
+  const toggleTodosDelDia = (tipo) => {
     setDisponibilidades(prev => {
       const actualizado = {
         ...prev,
         [selectedDay]: prev[selectedDay].map(bloque => ({
           ...bloque,
-          disponible: !todosDisponibles
+          disponible: true,
+          tipoDisponibilidad: tipo
         }))
       };
 
@@ -217,7 +249,7 @@ const MisClasesProfesor = () => {
 
   useEffect(() => {
     cargarDisponibilidades();
-  }, []);
+  }, [semanaActual]);
 
   const bloquesDelDia = disponibilidades[selectedDay] || [];
   const disponiblesDelDia = bloquesDelDia.filter(b => b.disponible).length;
@@ -250,17 +282,6 @@ const MisClasesProfesor = () => {
             Gestiona tu disponibilidad para que los alumnos puedan reservar tus clases
           </p>
         </div>
-
-        {Object.keys(disponibilidades).length === 0 && !loading && (
-          <Button
-            variant="primary"
-            onClick={generarBloques}
-            icon={Settings}
-            disabled={saving}
-          >
-            {saving ? 'Generando...' : 'Generar horarios'}
-          </Button>
-        )}
       </div>
 
       {/* Alertas */}
@@ -309,6 +330,79 @@ const MisClasesProfesor = () => {
         marginBottom: spacing.margin.xlarge
       }}>
         <Card title="Días disponibles" icon={Calendar}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: spacing.gap.normal,
+            marginBottom: spacing.margin.lg
+          }}>
+            <button
+              onClick={() => setSemanaActual(Math.max(0, semanaActual - 1))}
+              disabled={semanaActual === 0}
+              style={{
+                padding: spacing.padding.md,
+                backgroundColor: semanaActual === 0 ? colors.borderLight : colors.borderLight,
+                border: 'none',
+                borderRadius: spacing.radius.md,
+                cursor: semanaActual === 0 ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: semanaActual === 0 ? colors.textTertiary : colors.textPrimary,
+                transition: 'all 0.2s ease',
+                opacity: semanaActual === 0 ? 0.5 : 1
+              }}
+              onMouseEnter={(e) => {
+                if (semanaActual > 0) {
+                  e.currentTarget.style.backgroundColor = colors.border;
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = colors.borderLight;
+              }}
+            >
+              <ChevronLeft size={20} />
+            </button>
+
+            <div style={{
+              flex: 1,
+              textAlign: 'center',
+              fontSize: '13px',
+              color: colors.textSecondary,
+              fontWeight: '500'
+            }}>
+              {formatearFecha(lunes)} - {formatearFecha(viernes)}
+            </div>
+
+            <button
+              onClick={() => setSemanaActual(Math.min(3, semanaActual + 1))}
+              disabled={semanaActual === 3}
+              style={{
+                padding: spacing.padding.md,
+                backgroundColor: semanaActual === 3 ? colors.borderLight : colors.borderLight,
+                border: 'none',
+                borderRadius: spacing.radius.md,
+                cursor: semanaActual === 3 ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: semanaActual === 3 ? colors.textTertiary : colors.textPrimary,
+                transition: 'all 0.2s ease',
+                opacity: semanaActual === 3 ? 0.5 : 1
+              }}
+              onMouseEnter={(e) => {
+                if (semanaActual < 3) {
+                  e.currentTarget.style.backgroundColor = colors.border;
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = colors.borderLight;
+              }}
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(60px, 1fr))',
@@ -374,32 +468,77 @@ const MisClasesProfesor = () => {
               margin: '0 0 12px 0',
               textTransform: 'capitalize'
             }}>
-              {selectedDay}
+              {selectedDay} - Tipo de disponibilidad
             </h3>
-            <p style={{
-              fontSize: '32px',
-              fontWeight: 'bold',
-              color: colors.primary,
-              margin: '0 0 8px 0'
-            }}>
-              {disponiblesDelDia}/{bloquesDelDia.length}
-            </p>
-            <p style={{
-              fontSize: '13px',
-              color: colors.textTertiary,
-              margin: '0 0 16px 0'
-            }}>
-              bloques disponibles
-            </p>
 
-            <Button
-              variant="secondary"
-              size="md"
-              fullWidth={true}
-              onClick={toggleTodosDelDia}
-            >
-              {disponiblesDelDia === bloquesDelDia.length ? 'Desmarcar todos' : 'Marcar todos'}
-            </Button>
+            {/* Toggle Teórica/Práctica */}
+            <div style={{
+              display: 'flex',
+              gap: spacing.gap.normal,
+              marginBottom: spacing.margin.lg,
+              backgroundColor: colors.borderLight,
+              padding: spacing.padding.md,
+              borderRadius: spacing.radius.md
+            }}>
+              <button
+                onClick={() => setTipoDisponibilidad('teorica')}
+                style={{
+                  flex: 1,
+                  padding: `${spacing.padding.md} ${spacing.padding.lg}`,
+                  backgroundColor: tipoDisponibilidad === 'teorica' ? '#22c55e' : colors.borderLight,
+                  color: tipoDisponibilidad === 'teorica' ? colors.white : colors.textPrimary,
+                  border: 'none',
+                  borderRadius: spacing.radius.md,
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.2s ease',
+                  fontSize: '14px'
+                }}
+              >
+                📚 Teórica
+              </button>
+              <button
+                onClick={() => setTipoDisponibilidad('practica')}
+                style={{
+                  flex: 1,
+                  padding: `${spacing.padding.md} ${spacing.padding.lg}`,
+                  backgroundColor: tipoDisponibilidad === 'practica' ? '#a855f7' : colors.borderLight,
+                  color: tipoDisponibilidad === 'practica' ? colors.white : colors.textPrimary,
+                  border: 'none',
+                  borderRadius: spacing.radius.md,
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.2s ease',
+                  fontSize: '14px'
+                }}
+              >
+                🚗 Práctica
+              </button>
+            </div>
+
+            {/* Botones Marcar Todos */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: spacing.gap.normal
+            }}>
+              <Button
+                variant="secondary"
+                size="sm"
+                fullWidth={true}
+                onClick={() => toggleTodosDelDia('teorica')}
+              >
+                Marcar todos teóricos
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                fullWidth={true}
+                onClick={() => toggleTodosDelDia('practica')}
+              >
+                Marcar todos prácticos
+              </Button>
+            </div>
           </div>
         </Card>
       </div>
@@ -434,67 +573,82 @@ const MisClasesProfesor = () => {
               gap: spacing.gap.normal,
               marginBottom: spacing.margin.xlarge
             }}>
-              {bloquesDelDia.map(bloque => (
-                <div
-                  key={bloque.id}
-                  onClick={() => toggleBloque(bloque.id)}
-                  style={{
-                    padding: spacing.padding.lg,
-                    backgroundColor: bloque.disponible ? '#f0fdf4' : '#fef2f2',
-                    border: `2px solid ${bloque.disponible ? colors.success : colors.danger}`,
-                    borderRadius: spacing.radius.md,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing.gap.normal
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                >
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: spacing.radius.full,
-                    backgroundColor: bloque.disponible ? '#dcfce7' : '#fee2e2',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}>
-                    {bloque.disponible ? (
-                      <CheckCircle size={24} color={colors.success} />
-                    ) : (
-                      <Circle size={24} color={colors.danger} />
-                    )}
-                  </div>
+              {bloquesDelDia.map(bloque => {
+                  const bloqueType = bloque.tipoDisponibilidad || 'teorica';
+                  const esTeortica = bloqueType === 'teorica';
+                  const colorBase = esTeortica ? '#22c55e' : '#a855f7';
+                  const bgLight = esTeortica ? '#f0fdf4' : '#faf5ff';
+                  const bgCheck = esTeortica ? '#dcfce7' : '#e9d5ff';
 
-                  <div style={{ flex: 1 }}>
-                    <p style={{
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: colors.textPrimary,
-                      margin: '0 0 4px 0'
-                    }}>
-                      {bloque.horaInicio} - {bloque.horaFin}
-                    </p>
-                    <p style={{
-                      fontSize: '12px',
-                      color: bloque.disponible ? colors.success : colors.danger,
-                      margin: 0,
-                      fontWeight: '500'
-                    }}>
-                      {bloque.disponible ? '✓ Disponible' : '✗ No disponible'}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                  return (
+                    <div
+                      key={bloque.id}
+                      onClick={() => toggleBloque(bloque.id)}
+                      style={{
+                        padding: spacing.padding.lg,
+                        backgroundColor: bloque.disponible ? bgLight : '#fef2f2',
+                        border: `2px solid ${bloque.disponible ? colorBase : colors.danger}`,
+                        borderRadius: spacing.radius.md,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: spacing.gap.normal
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: spacing.radius.full,
+                        backgroundColor: bloque.disponible ? bgCheck : '#fee2e2',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}>
+                        {bloque.disponible ? (
+                          <CheckCircle size={24} color={colorBase} />
+                        ) : (
+                          <Circle size={24} color={colors.danger} />
+                        )}
+                      </div>
+
+                      <div style={{ flex: 1 }}>
+                        <p style={{
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: colors.textPrimary,
+                          margin: '0 0 4px 0'
+                        }}>
+                          {bloque.horaInicio} - {bloque.horaFin}
+                        </p>
+                        <p style={{
+                          fontSize: '12px',
+                          color: bloque.disponible ? colorBase : colors.danger,
+                          margin: 0,
+                          fontWeight: '500'
+                        }}>
+                          {bloque.disponible ? '✓ Disponible' : '✗ No disponible'}
+                        </p>
+                        <p style={{
+                          fontSize: '11px',
+                          color: colors.textTertiary,
+                          margin: '4px 0 0 0'
+                        }}>
+                          {esTeortica ? '📚 Teórica' : '🚗 Práctica'}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
 
             <Button

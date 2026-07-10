@@ -9,20 +9,17 @@ export const ProfesorSchema = new EntitySchema({
       type: "int",
       generated: true,
     },
-    email: {
-      type: "varchar",
-      length: 100,
-      unique: true,
-    },
-    password: {
-      type: "varchar",
-      length: 255,
-    },
     nombre: {
       type: "varchar",
       length: 100,
       nullable: true,
     },
+    rut: {
+      type: "varchar",
+      length: 12,
+      unique: true,
+      nullable: true,
+    },  
     telefono: {
       type: "varchar",
       length: 15,
@@ -33,6 +30,32 @@ export const ProfesorSchema = new EntitySchema({
       length: 20,
       default: "full_time",
       nullable: false,
+    },
+  },
+  relations: {
+    user: {
+      target: "User",
+      type: "one-to-one",
+      joinColumn: {
+        name: "id_user",
+      },
+      onDelete: "CASCADE",
+    },
+    sedes: {
+      target: "Sede",
+      type: "many-to-many",
+      joinTable: {
+        name: "profesor_sedes",
+        joinColumn: {
+          name: "id_profesor",
+          referencedColumnName: "id",
+        },
+        inverseJoinColumn: {
+          name: "id_sede",
+          referencedColumnName: "id",
+        },
+      },
+      cascade: true,
     },
   },
 });

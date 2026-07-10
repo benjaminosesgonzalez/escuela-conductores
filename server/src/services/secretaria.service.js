@@ -60,13 +60,16 @@ export const registrarSecretariaService = async (datosSecretaria) => {
 
 // Obtener todas las secretarias
 export const getSecretariasService = async () => {
+  // Usamos find() para traer un arreglo con todas las secretarias
   return await secretariaRepo.find({
-    relations: ["user"],
+    // relations le indica a TypeORM que haga un JOIN (cruce de tablas) con la tabla User
+    relations: ["user"], // Para ver su email y fecha de creación
   });
 };
 
 // Obtener secretaria por ID
 export const getSecretariaByIdService = async (id) => {
+  //busca un registro unico que coincida con la id
   return await secretariaRepo.findOne({
     where: { id },
     relations: ["user"],
@@ -75,10 +78,14 @@ export const getSecretariaByIdService = async (id) => {
 
 // Actualizar secretaria
 export const updateSecretariaService = async (id, data) => {
+  // Paso 1: Buscamos si existe el registro antes de intentar actualizarlo
   const secretaria = await secretariaRepo.findOneBy({ id });
   if (!secretaria) return null;
 
+  // Paso 2: Usamos merge() de TypeORM. Esto toma el objeto original (secretaria) 
+  // y le sobreescribe solo las propiedades que vengan en el objeto nuevo (data).
   secretariaRepo.merge(secretaria, data);
+  // Paso 3: Guardamos el objeto fusionado en la base de datos
   return await secretariaRepo.save(secretaria);
 };
 
@@ -89,6 +96,7 @@ export const deleteSecretariaService = async (id) => {
     relations: ["user"],
   });
 
+  //si no se encuentra detenemos
   if (!secretaria) {
     console.log(`No se encontró secretaria con ID: ${id}`);
     return null;

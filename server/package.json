@@ -35,9 +35,12 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
+    "multer": "^2.2.0",
+    "node-cron": "^4.6.0",
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
-    "typeorm": "^0.3.28"
+    "typeorm": "^0.3.28",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
