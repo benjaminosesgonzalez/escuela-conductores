@@ -17,9 +17,8 @@ const ProfesorLayout = ({ children, activeTab, onTabChange }) => {
 
   const menuItems = [
     { id: 'inicio', label: 'Inicio', icon: Home },
-    { id: 'disponibilidad', label: 'Disponibilidad', icon: Calendar },
-    { id: 'clasesOnline', label: 'Clases Online', icon: Video },
-    { id: 'misclases', label: 'Mis clases', icon: Car },
+    { id: 'disponibilidad', label: 'Disponibilidad', icon: Calendar, hasSubmenu: true },
+    { id: 'misclases', label: 'Registrar Avance', icon: Video },
     { id: 'repositorio', label: 'Repositorio', icon: FolderOpen },
     { id: "vehiculos", label: "Solicitar Vehículo", icon: Car },
   ];

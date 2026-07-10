@@ -8,11 +8,13 @@ import MisClasesProfesor from './MisClasesProfesor.jsx';
 import ClasesConfirmadasProfesor from './ClasesConfirmadasProfesor.jsx';
 import RepositorioProfesor from './RepositorioProfesor.jsx';
 import RegistrarAvanceProfesor from './RegistrarAvanceProfesor.jsx';
+import MisClasesOnlineProfesor from './MisClasesOnlineProfesor.jsx';
 import MisClasesConInscriptosProfesor from './MisClasesConInscriptosProfesor.jsx';
 import SolicitarVehiculo from "../../components/shared/SolicitarVehiculo.jsx";
 
 const DashboardProfesor = () => {
   const [activeTab, setActiveTab] = useState("inicio");
+  const [disponibilidadView, setDisponibilidadView] = useState("configurar"); // "configurar" o "verclases"
   const currentUser = authService.getCurrentUser();
   const profesorNombre = currentUser?.nombre || "Profesor";
 
@@ -373,15 +375,48 @@ const DashboardProfesor = () => {
       )}
 
       {/* DISPONIBILIDAD TAB */}
-      {activeTab === "disponibilidad" && <MisClasesProfesor />}
-
-      {/* MIS CLASES TAB */}
-      {activeTab === 'misclases' && (
-        <MisClasesConInscriptosProfesor />
+      {activeTab === "disponibilidad" && (
+        <div>
+          <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => setDisponibilidadView("configurar")}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: disponibilidadView === "configurar" ? '#5a68d8' : '#e0e0e0',
+                color: disponibilidadView === "configurar" ? 'white' : '#333',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: disponibilidadView === "configurar" ? 'bold' : 'normal',
+              }}
+            >
+              ⚙️ Configurar disponibilidad
+            </button>
+            <button
+              onClick={() => setDisponibilidadView("verclases")}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: disponibilidadView === "verclases" ? '#5a68d8' : '#e0e0e0',
+                color: disponibilidadView === "verclases" ? 'white' : '#333',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: disponibilidadView === "verclases" ? 'bold' : 'normal',
+              }}
+            >
+              📅 Ver clases online
+            </button>
+          </div>
+          {disponibilidadView === "configurar" ? (
+            <MisClasesProfesor />
+          ) : (
+            <MisClasesOnlineProfesor />
+          )}
+        </div>
       )}
 
       {/* REGISTRAR AVANCE TAB */}
-      {activeTab === 'clasesOnline' && (
+      {activeTab === 'misclases' && (
         <RegistrarAvanceProfesor />
       )}
       {/* VEHÍCULOS TAB */}
