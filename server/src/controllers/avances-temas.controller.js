@@ -42,7 +42,18 @@ export const obtener_instancias_del_dia = async (req, res) => {
     });
 
     const clasesDelDia = clases
-      .filter(clase => clase.fecha === fecha)
+      .filter(clase => {
+        // Normalizar la fecha de la clase a formato YYYY-MM-DD
+        let fechaClase;
+        if (typeof clase.fecha === 'string') {
+          fechaClase = clase.fecha.split('T')[0]; // Si es ISO 8601, tomar solo la fecha
+        } else if (clase.fecha instanceof Date) {
+          fechaClase = clase.fecha.toISOString().split('T')[0];
+        } else {
+          fechaClase = clase.fecha;
+        }
+        return fechaClase === fecha;
+      })
       .map(clase => ({
         id: clase.id,
         numeroTema: clase.numeroTema,
