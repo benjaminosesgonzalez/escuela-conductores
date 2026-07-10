@@ -19,7 +19,7 @@ import { asignarSedeMasivaProfesoresSchema } from "../validations/secretaria.val
 const router = Router();
 
 // Registro de profesor (solo admin autorizado)
-router.post("/registro", authMiddleware, isAdminOrSecretaria, registrarProfesor);
+router.post("/registro", authMiddleware, isAdmin, registrarProfesor);
 
 // Resto de rutas protegidas: admin o secretaria
 router.use(authMiddleware, isAdminOrSecretaria);

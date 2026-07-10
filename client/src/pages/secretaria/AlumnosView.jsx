@@ -1,8 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Users, UserPlus, Edit, Trash2 } from 'lucide-react';
 import { Card, Button } from '../../components/shared/index.js';
 import { colors, spacing } from '../../theme/index.js';
 import { authService } from '../../services/authService.js';
+
+const planesDisponibles = [
+  { id: 1, nombre: 'Plan básico', precio: '$50.000', caracteristicas: ['✓ 4 clases totales'] },
+  { id: 2, nombre: 'Plan intermedio', precio: '$100.000', caracteristicas: ['✓ 8 clases totales'] },
+  { id: 3, nombre: 'Plan intensivo', precio: '$130.000', caracteristicas: ['✓ 12 clases totales'] }
+];
 
 const AlumnosView = ({ alumnos, setAlumnos, sedesDisponibles, setStatsData }) => {
   const [vistaAlumno, setVistaAlumno] = useState('tabla'); 
@@ -13,25 +19,6 @@ const AlumnosView = ({ alumnos, setAlumnos, sedesDisponibles, setStatsData }) =>
   const [filterSede, setFilterSede] = useState('');
   const [sedeMasiva, setSedeMasiva] = useState('');
   const [formData, setFormData] = useState({ nombre: '', rut: '', email: '', telefono: '', sexo: '', comuna: '', id_plan_matriculado: '' });
-  
-  // Guardará los planes reales que vienen del backend
-  const [planesDisponibles, setPlanesDisponibles] = useState([]);
-
-  // Carga los planes dinámicamente al montar el componente
-  useEffect(() => {
-    const fetchPlanes = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/plans'); // Ruta de tu compañero
-        const data = await response.json();
-        if (data.success) {
-          setPlanesDisponibles(data.data);
-        }
-      } catch (error) {
-        console.error("Error al cargar los planes:", error);
-      }
-    };
-    fetchPlanes();
-  }, []);
 
   const comunasUnicas = [...new Set(alumnos.map(a => a.comuna).filter(Boolean))];
 
@@ -189,22 +176,15 @@ const AlumnosView = ({ alumnos, setAlumnos, sedesDisponibles, setStatsData }) =>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}><label>Teléfono</label><input type="text" value={formData.telefono} onChange={e => setFormData({...formData, telefono: e.target.value})} style={{ padding: '10px', borderRadius: '6px', border: `1px solid ${colors.borderLight}` }}/></div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}><label>Sexo</label><select value={formData.sexo} onChange={e => setFormData({...formData, sexo: e.target.value})} style={{ padding: '10px', borderRadius: '6px', border: `1px solid ${colors.borderLight}` }}><option value="">Seleccione...</option><option value="Masculino">Masculino</option><option value="Femenino">Femenino</option><option value="Otro">Otro</option></select></div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}><label>Comuna</label><input type="text" value={formData.comuna} onChange={e => setFormData({...formData, comuna: e.target.value})} style={{ padding: '10px', borderRadius: '6px', border: `1px solid ${colors.borderLight}` }}/></div>
-            
-            {/* MENÚ DE PLANES DINÁMICO */}
             {vistaAlumno === 'crear' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', gridColumn: 'span 2' }}>
                 <label>Plan a Matricular</label>
                 <select required value={formData.id_plan_matriculado} onChange={e => setFormData({...formData, id_plan_matriculado: Number(e.target.value)})} style={{ padding: '10px', borderRadius: '6px', border: `1px solid ${colors.borderLight}` }}>
                   <option value="">Seleccione un plan...</option>
-                  {planesDisponibles.map(plan => (
-                    <option key={plan.id} value={plan.id}>
-                      {plan.nombre} - ${plan.precio.toLocaleString('es-CL')}
-                    </option>
-                  ))}
+                  {planesDisponibles.map(plan => <option key={plan.id} value={plan.id}>{plan.nombre} - {plan.precio}</option>)}
                 </select>
               </div>
             )}
-            
             <div style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: '10px', marginTop: '20px' }}>
               <Button type="submit" style={{ backgroundColor: colors.secretaria }}>Guardar</Button>
               <Button type="button" onClick={() => setVistaAlumno('tabla')} style={{ backgroundColor: '#64748b' }}>Cancelar</Button>
