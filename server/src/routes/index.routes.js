@@ -15,6 +15,8 @@ import sedeRoutes from "./sede.routes.js";
 import autoRoutes from "./auto.routes.js";
 import agendamientoRoutes from "./agendamiento.routes.js";
 import solicitudAutoRoutes from "./solicitudAuto.routes.js";
+import repositorioRoutes from "./repositorioRoutes.js";
+import avancesTemasRoutes from "./avances-temas.routes.js";
 
 export function routerApi(app) {
   const router = Router();
@@ -36,4 +38,6 @@ export function routerApi(app) {
   router.use("/clases-online", claseOnlineRoutes);
   router.use("/clases-online-alumno", claseOnlineAlumnoRoutes);
   router.use("/clases-practicas-alumno", clasePracticaAlumnoRoutes);
+  router.use("/repositorio", repositorioRoutes);
+  router.use("/avances-temas", avancesTemasRoutes);
 }
