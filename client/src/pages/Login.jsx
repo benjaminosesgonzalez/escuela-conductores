@@ -167,18 +167,7 @@ const Login = () => {
             </button>
           </form>
 
-          <div style={styles.testCredentials}>
-            <p style={styles.smallText}>Credenciales de prueba:</p>
-            <p style={styles.smallText}>
-              👨‍🏫 Profesor - profesor@escuela.com / profesor123
-            </p>
-            <p style={styles.smallText}>
-              👨‍🎓 Alumno - alumno@escuela.com / alumno123
-            </p>
-            <p style={styles.smallText}>
-              📋 Secretaria - secretaria@escuela.com / secretaria123
-            </p>
-          </div>
+        
         </section>
       </main>
     </div>
