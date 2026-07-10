@@ -12,7 +12,6 @@ import {
   DashboardProfesor,
   DashboardAlumno,
   DashboardSecretaria,
-  DashboardAdmin,
 } from "./index.js";
 import Registro from "./alumno/Registro.jsx";
 import ConfirmarPlan from "./alumno/ConfirmarPlan.jsx";
@@ -62,7 +61,7 @@ const App = () => {
           path="/administracion"
           element={
             <ProtectedRoute requiredRole="administracion">
-              <DashboardAdmin />
+              <DashboardSecretaria />
             </ProtectedRoute>
           }
         />

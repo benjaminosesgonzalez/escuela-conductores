@@ -5,11 +5,10 @@ import { authService } from "../../services/authService";
 const Registro = () => {
   const navigate = useNavigate();
 
-  // 1. Estados para los datos del alumno (incluyendo la confirmación de clave)
+  // 1. Estados para todos los campos requeridos por tu backend
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState(""); // 🔥 Nuevo Estado
   const [rut, setRut] = useState("");
   const [telefono, setTelefono] = useState("");
   const [comuna, setComuna] = useState("");
@@ -25,24 +24,12 @@ const Registro = () => {
     setError("");
     setLoading(true);
 
-    // 2. Auto-formateador de RUT Chileno (deja formato XXXXXXXX-X)
-    const rutSoloCaracteres = rut.replace(/[^0-9kK]/g, "");
-    if (rutSoloCaracteres.length < 2) {
-      setError("Por favor, ingresa un RUT válido.");
-      setLoading(false);
-      return;
-    }
-    const cuerpo = rutSoloCaracteres.slice(0, -1);
-    const dv = rutSoloCaracteres.slice(-1).toUpperCase();
-    const rutFinalFormateado = `${cuerpo}-${dv}`;
-
-    // 3. Validación estricta de campos vacíos
+    // 2. Validación estricta de campos vacíos antes de disparar al servidor
     if (
       !nombre.trim() ||
       !email.trim() ||
       !password ||
-      !confirmPassword || // 🔥 Validar que no esté vacío
-      !rutSoloCaracteres.trim() ||
+      !rut.trim() ||
       !telefono.trim() ||
       !comuna.trim() ||
       !sexo
@@ -52,17 +39,8 @@ const Registro = () => {
       return;
     }
 
-    // 4. 🔥 MATCH DE CONTRASENIAS: Validación en Frontend antes del Fetch
-    if (password !== confirmPassword) {
-      setError(
-        "Las contraseñas ingresadas no coinciden. Por favor, verifícalas.",
-      );
-      setLoading(false);
-      return;
-    }
-
     try {
-      // 5. Petición al endpoint mandando el set completo de datos sanitizados
+      // 3. Petición al endpoint mandando el set completo de datos
       const res = await fetch(`${backendUrl}/alumnos/registro/auto`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -70,7 +48,7 @@ const Registro = () => {
           nombre,
           email,
           password,
-          rut: rutFinalFormateado,
+          rut,
           telefono,
           comuna,
           sexo,
@@ -80,7 +58,7 @@ const Registro = () => {
       const data = await res.json();
 
       if (data.success) {
-        console.log("✅ Registro exitoso de expediente de alumno");
+        console.log("Registro exitoso de expediente de alumno");
 
         // Auto-loguear inmediatamente para capturar el token JWT
         const loginResult = await authService.login(email, password);
@@ -89,6 +67,7 @@ const Registro = () => {
           const planPendiente = localStorage.getItem("plan_pendiente");
 
           if (planPendiente) {
+            // Notificar plan de interés en tu ruta oficial /preferencia
             await fetch(`${backendUrl}/alumnos/preferencia`, {
               method: "POST",
               headers: {
@@ -117,7 +96,7 @@ const Registro = () => {
         );
       }
     } catch (err) {
-      console.error("❌ Error en registro:", err);
+      console.error("Error en registro:", err);
       setError("Error al conectar con el servidor de registros");
     } finally {
       setLoading(false);
@@ -190,6 +169,7 @@ const Registro = () => {
             {/* Fila Doble: Comuna y Sexo */}
             <div style={styles.row}>
               <div style={{ ...styles.field, flex: 1 }}>
+                <label style={styles.label}>Comuna</label>
                 <input
                   style={styles.input}
                   type="text"
@@ -228,30 +208,17 @@ const Registro = () => {
               />
             </div>
 
-            {/* 🔥 Fila Doble: Contraseña y Confirmación */}
-            <div style={styles.row}>
-              <div style={{ ...styles.field, flex: 1 }}>
-                <label style={styles.label}>Contraseña de Acceso</label>
-                <input
-                  style={styles.input}
-                  type="password"
-                  placeholder="Mínimo 6 caracteres"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-              <div style={{ ...styles.field, flex: 1 }}>
-                <label style={styles.label}>Confirmar Contraseña</label>
-                <input
-                  style={styles.input}
-                  type="password"
-                  placeholder="Repite la clave"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  disabled={loading}
-                />
-              </div>
+            {/* Campo: Contraseña */}
+            <div style={styles.field}>
+              <label style={styles.label}>Contraseña</label>
+              <input
+                style={styles.input}
+                type="password"
+                placeholder="Mínimo 6 caracteres"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+              />
             </div>
 
             <button
@@ -291,6 +258,9 @@ const Registro = () => {
   );
 };
 
+// ================================================================
+// Estilos Optimizados (Se ensanchó la tarjeta a 460px para el diseño en grilla)
+// ================================================================
 const styles = {
   page: {
     minHeight: "100vh",

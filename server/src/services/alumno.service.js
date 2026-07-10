@@ -73,7 +73,7 @@ export async function matricularNuevoAlumnoService(datosGenerales) {
       sexo,
       comuna,
       sede,
-      id_plan_matriculado,
+      id_plan_matriculado
     } = datosGenerales;
 
     // 1. Encriptar la contraseña generada
@@ -84,7 +84,7 @@ export async function matricularNuevoAlumnoService(datosGenerales) {
     const newUser = queryRunner.manager.create(User, {
       email,
       password: hashedPassword,
-      rol: "alumno",
+      rol: "alumno"
     });
     const savedUser = await queryRunner.manager.save(User, newUser);
 
@@ -100,7 +100,7 @@ export async function matricularNuevoAlumnoService(datosGenerales) {
       sede: sede, // Asegúrate de que coincida con tu entidad (id_sede vs sede)
       id_user: savedUser.id,
       id_plan_matriculado,
-      estado_matricula: "matriculado",
+      estado_matricula: "matriculado"
     });
     
     const savedAlumno = await queryRunner.manager.save(Alumno, newAlumno);
@@ -127,7 +127,7 @@ export async function editarAlumnoService(idAlumno, datosAEditar) {
 
     const alumno = await alumnoRepository.findOne({
       where: { id: idAlumno },
-      relations: ["user"],
+      relations: ["user"]
     });
 
     if (!alumno) return null;
@@ -162,33 +162,15 @@ export async function seleccionarPlanInteresService(idUser, idPlan) {
   }
 }
 
-export async function matricularAlumnoService(idUsuario, idPlanDefinitivo) {
+export async function matricularAlumnoService(idAlumno, idPlanDefinitivo) {
   try {
     const alumnoRepository = AppDataSource.getRepository(Alumno);
+    const alumno = await alumnoRepository.findOneBy({ id: idAlumno });
 
-    // 🔥 EL CAMBIO CLAVE: Buscamos por la columna que lo vincula al Usuario ('id_user')
-    // Nota: Usamos 'findOne' con 'where' que es más seguro para claves foráneas en TypeORM
-    const alumno = await alumnoRepository.findOne({
-      where: { id_user: idUsuario },
-    });
+    if (!alumno) return null;
 
-    // 💡 NOTA DE SEGURIDAD: Si en tu entidad de TypeORM declaraste 'id_user' como una relación
-    // de objeto llamada 'user', la línea de arriba se escribe así:
-    // const alumno = await alumnoRepository.findOne({ where: { user: { id: idUsuario } } });
-
-    if (!alumno) {
-      console.warn(
-        `⚠️ No se encontró ninguna ficha de alumno vinculada al id_user: ${idUsuario}`,
-      );
-      return null;
-    }
-
-    // Guardamos los datos de matrícula reales
     alumno.id_plan_matriculado = idPlanDefinitivo;
     alumno.estado_matricula = "matriculado";
-
-    // 🚀 Sincronizamos también el interés para que deje de quedar en null
-    alumno.id_plan_interes = idPlanDefinitivo;
 
     return await alumnoRepository.save(alumno);
   } catch (error) {
@@ -212,7 +194,7 @@ export async function autoRegistroAlumnoService(datosRegistro) {
       telefono,
       sexo,
       comuna,
-      id_plan_interes,
+      id_plan_interes
     } = datosRegistro;
 
     // 1. Encriptar la contraseña
@@ -223,7 +205,7 @@ export async function autoRegistroAlumnoService(datosRegistro) {
     const newUser = queryRunner.manager.create(User, {
       email,
       password: hashedPassword,
-      rol: "alumno",
+      rol: "alumno"
     });
     const savedUser = await queryRunner.manager.save(User, newUser);
 
@@ -238,7 +220,7 @@ export async function autoRegistroAlumnoService(datosRegistro) {
       comuna,
       id_user: savedUser.id,
       id_plan_interes: id_plan_interes || null,
-      estado_matricula: "pendiente",
+      estado_matricula: "pendiente"
     });
     const savedAlumno = await queryRunner.manager.save(Alumno, newAlumno);
 
@@ -247,6 +229,7 @@ export async function autoRegistroAlumnoService(datosRegistro) {
 
     await queryRunner.commitTransaction();
     return savedAlumno;
+
   } catch (error) {
     await queryRunner.rollbackTransaction();
     console.error("Error en el auto-registro:", error);
@@ -256,24 +239,21 @@ export async function autoRegistroAlumnoService(datosRegistro) {
   }
 }
 
-export const asignarSedeMasivaPorIdsService = async (
-  alumnosIdsArray,
-  idSede,
-) => {
+export const asignarSedeMasivaPorIdsService = async (alumnosIdsArray, idSede) => {
   const alumnoRepository = AppDataSource.getRepository(Alumno);
   const resultado = await alumnoRepository.update(
     { id: In(alumnosIdsArray) },
-    { id_sede: idSede },
+    { id_sede: idSede }
   );
 
   return resultado.affected;
-};
+}
 
 export async function getAlumnosService() {
   const alumnoRepository = AppDataSource.getRepository(Alumno);
   return await alumnoRepository.find({
     relations: ["user", "sede"],
-    order: { id: "DESC" },
+    order: { id: "DESC" }
   });
 }
 
@@ -282,17 +262,17 @@ export async function resetPasswordAlumnoService(id) {
   const userRepository = AppDataSource.getRepository(User);
 
   // 1. Buscamos al alumno
-  const alumno = await alumnoRepository.findOne({
-    where: { id: parseInt(id) },
-    relations: ["user"],
+  const alumno = await alumnoRepository.findOne({ 
+    where: { id: parseInt(id) }, 
+    relations: ["user"] 
   });
 
   if (!alumno) return null; // Si no existe, retornamos null
 
   // 2. Generamos la nueva contraseña (últimos 5 dígitos del RUT)
-  const rutLimpio = alumno.rut.replace(/[^0-9kK]/g, "");
+  const rutLimpio = alumno.rut.replace(/[^0-9kK]/g, '');
   const nuevaPassword = rutLimpio.slice(-5);
-
+  
   // 3. Encriptamos
   const saltRounds = 10;
   const hashedPassword = await bcrypt.hash(nuevaPassword, saltRounds);
@@ -306,7 +286,7 @@ export async function resetPasswordAlumnoService(id) {
   await alumnoRepository.save(alumno);
 
   // Retornamos la nueva clave en texto plano SOLO para mostrársela a la secretaria en el alert
-  return nuevaPassword;
+  return nuevaPassword; 
 }
 
 export const eliminarAlumnosPorIdsService = async (alumnosIdsArray) => {
@@ -316,17 +296,17 @@ export const eliminarAlumnosPorIdsService = async (alumnosIdsArray) => {
   // 1. Buscamos los alumnos con sus usuarios asociados
   const alumnos = await alumnoRepository.find({
     where: { id: In(alumnosIdsArray) },
-    relations: ["user"],
+    relations: ["user"]
   });
 
   if (alumnos.length === 0) return 0;
 
   // 2. Extraemos los IDs de los usuarios asociados
-  const usersIds = alumnos.map((alum) => alum.user.id);
+  const usersIds = alumnos.map(alum => alum.user.id);
 
   // 3. Eliminamos primero los alumnos (por la llave foránea)
   await alumnoRepository.delete(alumnosIdsArray);
-
+  
   // 4. Eliminamos los usuarios de la tabla 'users'
   await userRepository.delete(usersIds);
 
