@@ -12,6 +12,7 @@ import VehiculosView from "../secretaria/VehiculosView.jsx";
 import { Card, Button } from "../../components/shared/index.js";
 import { colors, spacing } from "../../theme/index.js";
 import { authService } from "../../services/authService.js";
+import SecretariasView from "./SecretariasView.jsx";
 
 const DashboardAdmin = () => {
   const [activeTab, setActiveTab] = useState("inicio");
@@ -30,6 +31,7 @@ const DashboardAdmin = () => {
 
   const currentUser = authService.getCurrentUser();
   const adminNombre = currentUser?.nombre || "Administrador";
+  const [secretarias, setSecretarias] = useState([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -37,11 +39,12 @@ const DashboardAdmin = () => {
         const token = authService.getToken();
         const headers = { Authorization: `Bearer ${token}` };
 
-        const [alumnosRes, profesRes, autosRes, sedesRes] = await Promise.all([
+        const [alumnosRes, profesRes, autosRes, sedesRes, secretariasRes] = await Promise.all([
           fetch("http://localhost:5000/api/alumnos", { headers }),
           fetch("http://localhost:5000/api/profesores", { headers }),
           fetch("http://localhost:5000/api/autos", { headers }),
           fetch("http://localhost:5000/api/sedes", { headers }),
+          fetch("http://localhost:5000/api/secretarias", { headers })
         ]);
 
         const alumnosData = await alumnosRes.json();
@@ -76,6 +79,13 @@ const DashboardAdmin = () => {
           const sedesData = await sedesRes.json();
           if (sedesData.success) setSedesDisponibles(sedesData.data);
         }
+
+        if (secretariasRes.ok) {
+          const secretariasData = await secretariasRes.json();
+          if (secretariasData.success) {
+            setSecretarias(secretariasData.data);
+          }
+        }
       } catch (error) {
         console.error("Error cargando la data del administrador:", error);
       }
@@ -109,6 +119,13 @@ const DashboardAdmin = () => {
           profesores={profesores}
           setProfesores={setProfesores}
           sedesDisponibles={sedesDisponibles}
+        />
+      )}
+
+      {activeTab === "secretarias" && (
+        <SecretariasView 
+          secretarias={secretarias} 
+          setSecretarias={setSecretarias} 
         />
       )}
 

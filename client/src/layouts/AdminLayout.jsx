@@ -33,6 +33,7 @@ const AdminLayout = ({ children, activeTab, onTabChange }) => {
     { id: "psicotecnico", label: "Sala Psicotécnica", icon: Stethoscope },
     { id: "vehiculos", label: "Vehículos", icon: Car },
     { id: "agendar-clases", label: "Agendar clases", icon: Calendar },
+    { id: "secretarias", label: "Gestión Secretarias", icon: UserCog},
     { id: "interesados", label: "Alumnos Interesados", icon: Users },
     { id: "reportes", label: "Reportes", icon: FileText },
     { id: "planes", label: "Gestión de Planes", icon: Layers },
