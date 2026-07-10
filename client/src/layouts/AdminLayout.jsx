@@ -10,12 +10,13 @@ import {
   Car,
   Calendar,
   Layers,
+  MapPin, // 🚀 NUEVO: Importamos el ícono de mapa para las sedes
 } from "lucide-react";
 import { Layout } from "../components/shared/index.js";
 import { colors } from "../theme/index.js";
 import { authService } from "../services/authService.js";
 
-const SecretariaLayout = ({ children, activeTab, onTabChange }) => {
+const AdminLayout = ({ children, activeTab, onTabChange }) => {
   const navigate = useNavigate();
   const currentUser = authService.getCurrentUser();
   const userEmail = currentUser?.nombre || currentUser?.email || "Secretaria";
@@ -36,6 +37,7 @@ const SecretariaLayout = ({ children, activeTab, onTabChange }) => {
     { id: "interesados", label: "Alumnos Interesados", icon: Users },
     { id: "reportes", label: "Reportes", icon: FileText },
     { id: "planes", label: "Gestión de Planes", icon: Layers },
+    { id: "sedes", label: "Gestión de Sedes", icon: MapPin }, // NUEVO: Insertado en el menú lateral
     { id: "configuracion", label: "Configuración", icon: Settings },
   ];
 
@@ -55,4 +57,4 @@ const SecretariaLayout = ({ children, activeTab, onTabChange }) => {
   );
 };
 
-export default SecretariaLayout;
+export default AdminLayout;

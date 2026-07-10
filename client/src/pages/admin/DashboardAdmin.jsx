@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { FileText, Plus, Edit2, Trash2, Layers } from "lucide-react";
+// Modificado: Removemos la importación del archivo externo SedesView
+import { FileText, Plus, Edit2, Trash2, Layers, MapPin } from "lucide-react";
 import AdminLayout from "../../layouts/AdminLayout.jsx";
 import AgendarClasesSecretaria from "../secretaria/AgendarClasesSecretaria.jsx";
 import InicioView from "../secretaria/InicioView.jsx";
@@ -20,6 +21,7 @@ const DashboardAdmin = () => {
   const [alumnos, setAlumnos] = useState([]);
   const [profesores, setProfesores] = useState([]);
   const [sedesDisponibles, setSedesDisponibles] = useState([]);
+  const [seccionActual, setSeccionActual] = useState("planes");
   const [autos, setAutos] = useState([]);
   const [statsData, setStatsData] = useState({
     totalAlumnos: 0,
@@ -144,6 +146,9 @@ const DashboardAdmin = () => {
       {/* MÓDULO GESTIÓN DE PLANES */}
       {activeTab === "planes" && <PlanesView />}
 
+      {/* 🚀 MÓDULO GESTIÓN DE SEDES LOCAL (UNIFICADO) */}
+      {activeTab === "sedes" && <SedesView />}
+
       {(activeTab === "reportes" || activeTab === "configuracion") && (
         <Card title={activeTab.toUpperCase()} icon={FileText}>
           <p
@@ -158,6 +163,306 @@ const DashboardAdmin = () => {
         </Card>
       )}
     </AdminLayout>
+  );
+};
+
+// ============================================================================
+// SUBCOMPONENTE: SEDESVIEW (CRUD DE SEDES REAJUSTADO A COMUNA)
+// ============================================================================
+const SedesView = () => {
+  const [sedes, setSedes] = useState([]);
+  const [cargando, setCargando] = useState(true);
+
+  const [editandoId, setEditandoId] = useState(null);
+  const [form, setForm] = useState({
+    nombre: "",
+    direccion: "",
+    comuna: "",
+  });
+
+  const backendUrl = "http://localhost:5000/api/sedes";
+
+  const fetchSedes = () => {
+    setCargando(true);
+    const token = authService.getToken();
+
+    fetch(backendUrl, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && Array.isArray(data.data)) {
+          setSedes(data.data);
+        } else if (Array.isArray(data)) {
+          setSedes(data);
+        }
+      })
+      .catch((err) => console.error("Error leyendo sedes:", err))
+      .finally(() => setCargando(false));
+  };
+
+  useEffect(() => {
+    fetchSedes();
+  }, []);
+
+  const handleInputChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const token = authService.getToken();
+    const url = editandoId ? `${backendUrl}/${editandoId}` : backendUrl;
+    const method = editandoId ? "PUT" : "POST";
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          nombre: form.nombre,
+          direccion: form.direccion,
+          comuna: form.comuna,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success || res.ok) {
+        alert(editandoId ? "Sede actualizada" : "Sede creada con éxito");
+        limpiarFormulario();
+        fetchSedes();
+      } else {
+        alert("Error del servidor: " + (data.message || "Error desconocido"));
+      }
+    } catch (err) {
+      console.error("Error al guardar sede:", err);
+    }
+  };
+
+  const handleEliminar = async (id, nombreSede) => {
+    if (!window.confirm(`¿Seguro que deseas eliminar la sede "${nombreSede}"?`))
+      return;
+    const token = authService.getToken();
+    try {
+      const res = await fetch(`${backendUrl}/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        alert("Sede eliminada del sistema");
+        fetchSedes();
+      }
+    } catch (err) {
+      console.error("Error al eliminar sede:", err);
+    }
+  };
+
+  const activarEdicion = (sede) => {
+    setEditandoId(sede.id);
+    setForm({
+      nombre: sede.nombre,
+      direccion: sede.direccion,
+      comuna: sede.comuna || "",
+    });
+  };
+
+  const limpiarFormulario = () => {
+    setEditandoId(null);
+    setForm({ nombre: "", direccion: "", comuna: "" });
+  };
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 2fr",
+        gap: "24px",
+        alignItems: "start",
+      }}
+    >
+      {/* Formulario Izquierda */}
+      <Card
+        title={editandoId ? "Editar Sede Académica" : "Registrar Nueva Sede"}
+        icon={MapPin}
+      >
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            padding: "8px",
+          }}
+        >
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Nombre de la Sede</label>
+            <input
+              name="nombre"
+              type="text"
+              placeholder="Ej: Concepción Centro o DEM Tomé"
+              value={form.nombre}
+              onChange={handleInputChange}
+              style={styles.input}
+              required
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Dirección Física</label>
+            <input
+              name="direccion"
+              type="text"
+              placeholder="Ej: Aníbal Pinto 455"
+              value={form.direccion}
+              onChange={handleInputChange}
+              style={styles.input}
+              required
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Comuna</label>
+            <input
+              name="comuna"
+              type="text"
+              placeholder="Ej: Tomé, Concepción, Penco"
+              value={form.comuna}
+              onChange={handleInputChange}
+              style={styles.input}
+              required
+            />
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "12px",
+              marginTop: "10px",
+            }}
+          >
+            {editandoId && (
+              <Button
+                type="button"
+                onClick={limpiarFormulario}
+                style={{ backgroundColor: "#718096" }}
+              >
+                Cancelar
+              </Button>
+            )}
+            <Button type="submit" style={{ backgroundColor: "#ff6b35" }}>
+              {editandoId ? "Actualizar Sede" : "Crear Sede"}
+            </Button>
+          </div>
+        </form>
+      </Card>
+
+      {/* Grilla Derecha */}
+      <Card title="Sedes de la Escuela Activas" icon={MapPin}>
+        {cargando ? (
+          <p style={{ textAlign: "center", color: "#666" }}>
+            Sincronizando sedes con el backend...
+          </p>
+        ) : sedes.length === 0 ? (
+          <p style={{ textAlign: "center", color: "#999" }}>
+            No hay sedes registradas.
+          </p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: "14px",
+                textAlign: "left",
+              }}
+            >
+              <thead>
+                <tr
+                  style={{
+                    borderBottom: "2px solid #edf2f7",
+                    color: "#4a5568",
+                    fontWeight: "700",
+                  }}
+                >
+                  <th style={{ padding: "12px" }}>ID</th>
+                  <th style={{ padding: "12px" }}>Nombre Sede</th>
+                  <th style={{ padding: "12px" }}>Dirección</th>
+                  <th style={{ padding: "12px" }}>Comuna</th>
+                  <th style={{ padding: "12px", textAlign: "right" }}>
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {sedes.map((s) => (
+                  <tr key={s.id} style={{ borderBottom: "1px solid #edf2f7" }}>
+                    <td
+                      style={{
+                        padding: "12px",
+                        fontFamily: "monospace",
+                        color: "#ff6b35",
+                      }}
+                    >
+                      {s.id}
+                    </td>
+                    <td
+                      style={{
+                        padding: "12px",
+                        fontWeight: "600",
+                        color: "#2c3e8f",
+                      }}
+                    >
+                      {s.nombre}
+                    </td>
+                    <td style={{ padding: "12px", color: "#555" }}>
+                      {s.direccion}
+                    </td>
+                    <td
+                      style={{
+                        padding: "12px",
+                        color: "#718096",
+                        textTransform: "capitalize",
+                      }}
+                    >
+                      {s.comuna || "—"}
+                    </td>
+                    <td style={{ padding: "12px", textAlign: "right" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "8px",
+                          justifyContent: "flex-end",
+                        }}
+                      >
+                        <button
+                          onClick={() => activarEdicion(s)}
+                          style={styles.actionBtn}
+                          title="Editar Sede"
+                        >
+                          <Edit2 size={15} color="#4c5fd5" />
+                        </button>
+                        <button
+                          onClick={() => handleEliminar(s.id, s.nombre)}
+                          style={styles.actionBtn}
+                          title="Eliminar Sede"
+                        >
+                          <Trash2 size={15} color="#e53e3e" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    </div>
   );
 };
 
@@ -179,7 +484,6 @@ const PlanesView = () => {
 
   const backendUrl = "http://localhost:5000/api/plans";
 
-  // 1. Lectura dinámica de planes con Token fresco
   const fetchPlanes = () => {
     setCargando(true);
     const token = authService.getToken();
@@ -208,7 +512,6 @@ const PlanesView = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // 2. Guardado dinámico con Token fresco
   const handleSubmit = async (e) => {
     e.preventDefault();
     const token = authService.getToken();
@@ -275,7 +578,6 @@ const PlanesView = () => {
     }
   };
 
-  //  FUNCIÓN CORREGIDA CON SINCRONIZACIÓN REAL
   const handleToggleInscripciones = async (id) => {
     const token = authService.getToken();
     try {
@@ -288,7 +590,6 @@ const PlanesView = () => {
       console.log("🔄 RESPUESTA TOGGLE INSCRIPCIONES:", data);
 
       if (data.success && data.data) {
-        //  LA CLAVE: Reemplazamos el valor usando EXACTAMENTE lo que guardó el backend (data.data)
         setPlanes((prevPlanes) =>
           prevPlanes.map((plan) =>
             plan.id === id
@@ -335,7 +636,6 @@ const PlanesView = () => {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-      {/* Formulario */}
       <Card
         title={
           editandoId
@@ -444,7 +744,6 @@ const PlanesView = () => {
         </form>
       </Card>
 
-      {/* Tabla del Catálogo Única */}
       <Card title="Catálogo de Oferta Académica Actual" icon={Layers}>
         {cargando ? (
           <p style={{ textAlign: "center", color: "#666" }}>
@@ -479,8 +778,7 @@ const PlanesView = () => {
                 <th style={{ padding: "12px" }}>Simulador</th>
                 <th style={{ padding: "12px", textAlign: "center" }}>
                   Inscripciones
-                </th>{" "}
-                {/* 🔥 NUEVA COLUMNA */}
+                </th>
                 <th style={{ padding: "12px", textAlign: "right" }}>
                   Acciones
                 </th>
@@ -518,7 +816,6 @@ const PlanesView = () => {
                     {plan.clases_simulador} bloques
                   </td>
 
-                  {/* 🔥 NUEVO CELL: Botón interactivo tipo Badge para conmutar matrículas */}
                   <td style={{ padding: "12px", textAlign: "center" }}>
                     <button
                       onClick={() => handleToggleInscripciones(plan.id)}
@@ -542,8 +839,8 @@ const PlanesView = () => {
                       }}
                       title={
                         plan.inscripciones_abiertas !== false
-                          ? "Haga clic para cerrar inscripciones"
-                          : "Haga clic para abrir inscripciones"
+                          ? "Haga clic para cerrar"
+                          : "Haga clic para abrir"
                       }
                     >
                       {plan.inscripciones_abiertas !== false
