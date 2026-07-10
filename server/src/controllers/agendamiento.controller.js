@@ -1,7 +1,9 @@
+import { success } from "zod";
 import{
     configurarHorarioSalaService,
     obtenerDisponibilidadSalaService,
-    agendarBloqueService
+    agendarBloqueService,
+    obtenerMisReservasPsicotecnicoService
 } from "../services/agendamiento.service.js";
 
 export async function configurarHorarioSala(req, res) {
@@ -31,6 +33,7 @@ export async function obtenerDisponibilidadSala(req, res) {
 
         const disponibilidad = await obtenerDisponibilidadSalaService(fecha);
         return res.status(200).json({
+            success: true,
             message: "Disponibilidad de la sala obtenida exitosamente",
             data: disponibilidad
         });
@@ -55,5 +58,22 @@ export async function agendarBloque(req, res) {
             return res.status(400).json({ message: error.message });
         }
         return res.status(500).json({ message: "Error al agendar el bloque", error: error.message });
+    }
+}
+
+export async function obtenerMisReservasPsicotecnico(req, res) {
+    try {
+        const idUsuario = req.user.id; // Extraído de forma segura desde el token
+
+        const reservas = await obtenerMisReservasPsicotecnicoService(idUsuario);
+        
+        return res.status(200).json({
+            success: true, // Crucial para que el frontend lo valide
+            message: "Reservas obtenidas exitosamente",
+            data: reservas
+        });
+    } catch (error) {
+        console.error("Error al obtener reservas del alumno:", error);
+        return res.status(500).json({ success: false, message: error.message });
     }
 }

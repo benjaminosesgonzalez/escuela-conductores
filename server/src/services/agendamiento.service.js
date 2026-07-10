@@ -116,3 +116,32 @@ export async function agendarBloqueService(idAlumno, fechaStr, horaInicio){
 
     return await reservaRepository.save(nuevaReserva);
 }
+
+export async function obtenerMisReservasPsicotecnicoService(idUsuario) {
+    const reservaRepository = AppDataSource.getRepository(ReservaPsicotecnico);
+    const alumnoRepository = AppDataSource.getRepository("Alumno");
+
+    // 1. Buscar el perfil del alumno asociado a este usuario (token)
+    const perfilAlumno = await alumnoRepository.findOne({ where: { id_user: idUsuario } });
+    
+    if (!perfilAlumno) {
+        throw new Error("Alumno no encontrado");
+    }
+
+    // 2. Buscar todas las reservas de este alumno
+    const reservas = await reservaRepository.createQueryBuilder("reserva")
+        .where("reserva.id_alumno = :idAlumno", { idAlumno: perfilAlumno.id })
+        .andWhere("reserva.estado = :estado", { estado: 'agendada' })
+        .orderBy("reserva.fecha", "ASC")
+        .addOrderBy("reserva.hora_inicio", "ASC")
+        .getMany();
+
+    // 3. Formatear la salida para el frontend (ej: "09:00" en vez de "09:00:00")
+    return reservas.map(reserva => ({
+        id: reserva.id,
+        fecha: reserva.fecha,
+        hora_inicio: reserva.hora_inicio.substring(0, 5),
+        hora_fin: reserva.hora_fin.substring(0, 5),
+        estado: reserva.estado
+    }));
+}

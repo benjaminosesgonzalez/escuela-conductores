@@ -2,9 +2,9 @@ import * as profService from "../services/profesor.service.js";
 
 export const registrarProfesor = async (req, res) => {
   try {
-    const { email, password, nombre, telefono, tipo_contrato } = req.body;
+    const { rut, email, password, nombre, telefono, tipo_contrato } = req.body;
 
-    if (!email || !password) {
+    if (!rut || !email || !password) {
       return res.status(400).json({
         success: false,
         message: "Email y contraseña son requeridos."
@@ -12,6 +12,7 @@ export const registrarProfesor = async (req, res) => {
     }
 
     const profesor = await profService.registrarProfesorService({
+      rut,
       email,
       password,
       nombre,
