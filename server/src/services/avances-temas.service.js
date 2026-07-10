@@ -105,35 +105,36 @@ export const verificarPuedeReservarPracticas = async (idAlumno) => {
 
 export const obtenerClasesCompletadas = async (idAlumno) => {
   try {
-    const registrosRepository = AppDataSource.getRepository(RegistrosAsistenciaClasesOnlineSchema);
-    const registros = await registrosRepository.find({
-      where: {
-        alumnoId: idAlumno,
-        asistio: true,
-      },
-    });
+    const query = `
+      SELECT
+        co.id,
+        co."numeroTema",
+        co."nombreTema",
+        co.fecha,
+        co."horaInicio",
+        co."horaFin",
+        co."profesorId",
+        p.nombre as "profesorNombre",
+        rac."fechaRegistro"
+      FROM registros_asistencia_clases_online rac
+      JOIN clases_online co ON rac."claseOnlineId" = co.id
+      LEFT JOIN profesores p ON co."profesorId" = p.id
+      WHERE rac."alumnoId" = $1 AND rac.asistio = true
+      ORDER BY rac."fechaRegistro" DESC
+    `;
 
-    const claseRepository = AppDataSource.getRepository(ClaseOnlineSchema);
+    const clasesCompletadas = await AppDataSource.query(query, [idAlumno]);
 
-    const clasesCompletadas = await Promise.all(
-      registros.map(async (registro) => {
-        const clase = await claseRepository.findOne({
-          where: { id: registro.claseOnlineId },
-        });
-
-        if (!clase) return null;
-
-        return {
-          id_clase: clase.id,
-          numeroTema: clase.numeroTema,
-          nombreTema: clase.nombreTema,
-          fecha: registro.fechaRegistro,
-          profesorId: clase.profesorId,
-        };
-      })
-    );
-
-    return clasesCompletadas.filter(c => c !== null);
+    return clasesCompletadas.map(clase => ({
+      id_clase: clase.id,
+      numeroTema: clase.numeroTema,
+      nombreTema: clase.nombreTema,
+      fecha: clase.fecha,
+      horaInicio: clase.horaInicio,
+      horaFin: clase.horaFin,
+      profesorId: clase.profesorId,
+      profesorNombre: clase.profesorNombre,
+    }));
   } catch (error) {
     console.error("Error obteniendo clases completadas:", error);
     throw error;

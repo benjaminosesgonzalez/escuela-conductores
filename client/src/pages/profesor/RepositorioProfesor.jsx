@@ -181,18 +181,13 @@ const RepositorioProfesor = () => {
             }}
           />
 
-          <label
-            htmlFor="archivoRepositorio"
-            style={{
-              display: 'inline-block',
-              marginRight: spacing.margin.md,
-              cursor: 'pointer'
-            }}
+          <Button
+            variant="secondary"
+            onClick={() => document.getElementById("archivoRepositorio").click()}
+            style={{ marginRight: spacing.margin.md }}
           >
-            <Button variant="secondary">
-              Seleccionar archivo
-            </Button>
-          </label>
+            Seleccionar archivo
+          </Button>
 
           <Button
             variant="success"

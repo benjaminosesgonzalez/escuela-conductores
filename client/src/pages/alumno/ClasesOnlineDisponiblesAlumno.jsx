@@ -164,6 +164,28 @@ const ClasesOnlineDisponiblesAlumno = ({ onDesinscripcion }) => {
     }
   };
 
+  const obtenerFechasDelaSemana = (semanaOffset = 0) => {
+    const hoy = new Date();
+    const diaSemana = hoy.getDay();
+    const diasAlLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() + diasAlLunes + (semanaOffset * 7));
+
+    const viernes = new Date(lunes);
+    viernes.setDate(lunes.getDate() + 4);
+
+    return { lunes, viernes };
+  };
+
+  const formatearFechaCorta = (fecha) => {
+    return fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  };
+
+  const obtenerLabelSemana = () => {
+    const { lunes, viernes } = obtenerFechasDelaSemana(semanaActual);
+    return `${formatearFechaCorta(lunes)} - ${formatearFechaCorta(viernes)}`;
+  };
+
   return (
     <div className="clases-online-disponibles-container">
       <div className="header-clases">
@@ -177,10 +199,11 @@ const ClasesOnlineDisponiblesAlumno = ({ onDesinscripcion }) => {
             ← Semana Anterior
           </button>
           <span className="semana-label">
-            Semana {semanaActual === 0 ? "Actual" : `+${semanaActual}`}
+            {obtenerLabelSemana()}
           </span>
           <button
-            onClick={() => setSemanaActual(semanaActual + 1)}
+            onClick={() => setSemanaActual(Math.min(3, semanaActual + 1))}
+            disabled={semanaActual === 3}
             className="btn-semana"
           >
             Próxima Semana →

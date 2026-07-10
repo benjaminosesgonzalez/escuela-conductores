@@ -43,21 +43,6 @@ export const login = async (req, res) => {
       where: { email: email },
     });
 
-    // 🔴 Si no está, buscar en tabla profesores usando AppDataSource
-    if (!user) {
-      const result = await AppDataSource.query(
-        "SELECT * FROM profesores WHERE email = $1",
-        [email],
-      );
-
-      if (result.length > 0) {
-        user = result[0];
-        if (!user.rol) {
-          user.rol = "profesor";
-        }
-      }
-    }
-
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -80,6 +65,7 @@ export const login = async (req, res) => {
 
     // Si es profesor, generar bloques automáticamente si no existen
     let profesorId = null;
+    let profesorNombre = null;
     if (user.rol === "profesor" && user.id) {
       try {
         // Buscar el profesor correspondiente a este usuario usando SQL crudo
@@ -91,6 +77,7 @@ export const login = async (req, res) => {
         if (profesorResult && profesorResult.length > 0) {
           const profesor = profesorResult[0];
           profesorId = profesor.id; // Guardar para devolverlo en la respuesta
+          profesorNombre = profesor.nombre; // Guardar nombre del profesor
           const disponibilidadRepository =
             AppDataSource.getRepository(DisponibilidadSchema);
           const bloquesExistentes = await disponibilidadRepository.findOne({
@@ -210,7 +197,7 @@ export const login = async (req, res) => {
         id: user.id,
         email: user.email,
         rol: user.rol,
-        nombre: user.nombre || user.email.split("@")[0],
+        nombre: user.rol === "profesor" ? (profesorNombre || user.email.split("@")[0]) : (user.nombre || user.email.split("@")[0]),
         created_at: user.created_at,
         alumnoId: alumnoId, // Incluir alumnoId para alumnos
         planInfo: planInfo, // Incluir planInfo para alumnos

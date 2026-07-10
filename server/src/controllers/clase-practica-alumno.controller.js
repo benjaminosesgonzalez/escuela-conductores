@@ -8,7 +8,8 @@ import {
 export const getClasesPracticasDisponibles = async (req, res) => {
   try {
     const semana = parseInt(req.query.semana) || 0;
-    const resultado = await obtenerClasesPracticasDisponibles(semana);
+    const userId = req.user.id;
+    const resultado = await obtenerClasesPracticasDisponibles(semana, userId);
 
     res.json(resultado);
   } catch (error) {

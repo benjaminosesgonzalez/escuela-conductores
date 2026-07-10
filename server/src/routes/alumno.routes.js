@@ -10,6 +10,11 @@ import {
   getAlumnos,
   resetPasswordAlumno,
   eliminarAlumnosMasivo,
+  obtenerPlanAlumno,
+  obtenerClasesProximas,
+  obtenerEstadisticasAlumno,
+  obtenerAvanceTemas,
+  obtenerAvanceClasesPracticas,
 } from "../controllers/alumno.controller.js";
 //import { obtenerEstadoMatriculaService } from "../services/alumno.service.js";
 import {authMiddleware, isAdmin, isAdminOrSecretaria} from "../middleware/auth.middleware.js";
@@ -37,6 +42,26 @@ router.post(
 // Obtener todos los alumnos
 // GET /api/alumnos
 router.get("/", authMiddleware, isAdminOrSecretaria, getAlumnos);
+
+// Obtener plan del alumno
+// GET /api/alumnos/:id/plan
+router.get("/:id/plan", authMiddleware, obtenerPlanAlumno);
+
+// Obtener clases próximas del alumno
+// GET /api/alumno/:alumnoId/clases-proximas
+router.get("/:alumnoId/clases-proximas", authMiddleware, obtenerClasesProximas);
+
+// Obtener estadísticas del alumno
+// GET /api/alumnos/:alumnoId/estadisticas
+router.get("/:alumnoId/estadisticas", authMiddleware, obtenerEstadisticasAlumno);
+
+// Obtener avance de temas teóricos
+// GET /api/alumnos/:alumnoId/avance-temas
+router.get("/:alumnoId/avance-temas", authMiddleware, obtenerAvanceTemas);
+
+// Obtener avance de clases prácticas
+// GET /api/alumnos/:alumnoId/avance-practicas
+router.get("/:alumnoId/avance-practicas", authMiddleware, obtenerAvanceClasesPracticas);
 // Auto-registro de alumno (sin autenticación)
 // POST /api/alumnos/registro/auto
 router.post(

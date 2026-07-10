@@ -13,10 +13,27 @@ const obtenerIdAlumno = async (userId) => {
 };
 
 /**
- * Obtener clases prácticas disponibles (sin alumno inscrito)
+ * Obtener clases prácticas disponibles (sin alumno inscrito) - solo de la sede del alumno
  */
-export const obtenerClasesPracticasDisponibles = async (semanaActual = 0) => {
+export const obtenerClasesPracticasDisponibles = async (semanaActual = 0, userId) => {
   try {
+    // Obtener ID y sede del alumno
+    const alumnoData = await AppDataSource.query(
+      `SELECT id, id_sede FROM alumnos WHERE id_user = $1`,
+      [userId]
+    );
+
+    if (alumnoData.length === 0) {
+      return {
+        success: false,
+        message: "Alumno no encontrado",
+        clases: [],
+      };
+    }
+
+    const alumnoId = alumnoData[0].id;
+    const sedeAlumnoId = alumnoData[0].id_sede;
+
     // Calcular fechas de la semana solicitada
     const hoy = new Date();
     const diaSemana = hoy.getDay();
@@ -46,7 +63,7 @@ export const obtenerClasesPracticasDisponibles = async (semanaActual = 0) => {
                        String(ahora.getMinutes()).padStart(2, '0');
     const fechaActual = lunesStr(ahora);
 
-    // Obtener clases prácticas disponibles (sin alumno, estado=disponible)
+    // Obtener clases prácticas disponibles (sin alumno, estado=disponible, de la sede del alumno)
     const clases = await AppDataSource.query(
       `SELECT
         cp.id,
@@ -56,17 +73,21 @@ export const obtenerClasesPracticasDisponibles = async (semanaActual = 0) => {
         cp."horaInicio",
         cp."horaFin",
         cp."alumnoId",
+        cp."sedeId",
         cp.estado,
-        p.nombre as "nombreProfesor"
+        p.nombre as "nombreProfesor",
+        s.nombre as "nombreSede"
       FROM clases_practicas cp
       LEFT JOIN profesores p ON cp."profesorId" = p.id
+      LEFT JOIN sedes s ON cp."sedeId" = s.id
       WHERE cp.estado = 'disponible'
         AND cp."alumnoId" IS NULL
-        AND cp.fecha >= $1
-        AND cp.fecha <= $2
-        AND (cp.fecha > $3 OR (cp.fecha = $3 AND cp."horaFin" > $4))
+        AND cp."sedeId" = $1
+        AND cp.fecha >= $2
+        AND cp.fecha <= $3
+        AND (cp.fecha > $4 OR (cp.fecha = $4 AND cp."horaFin" > $5))
       ORDER BY cp.fecha, cp."horaInicio"`,
-      [fechaInicio, fechaFin, fechaActual, horaActual]
+      [sedeAlumnoId, fechaInicio, fechaFin, fechaActual, horaActual]
     );
 
     return {
@@ -74,6 +95,7 @@ export const obtenerClasesPracticasDisponibles = async (semanaActual = 0) => {
       semana: semanaActual,
       fechaInicio,
       fechaFin,
+      sedeAlumnoId,
       clases: clases,
     };
   } catch (error) {
@@ -87,15 +109,21 @@ export const obtenerClasesPracticasDisponibles = async (semanaActual = 0) => {
  */
 export const inscribirAlumnoEnClasePractica = async (clasePracticaId, userId) => {
   try {
-    // Obtener ID real del alumno usando el ID del usuario
-    const alumnoId = await obtenerIdAlumno(userId);
+    // Obtener ID y sede del alumno
+    const alumnoData = await AppDataSource.query(
+      `SELECT id, id_sede FROM alumnos WHERE id_user = $1`,
+      [userId]
+    );
 
-    if (!alumnoId) {
+    if (alumnoData.length === 0) {
       return {
         success: false,
         message: "No se encontró el alumno asociado a tu usuario",
       };
     }
+
+    const alumnoId = alumnoData[0].id;
+    const sedeAlumnoId = alumnoData[0].id_sede;
 
     // Verificar si la clase existe y está disponible
     const clasePractica = await clasePracticaRepository.findOne({
@@ -110,6 +138,14 @@ export const inscribirAlumnoEnClasePractica = async (clasePracticaId, userId) =>
       return {
         success: false,
         message: "La clase no está disponible o ya ha sido reservada",
+      };
+    }
+
+    // Validar que la clase pertenezca a la misma sede del alumno
+    if (clasePractica.sedeId !== sedeAlumnoId) {
+      return {
+        success: false,
+        message: "No puedes inscribirte en clases de otra sede. Verifica tu sede asignada.",
       };
     }
 

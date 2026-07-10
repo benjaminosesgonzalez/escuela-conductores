@@ -11,6 +11,9 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
   const [filtroProfesor, setFiltroProfesor] = useState("");
   const [puedeReservar, setPuedeReservar] = useState(true);
   const [temasCompletados, setTemasCompletados] = useState([false, false, false]);
+  const [clasesInscritas, setClasesInscritas] = useState(0);
+  const [maxClasesPlan, setMaxClasesPlan] = useState(0);
+  const [alcanzadoMaximo, setAlcanzadoMaximo] = useState(false);
 
   useEffect(() => {
     verificarPuedeReservar();
@@ -67,6 +70,9 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
 
   const cargarMisInscripciones = async () => {
     try {
+      const currentUser = authService.getCurrentUser();
+
+      // Cargar inscripciones
       const response = await fetch(
         `/api/clases-practicas-alumno/mis-clases`,
         {
@@ -80,6 +86,40 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
       if (data.success && data.clases) {
         const inscritos = new Set(data.clases.map(c => c.id));
         setInscripciones(inscritos);
+        setClasesInscritas(data.clases.length);
+      }
+
+      // Cargar plan del alumno
+      if (currentUser?.alumnoId) {
+        try {
+          const respPlan = await fetch(
+            `/api/alumnos/${currentUser.alumnoId}/plan`,
+            {
+              headers: {
+                Authorization: `Bearer ${authService.getToken()}`,
+              },
+            }
+          );
+          const dataPlan = await respPlan.json();
+
+          if (dataPlan.success) {
+            const maxClases = {
+              1: 4,   // Básico
+              2: 8,   // Intermedio
+              3: 12   // Avanzado
+            }[dataPlan.plan_id] || 4;
+
+            setMaxClasesPlan(maxClases);
+
+            // Verificar si alcanzó el máximo
+            if (data.success && data.clases) {
+              setAlcanzadoMaximo(data.clases.length >= maxClases);
+            }
+          }
+        } catch (error) {
+          console.error("Error al cargar plan:", error);
+          setMaxClasesPlan(4); // Default
+        }
       }
     } catch (error) {
       console.error("Error al cargar mis inscripciones:", error);
@@ -106,7 +146,10 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
           tipo: "exito",
           texto: "¡Inscripción completada exitosamente!",
         });
-        setInscripciones(new Set([...inscripciones, claseId]));
+        const nuevasInscripciones = new Set([...inscripciones, claseId]);
+        setInscripciones(nuevasInscripciones);
+        setClasesInscritas(nuevasInscripciones.size);
+        setAlcanzadoMaximo(nuevasInscripciones.size >= maxClasesPlan);
         setTimeout(() => cargarClasesDisponibles(), 500);
         // Notificar al padre para refrescar "Mis clases"
         if (onDesinscripcion) {
@@ -144,6 +187,8 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
         const nuevas = new Set(inscripciones);
         nuevas.delete(claseId);
         setInscripciones(nuevas);
+        setClasesInscritas(nuevas.size);
+        setAlcanzadoMaximo(nuevas.size >= maxClasesPlan);
         setTimeout(() => cargarClasesDisponibles(), 500);
         // Notificar al padre para refrescar "Mis clases"
         if (onDesinscripcion) {
@@ -160,6 +205,28 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
     }
 
     setTimeout(() => setMensaje(null), 3000);
+  };
+
+  const obtenerFechasDelaSemana = (semanaOffset = 0) => {
+    const hoy = new Date();
+    const diaSemana = hoy.getDay();
+    const diasAlLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() + diasAlLunes + (semanaOffset * 7));
+
+    const viernes = new Date(lunes);
+    viernes.setDate(lunes.getDate() + 4);
+
+    return { lunes, viernes };
+  };
+
+  const formatearFechaCorta = (fecha) => {
+    return fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  };
+
+  const obtenerLabelSemana = () => {
+    const { lunes, viernes } = obtenerFechasDelaSemana(semanaActual);
+    return `${formatearFechaCorta(lunes)} - ${formatearFechaCorta(viernes)}`;
   };
 
   const claseFiltradas = clases.filter((c) => {
@@ -195,7 +262,28 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
   return (
     <div className="clases-online-disponibles-container">
       <div className="header-clases">
-        <h2>🚗 Reservar Clase Práctica</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2>🚗 Reservar Clase Práctica</h2>
+          {maxClasesPlan > 0 && (
+            <div style={{
+              padding: '8px 16px',
+              backgroundColor: '#f0f9ff',
+              borderRadius: '8px',
+              border: '1px solid #0284c7',
+              textAlign: 'right'
+            }}>
+              <p style={{ margin: 0, fontSize: '12px', color: '#666' }}>Total Clases Prácticas</p>
+              <p style={{
+                margin: '4px 0 0 0',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: alcanzadoMaximo ? '#dc2626' : '#0284c7'
+              }}>
+                {clasesInscritas}/{maxClasesPlan}
+              </p>
+            </div>
+          )}
+        </div>
         <div className="controles-semana">
           <button
             onClick={() => setSemanaActual(Math.max(0, semanaActual - 1))}
@@ -205,10 +293,11 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
             ← Semana Anterior
           </button>
           <span className="semana-label">
-            Semana {semanaActual === 0 ? "Actual" : `+${semanaActual}`}
+            {obtenerLabelSemana()}
           </span>
           <button
-            onClick={() => setSemanaActual(semanaActual + 1)}
+            onClick={() => setSemanaActual(Math.min(3, semanaActual + 1))}
+            disabled={semanaActual === 3}
             className="btn-semana"
           >
             Próxima Semana →
@@ -242,6 +331,14 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
           ))}
         </select>
       </div>
+
+      {alcanzadoMaximo && (
+        <div className="mensaje mensaje-error">
+          ⚠️ Has alcanzado el límite de clases prácticas ({clasesInscritas}/{maxClasesPlan}) para tu plan actual.
+          <br />
+          Para inscribirse en más clases, debes desinscribirte de alguna clase existente.
+        </div>
+      )}
 
       {!puedeReservar ? (
         <div className="sin-clases">
@@ -291,8 +388,10 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
                     <button
                       onClick={() => inscribirse(clase.id)}
                       className="btn-inscribirse"
+                      disabled={alcanzadoMaximo}
+                      title={alcanzadoMaximo ? `Has alcanzado el límite de ${maxClasesPlan} clases prácticas para tu plan` : ''}
                     >
-                      Inscribirse
+                      {alcanzadoMaximo ? '❌ Límite alcanzado' : 'Inscribirse'}
                     </button>
                   ) : (
                     <button disabled className="btn-lleno">

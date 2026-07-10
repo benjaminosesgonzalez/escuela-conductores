@@ -275,3 +275,284 @@ export async function eliminarAlumnosMasivo(req, res) {
     res.status(500).json({ success: false, message: "Error interno al eliminar alumnos." });
   }
 }
+
+// Obtener plan del alumno
+export async function obtenerPlanAlumno(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ success: false, message: "ID de alumno es requerido." });
+    }
+
+    // Importar AppDataSource
+    const { AppDataSource } = await import("../config/configDb.js");
+
+    const alumno = await AppDataSource.query(
+      `SELECT a.id, a.id_plan_matriculado, p.name as plan_nombre
+       FROM alumnos a
+       LEFT JOIN plans p ON a.id_plan_matriculado = p.id
+       WHERE a.id = $1`,
+      [parseInt(id)]
+    );
+
+    if (!alumno || alumno.length === 0) {
+      return res.status(404).json({ success: false, message: "Alumno no encontrado." });
+    }
+
+    const data = alumno[0];
+    res.status(200).json({
+      success: true,
+      plan_id: data.id_plan_matriculado,
+      plan_nombre: data.plan_nombre,
+      alumno_id: data.id
+    });
+  } catch (error) {
+    console.error("Error al obtener plan:", error);
+    res.status(500).json({ success: false, message: "Error al obtener plan del alumno.", error: error.message });
+  }
+}
+
+// Obtener clases próximas del alumno
+export async function obtenerClasesProximas(req, res) {
+  try {
+    const { alumnoId } = req.params;
+
+    if (!alumnoId) {
+      return res.status(400).json({ success: false, message: "ID de alumno requerido" });
+    }
+
+    const { AppDataSource } = await import("../config/configDb.js");
+
+    // Obtener clases online próximas
+    const clasesOnline = await AppDataSource.query(`
+      SELECT
+        co.id,
+        co."horaInicio",
+        co."horaFin",
+        co.fecha,
+        p.nombre as profesor,
+        'Teórica' as tipo,
+        co."nombreTema" as tema,
+        'Zoom' as ubicacion,
+        'teórica' as tipo_label
+      FROM clases_online co
+      JOIN clase_online_alumno coa ON co.id = coa."claseOnlineId"
+      LEFT JOIN profesores p ON co."profesorId" = p.id
+      WHERE coa."alumnoId" = $1 AND co.fecha >= CURRENT_DATE
+      ORDER BY co.fecha, co."horaInicio"
+    `, [alumnoId]);
+
+    // Obtener clases prácticas próximas
+    const clasesPracticas = await AppDataSource.query(`
+      SELECT
+        cp.id,
+        cp."horaInicio",
+        cp."horaFin",
+        cp.fecha,
+        p.nombre as profesor,
+        'Práctica' as tipo,
+        '' as tema,
+        s.nombre as ubicacion,
+        'práctica' as tipo_label
+      FROM clases_practicas cp
+      LEFT JOIN profesores p ON cp."profesorId" = p.id
+      LEFT JOIN sedes s ON cp."sedeId" = s.id
+      WHERE cp."alumnoId" = $1 AND cp.fecha >= CURRENT_DATE
+      ORDER BY cp.fecha, cp."horaInicio"
+    `, [alumnoId]);
+
+    // Combinar y formatear
+    const todasLasClases = [...clasesOnline, ...clasesPracticas].map(clase => {
+      const fecha = new Date(clase.fecha);
+      const diasES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+      const mesesES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+      const diaES = diasES[fecha.getDay()];
+      const numDia = fecha.getDate();
+      const mesES = mesesES[fecha.getMonth()];
+      const año = fecha.getFullYear();
+
+      const fechaFormato = `${diaES.charAt(0).toUpperCase() + diaES.slice(1)} ${numDia} ${mesES} ${año}`;
+
+      return {
+        id: clase.id,
+        fecha: `${fechaFormato} - ${clase.horaInicio} a ${clase.horaFin}`,
+        profesor: clase.profesor,
+        tipo: clase.tipo,
+        tema: clase.tema,
+        ubicacion: clase.ubicacion,
+        tipo_label: clase.tipo_label
+      };
+    }).sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+    res.json({ success: true, clases: todasLasClases });
+  } catch (error) {
+    console.error("Error al obtener clases próximas:", error);
+    res.status(500).json({ success: false, message: "Error al obtener clases próximas" });
+  }
+}
+
+// Obtener avance de temas teóricos
+export async function obtenerAvanceTemas(req, res) {
+  try {
+    const { alumnoId } = req.params;
+
+    if (!alumnoId) {
+      return res.status(400).json({ success: false, message: "ID de alumno requerido" });
+    }
+
+    const { AppDataSource } = await import("../config/configDb.js");
+
+    const temas = await AppDataSource.query(`
+      SELECT
+        id_tema as id,
+        completado
+      FROM avances_temas
+      WHERE id_alumno = $1
+      ORDER BY id_tema ASC
+    `, [alumnoId]);
+
+    const nombresTemas = [
+      "Defensa vial",
+      "Mecánica básica",
+      "Señalética vial",
+      "Conducción segura",
+      "Leyes de tránsito",
+      "Manejo del estrés",
+      "Técnicas de frenado",
+      "Visibilidad y luces",
+      "Conducción nocturna",
+      "Emergencias viales"
+    ];
+
+    const temasFormateados = nombresTemas.map((nombre, index) => {
+      const temaBD = temas.find(t => t.id === index + 1);
+      return {
+        id: index + 1,
+        nombre: nombre,
+        completado: temaBD?.completado || false
+      };
+    });
+
+    res.json({ success: true, temas: temasFormateados });
+  } catch (error) {
+    console.error("Error al obtener avance de temas:", error);
+    res.status(500).json({ success: false, message: "Error al obtener avance de temas" });
+  }
+}
+
+// Obtener avance de clases prácticas
+export async function obtenerAvanceClasesPracticas(req, res) {
+  try {
+    const { alumnoId } = req.params;
+
+    if (!alumnoId) {
+      return res.status(400).json({ success: false, message: "ID de alumno requerido" });
+    }
+
+    const { AppDataSource } = await import("../config/configDb.js");
+
+    // Obtener el plan del alumno
+    const alumno = await AppDataSource.query(`
+      SELECT a.id_plan_matriculado, p.total_classes
+      FROM alumnos a
+      LEFT JOIN plans p ON a.id_plan_matriculado = p.id
+      WHERE a.id = $1
+    `, [alumnoId]);
+
+    if (!alumno || alumno.length === 0) {
+      return res.status(404).json({ success: false, message: "Alumno no encontrado" });
+    }
+
+    const cantidadMaxima = alumno[0].total_classes || 0;
+
+    // Obtener clases prácticas asignadas al alumno con sus evaluaciones
+    const evaluaciones = await AppDataSource.query(`
+      SELECT
+        cp.id,
+        cp.fecha,
+        cp."horaInicio",
+        cp."horaFin",
+        COALESCE(ep.nota_final, ep.nota_inicial) as nota,
+        ep.id as evaluacionId
+      FROM clases_practicas cp
+      LEFT JOIN evaluaciones_practicas ep ON cp.id = ep.clase_practica_id AND ep.alumno_id = $1
+      WHERE cp."alumnoId" = $1
+      ORDER BY cp.fecha ASC
+    `, [alumnoId]);
+
+    const completadas = evaluaciones.filter(e => e.evaluacionId !== null).length;
+
+    res.json({
+      success: true,
+      completadas,
+      cantidadMaxima,
+      evaluaciones
+    });
+  } catch (error) {
+    console.error("Error al obtener avance de clases prácticas:", error);
+    res.status(500).json({ success: false, message: "Error al obtener avance de clases prácticas" });
+  }
+}
+
+// Obtener estadísticas del alumno
+export async function obtenerEstadisticasAlumno(req, res) {
+  try {
+    const { alumnoId } = req.params;
+
+    if (!alumnoId) {
+      return res.status(400).json({ success: false, message: "ID de alumno requerido" });
+    }
+
+    const { AppDataSource } = await import("../config/configDb.js");
+
+    // Contar clases inscritas (online + prácticas)
+    const clasesInscritasResult = await AppDataSource.query(`
+      SELECT COUNT(*) as total FROM (
+        SELECT id FROM clase_online_alumno WHERE "alumnoId" = $1
+        UNION ALL
+        SELECT id FROM clases_practicas WHERE "alumnoId" = $1
+      ) as todas
+    `, [alumnoId]);
+    const clasesInscritas = parseInt(clasesInscritasResult[0]?.total || 0);
+
+    // Obtener próxima clase
+    const proximaClaseResult = await AppDataSource.query(`
+      SELECT MIN(fecha) as proxima_fecha FROM (
+        SELECT fecha FROM clases_online co
+        JOIN clase_online_alumno coa ON co.id = coa."claseOnlineId"
+        WHERE coa."alumnoId" = $1 AND co.fecha >= CURRENT_DATE
+        UNION ALL
+        SELECT fecha FROM clases_practicas WHERE "alumnoId" = $1 AND fecha >= CURRENT_DATE
+      ) as todas
+    `, [alumnoId]);
+
+    let proximaClase = "—";
+    if (proximaClaseResult[0]?.proxima_fecha) {
+      const fecha = new Date(proximaClaseResult[0].proxima_fecha);
+      proximaClase = fecha.toLocaleDateString('es-ES', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short'
+      });
+    }
+
+    // Contar clases prácticas completadas
+    const clasesCompletadasResult = await AppDataSource.query(`
+      SELECT COUNT(*) as total FROM clases_practicas
+      WHERE "alumnoId" = $1 AND fecha < CURRENT_DATE
+    `, [alumnoId]);
+    const clasesCompletadas = parseInt(clasesCompletadasResult[0]?.total || 0);
+
+    res.json({
+      success: true,
+      clasesInscritas,
+      proximaClase,
+      clasesCompletadas
+    });
+  } catch (error) {
+    console.error("Error al obtener estadísticas:", error);
+    res.status(500).json({ success: false, message: "Error al obtener estadísticas" });
+  }
+}

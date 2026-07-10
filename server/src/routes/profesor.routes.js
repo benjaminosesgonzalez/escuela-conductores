@@ -5,7 +5,11 @@ import {
   updateProfesor,
   deleteProfesor,
   eliminarProfesoresMasivo,
-  resetPasswordProfesor
+  resetPasswordProfesor,
+  obtenerAlumnosInscritos,
+  obtenerClasesHoy,
+  obtenerVehiculosReservados,
+  obtenerClasesDetalleHoy
 } from "../controllers/profesor.controller.js";
 import {
   authMiddleware,
@@ -20,6 +24,12 @@ const router = Router();
 
 // Registro de profesor (solo admin autorizado)
 router.post("/registro", authMiddleware, isAdmin, registrarProfesor);
+
+// Rutas de estadísticas (protegidas por auth)
+router.get("/:profesorId/alumnos-inscritos", authMiddleware, obtenerAlumnosInscritos);
+router.get("/:profesorId/clases-hoy", authMiddleware, obtenerClasesHoy);
+router.get("/:profesorId/clases-detalle-hoy", authMiddleware, obtenerClasesDetalleHoy);
+router.get("/:profesorId/vehiculos-reservados", authMiddleware, obtenerVehiculosReservados);
 
 // Resto de rutas protegidas: admin o secretaria
 router.use(authMiddleware, isAdminOrSecretaria);

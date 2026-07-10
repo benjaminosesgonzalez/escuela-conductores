@@ -110,6 +110,13 @@ export const generarClasesOnlineService = async (profesorId) => {
 
         // Separar clases teóricas (online) de prácticas
         if (disp.tipoDisponibilidad === 'practica') {
+          // Obtener sedeId del profesor (si tiene sedes asignadas)
+          const sedeProfesor = await AppDataSource.query(
+            `SELECT "id_sede" FROM profesor_sedes WHERE "id_profesor" = $1 LIMIT 1`,
+            [profesorId]
+          );
+          const sedeId = sedeProfesor.length > 0 ? sedeProfesor[0].id_sede : null;
+
           // Crear clase práctica (capacidad 1, sin alumno inicial)
           const clasePractica = clasePracticaRepository.create({
             profesorId,
@@ -118,10 +125,11 @@ export const generarClasesOnlineService = async (profesorId) => {
             horaInicio,
             horaFin,
             alumnoId: null,
+            sedeId: sedeId,
             estado: "disponible",
           });
           clasesPracticas.push(clasePractica);
-          console.log(`✅ Clase Práctica creada: ${disp.diaSemana} ${fechaStr} ${horaInicio}-${horaFin}`);
+          console.log(`✅ Clase Práctica creada: ${disp.diaSemana} ${fechaStr} ${horaInicio}-${horaFin} | Sede: ${sedeId}`);
         } else {
           // Crear clase online (teórica, capacidad 30)
           const claseOnline = claseOnlineRepository.create({
