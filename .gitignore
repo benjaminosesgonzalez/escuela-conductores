@@ -36,3 +36,5 @@ Thumbs.db
 # Misc
 .cache/
 .temp/
+.claude/launch.json
+.claude/launch.json

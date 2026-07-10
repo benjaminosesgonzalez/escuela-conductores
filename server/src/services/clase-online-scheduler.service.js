@@ -98,10 +98,10 @@ export const generarClasesParaSemana = async (lunesBase) => {
         fechaClase.setDate(lunesBase.getDate() + indice);
         const fechaStr = fechaClase.toISOString().split('T')[0];
 
-        // Obtener tema basado en el ciclo actual
+        // Obtener tema basado en el ciclo actual y semana global
         // En ciclo A, numeroSemana es par (0, 2, 4...)
         // En ciclo B, numeroSemana es impar (1, 3, 5...)
-        const numeroSemanaLocal = ciclo === 'A' ? 0 : 1;
+        const numeroSemanaLocal = semanaGlobal % 2;
         const tema = obtenerTemaPorDia(numeroSemanaLocal, disp.diaSemana);
 
         if (!tema) {

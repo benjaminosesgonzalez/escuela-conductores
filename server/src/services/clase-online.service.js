@@ -10,8 +10,7 @@ export const generarClasesOnlineService = async (profesorId) => {
   try {
     console.log(`🎓 Generando clases online para profesor: ${profesorId}`);
 
-    // Obtener disponibilidades donde disponible = true SOLO PARA LAS PRIMERAS 2 SEMANAS
-    // (aunque el profesor puede configurar hasta 4 semanas)
+    // Obtener disponibilidades donde disponible = true PARA LAS 4 SEMANAS
     const hoy = new Date();
     const diaSemana = hoy.getDay();
     const diasAlLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
@@ -19,14 +18,14 @@ export const generarClasesOnlineService = async (profesorId) => {
     lunesActual.setDate(hoy.getDate() + diasAlLunes);
 
     const lunesProximo = new Date(lunesActual);
-    lunesProximo.setDate(lunesActual.getDate() + 14); // 2 semanas = 14 días
+    lunesProximo.setDate(lunesActual.getDate() + 35); // 5 semanas para asegurar que captura todo
 
     const lunesStr = String(lunesActual.getFullYear()).concat('-', String(lunesActual.getMonth() + 1).padStart(2, '0'), '-', String(lunesActual.getDate()).padStart(2, '0'));
     const lunesProxStr = String(lunesProximo.getFullYear()).concat('-', String(lunesProximo.getMonth() + 1).padStart(2, '0'), '-', String(lunesProximo.getDate()).padStart(2, '0'));
 
     const disponibilidades = await AppDataSource.query(
       `SELECT * FROM disponibilidades_profesores
-       WHERE "profesorId" = $1 AND disponible = true AND fecha >= $2 AND fecha < $3
+       WHERE "profesorId" = $1 AND disponible = true AND fecha >= $2 AND fecha <= $3
        ORDER BY fecha ASC, "diaSemana" ASC, "horaInicio" ASC`,
       [profesorId, lunesStr, lunesProxStr]
     );
@@ -39,6 +38,16 @@ export const generarClasesOnlineService = async (profesorId) => {
         message: "El profesor no tiene disponibilidades configuradas"
       };
     }
+
+    // Eliminar materiales de clases online primero (por llave foránea)
+    await AppDataSource.query(
+      `DELETE FROM clase_material
+       WHERE "claseId" IN (
+         SELECT id FROM clases_online WHERE "profesorId" = $1
+       )`,
+      [profesorId]
+    );
+    console.log(`🗑️ Materiales de clases eliminados`);
 
     // Eliminar clases online y prácticas previas para este profesor para regenerarlas
     await claseOnlineRepository.delete({ profesorId });
@@ -86,13 +95,14 @@ export const generarClasesOnlineService = async (profesorId) => {
         }
 
         const semana0Inicio = new Date(lunesActual);
-        const semana1Inicio = new Date(lunesActual);
-        semana1Inicio.setDate(semana0Inicio.getDate() + 7);
+        semana0Inicio.setHours(0, 0, 0, 0);
 
-        let numeroSemana = 0;
-        if (fechaDisp >= semana1Inicio) {
-          numeroSemana = 1;
-        }
+        // Calcular días entre lunes y la fecha de disponibilidad
+        const diferenciaDias = Math.floor((fechaDisp - semana0Inicio) / (1000 * 60 * 60 * 24));
+        let numeroSemana = Math.floor(diferenciaDias / 7);
+
+        // Asegurar que numeroSemana esté entre 0 y 3
+        numeroSemana = Math.max(0, Math.min(3, numeroSemana));
 
         // Obtener tema correspondiente al día
         const tema = obtenerTemaPorDia(numeroSemana, disp.diaSemana);
