@@ -7,7 +7,6 @@ import bcrypt from "bcrypt";
 import { In } from "typeorm";
 import { DisponibilidadAlumno } from "../entities/disponibilidad-alumno.entity.js";
 
-
 const alumnoRepo = AppDataSource.getRepository(Alumno);
 
 // Función auxiliar para generar bloques de disponibilidad
@@ -34,13 +33,16 @@ const generarBloquesAlumnoAutomaticamente = async (queryRunner, alumnoId) => {
         const inicio = minutosAHora(horaActual);
         const fin = minutosAHora(horaActual + duracionClaseMinutos);
 
-        const disponibilidad = queryRunner.manager.create(DisponibilidadAlumno, {
-          alumnoId,
-          diaSemana: dia,
-          horaInicio: inicio,
-          horaFin: fin,
-          disponible: false
-        });
+        const disponibilidad = queryRunner.manager.create(
+          DisponibilidadAlumno,
+          {
+            alumnoId,
+            diaSemana: dia,
+            horaInicio: inicio,
+            horaFin: fin,
+            disponible: false,
+          },
+        );
 
         bloques.push(disponibilidad);
         horaActual += duracionClaseMinutos + breakMinutos;
@@ -53,8 +55,8 @@ const generarBloquesAlumnoAutomaticamente = async (queryRunner, alumnoId) => {
     console.error("Error generando bloques automáticos:", error);
     throw error;
   }
-  
-const alumnoRepo = AppDataSource.getRepository(Alumno);
+
+  const alumnoRepo = AppDataSource.getRepository(Alumno);
 };
 
 export async function matricularNuevoAlumnoService(datosGenerales) {
@@ -102,7 +104,7 @@ export async function matricularNuevoAlumnoService(datosGenerales) {
       id_plan_matriculado,
       estado_matricula: "matriculado",
     });
-    
+
     const savedAlumno = await queryRunner.manager.save(Alumno, newAlumno);
 
     // Generar bloques de disponibilidad automáticamente
@@ -271,6 +273,9 @@ export const asignarSedeMasivaPorIdsService = async (
 
 export async function getAlumnosService() {
   const alumnoRepository = AppDataSource.getRepository(Alumno);
+  const alumnos = await alumnoRepository.find({
+    relations: ["user"],
+  });
   return await alumnoRepository.find({
     relations: ["user", "sede"],
     order: { id: "DESC" },

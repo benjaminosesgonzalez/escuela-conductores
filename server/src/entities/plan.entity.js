@@ -32,6 +32,10 @@ export const Plan = new EntitySchema({
       nullable: false,
       default: 0, // Ej: 1, 2, 3
     },
+    inscripciones_abiertas: {
+      type: "boolean",
+      default: true, // Indica si el plan está disponible para nuevos alumnos
+    },
     created_at: {
       type: "timestamp",
       createDate: true,

@@ -18,6 +18,7 @@ const ConfirmarPlan = () => {
   const [pagoExitoso, setPagoExitoso] = useState(false);
   const [error, setError] = useState("");
 
+  // 1. Efecto existente: Carga la información visual del plan
   useEffect(() => {
     if (!planId) {
       setError("No se ha especificado ningún plan para la matrícula.");
@@ -48,6 +49,34 @@ const ConfirmarPlan = () => {
       .finally(() => setCargando(false));
   }, [planId]);
 
+  // 🚀 NUEVO EFECTO: Pre-registra el interés en la BD apenas entra a la pasarela de pago
+  useEffect(() => {
+    if (planId && userToken) {
+      // ⚠️ NOTA: Ajusta '/alumnos/preferencia' al path exacto que tenga tu ruta en Express
+      fetch(`${backendUrl}/alumnos/preferencia`, {
+        method: "POST", // Usa POST o PATCH según cómo definiste la ruta en tu backend
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userToken}`,
+        },
+        body: JSON.stringify({
+          id_plan: Number(planId), // 🔥 Enviamos 'id_plan' tal como lo extrae tu req.body en el controlador
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(
+            "🛒 Intención de compra pre-registrada en silencio:",
+            data,
+          );
+        })
+        .catch((err) => {
+          console.error("No se pudo pre-registrar el interés del alumno:", err);
+        });
+    }
+  }, [planId, userToken]); // Se dispara inmediatamente si el alumno está logueado y hay un plan en camino
+
+  // 3. Simulación del pago definitivo
   const handleSimularPago = async () => {
     setProcesandoPago(true);
     setError("");
@@ -209,7 +238,7 @@ const ConfirmarPlan = () => {
             >
               {procesandoPago
                 ? "Validando con el banco transaccional..."
-                : "Confirmar Transacción Simbólica"}
+                : "Confirmar Transacción"}
             </button>
 
             <div style={styles.secureFooter}>

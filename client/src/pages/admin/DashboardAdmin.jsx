@@ -141,7 +141,7 @@ const DashboardAdmin = () => {
       {activeTab === "agendar-clases" && <AgendarClasesSecretaria />}
       {activeTab === "interesados" && <Interesados />}
 
-      {/* 🔥 MÓDULO GESTIÓN DE PLANES */}
+      {/* MÓDULO GESTIÓN DE PLANES */}
       {activeTab === "planes" && <PlanesView />}
 
       {(activeTab === "reportes" || activeTab === "configuracion") && (
@@ -272,6 +272,42 @@ const PlanesView = () => {
       }
     } catch (err) {
       console.error("Error al eliminar plan:", err);
+    }
+  };
+
+  //  FUNCIÓN CORREGIDA CON SINCRONIZACIÓN REAL
+  const handleToggleInscripciones = async (id) => {
+    const token = authService.getToken();
+    try {
+      const res = await fetch(`${backendUrl}/${id}/toggle-enrollment`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+      console.log("🔄 RESPUESTA TOGGLE INSCRIPCIONES:", data);
+
+      if (data.success && data.data) {
+        //  LA CLAVE: Reemplazamos el valor usando EXACTAMENTE lo que guardó el backend (data.data)
+        setPlanes((prevPlanes) =>
+          prevPlanes.map((plan) =>
+            plan.id === id
+              ? {
+                  ...plan,
+                  inscripciones_abiertas: data.data.inscripciones_abiertas,
+                }
+              : plan,
+          ),
+        );
+      } else {
+        alert(
+          "Error al modificar inscripciones: " +
+            (data.message || "Error desconocido"),
+        );
+      }
+    } catch (err) {
+      console.error("Error al mutar el estado del plan:", err);
+      alert("Hubo un error de conexión al intentar cambiar el estado.");
     }
   };
 
@@ -416,7 +452,7 @@ const PlanesView = () => {
           </p>
         ) : planes.length === 0 ? (
           <p style={{ textAlign: "center", color: "#999" }}>
-            No hay planes de conducción registrados en el sistema.
+            No hay planes de conducción registrados en el system.
           </p>
         ) : (
           <table
@@ -441,6 +477,10 @@ const PlanesView = () => {
                 <th style={{ padding: "12px" }}>C. Prácticas</th>
                 <th style={{ padding: "12px" }}>Teórico</th>
                 <th style={{ padding: "12px" }}>Simulador</th>
+                <th style={{ padding: "12px", textAlign: "center" }}>
+                  Inscripciones
+                </th>{" "}
+                {/* 🔥 NUEVA COLUMNA */}
                 <th style={{ padding: "12px", textAlign: "right" }}>
                   Acciones
                 </th>
@@ -477,6 +517,41 @@ const PlanesView = () => {
                   <td style={{ padding: "12px" }}>
                     {plan.clases_simulador} bloques
                   </td>
+
+                  {/* 🔥 NUEVO CELL: Botón interactivo tipo Badge para conmutar matrículas */}
+                  <td style={{ padding: "12px", textAlign: "center" }}>
+                    <button
+                      onClick={() => handleToggleInscripciones(plan.id)}
+                      style={{
+                        backgroundColor:
+                          plan.inscripciones_abiertas !== false
+                            ? "#c6f6d5"
+                            : "#fed7d7",
+                        color:
+                          plan.inscripciones_abiertas !== false
+                            ? "#22543d"
+                            : "#742a2a",
+                        border: "none",
+                        padding: "6px 14px",
+                        borderRadius: "999px",
+                        fontSize: "12px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                        minWidth: "85px",
+                      }}
+                      title={
+                        plan.inscripciones_abiertas !== false
+                          ? "Haga clic para cerrar inscripciones"
+                          : "Haga clic para abrir inscripciones"
+                      }
+                    >
+                      {plan.inscripciones_abiertas !== false
+                        ? "Abiertas 🔓"
+                        : "Cerradas 🔒"}
+                    </button>
+                  </td>
+
                   <td style={{ padding: "12px", textAlign: "right" }}>
                     <div
                       style={{
