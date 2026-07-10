@@ -9,10 +9,37 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState(null);
   const [filtroProfesor, setFiltroProfesor] = useState("");
+  const [puedeReservar, setPuedeReservar] = useState(true);
+  const [temasCompletados, setTemasCompletados] = useState([false, false, false]);
 
   useEffect(() => {
+    verificarPuedeReservar();
     cargarClasesDisponibles();
   }, [semanaActual]);
+
+  const verificarPuedeReservar = async () => {
+    try {
+      const currentUser = authService.getCurrentUser();
+      if (!currentUser?.alumnoId) return;
+
+      const response = await fetch(
+        `/api/avances-temas/${currentUser.alumnoId}/puede-reservar`,
+        {
+          headers: {
+            Authorization: `Bearer ${authService.getToken()}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+      if (data.success && data.data) {
+        setPuedeReservar(data.data.puede_reservar);
+        setTemasCompletados(data.data.temas_completados);
+      }
+    } catch (error) {
+      console.error("Error verificando permiso:", error);
+    }
+  };
 
   const cargarClasesDisponibles = async () => {
     setLoading(true);
@@ -189,6 +216,14 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
         </div>
       </div>
 
+      {!puedeReservar && (
+        <div className="mensaje mensaje-error">
+          ⚠️ Debes completar las primeras 3 clases teóricas para acceder a clases prácticas.
+          <br />
+          Progreso: {temasCompletados.filter(t => t).length}/3 completadas
+        </div>
+      )}
+
       {mensaje && (
         <div className={`mensaje mensaje-${mensaje.tipo}`}>{mensaje.texto}</div>
       )}
@@ -208,7 +243,11 @@ const ClasesPracticasDisponiblesAlumno = ({ onDesinscripcion }) => {
         </select>
       </div>
 
-      {loading ? (
+      {!puedeReservar ? (
+        <div className="sin-clases">
+          No puedes reservar clases prácticas hasta completar las primeras 3 clases teóricas.
+        </div>
+      ) : loading ? (
         <div className="cargando">Cargando clases...</div>
       ) : claseFiltradas.length === 0 ? (
         <div className="sin-clases">No hay clases disponibles en esta semana</div>

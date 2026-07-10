@@ -7,7 +7,7 @@ import { authService } from '../../services/authService.js';
 import MisClasesProfesor from './MisClasesProfesor.jsx';
 import ClasesConfirmadasProfesor from './ClasesConfirmadasProfesor.jsx';
 import RepositorioProfesor from './RepositorioProfesor.jsx';
-import MisClasesOnlineProfesor from './MisClasesOnlineProfesor.jsx';
+import RegistrarAvanceProfesor from './RegistrarAvanceProfesor.jsx';
 import MisClasesConInscriptosProfesor from './MisClasesConInscriptosProfesor.jsx';
 import SolicitarVehiculo from "../../components/shared/SolicitarVehiculo.jsx";
 
@@ -380,9 +380,9 @@ const DashboardProfesor = () => {
         <MisClasesConInscriptosProfesor />
       )}
 
-      {/* CLASES ONLINE TAB */}
+      {/* REGISTRAR AVANCE TAB */}
       {activeTab === 'clasesOnline' && (
-        <MisClasesOnlineProfesor />
+        <RegistrarAvanceProfesor />
       )}
       {/* VEHÍCULOS TAB */}
       {activeTab === "vehiculos" && <SolicitarVehiculo userRole="profesor" />}

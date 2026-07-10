@@ -11,6 +11,7 @@ const MisClasesAlumno = ({ refreshTrigger = 0 }) => {
     completadas: [],
     canceladas: [],
   });
+  const [clasesCompletadasTemas, setClasesCompletadasTemas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('practicasProximas');
   const [copiado, setCopiado] = useState(null);
@@ -50,6 +51,17 @@ const MisClasesAlumno = ({ refreshTrigger = 0 }) => {
       if (responsePracticas.ok) {
         const data = await responsePracticas.json();
         setClasesPracticas(data.clases || []);
+      }
+
+      // Obtener clases completadas por temas
+      const responseCompletadas = await fetch(`/api/avances-temas/${currentUser.alumnoId}/clases-completadas`, {
+        headers: {
+          Authorization: `Bearer ${authService.getToken()}`,
+        },
+      });
+      if (responseCompletadas.ok) {
+        const data = await responseCompletadas.json();
+        setClasesCompletadasTemas(data.clases || []);
       }
 
       setLoading(false);
@@ -269,6 +281,12 @@ const MisClasesAlumno = ({ refreshTrigger = 0 }) => {
           ✓ Completadas ({clasesOnline.completadas.length})
         </button>
         <button
+          className={`tab-button ${activeTab === 'temasCompletados' ? 'active' : ''}`}
+          onClick={() => setActiveTab('temasCompletados')}
+        >
+          📚 Temas Completados ({clasesCompletadasTemas.length})
+        </button>
+        <button
           className={`tab-button ${activeTab === 'onlineCanceladas' ? 'active' : ''}`}
           onClick={() => setActiveTab('onlineCanceladas')}
         >
@@ -285,6 +303,70 @@ const MisClasesAlumno = ({ refreshTrigger = 0 }) => {
         )}
         {activeTab === 'onlineCompletadas' && (
           <TabContent titulo="Clases Completadas" clases={clasesOnline.completadas} esPresencial={false} />
+        )}
+        {activeTab === 'temasCompletados' && (
+          <div>
+            <h3 style={{ marginBottom: spacing.md, color: colors.alumno }}>Temas Completados</h3>
+            {clasesCompletadasTemas.length === 0 ? (
+              <Card>
+                <p style={{ color: '#999', textAlign: 'center' }}>
+                  No has completado temas aún
+                </p>
+              </Card>
+            ) : (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                  gap: spacing.lg,
+                }}
+              >
+                {clasesCompletadasTemas.map((tema, idx) => (
+                  <Card key={idx}>
+                    <div style={{ marginBottom: spacing.md }}>
+                      <h4 style={{ marginBottom: spacing.xs, color: colors.alumno }}>
+                        Tema {tema.numeroTema}: {tema.nombreTema}
+                      </h4>
+                      <p style={{ color: '#666', marginBottom: spacing.sm }}>
+                        📅 {obtenerFechaFormato(tema.fecha)}
+                      </p>
+                    </div>
+
+                    <div
+                      style={{
+                        padding: spacing.md,
+                        backgroundColor: '#f0f0f0',
+                        borderRadius: spacing.radius.md,
+                        marginBottom: spacing.md,
+                      }}
+                    >
+                      <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#999' }}>
+                        Profesor
+                      </p>
+                      <p style={{ margin: 0, fontWeight: '600' }}>
+                        {tema.profesorNombre || 'Por asignar'}
+                      </p>
+                    </div>
+
+                    <div style={{ marginTop: spacing.md }}>
+                      <span
+                        style={{
+                          padding: '6px 12px',
+                          backgroundColor: '#10b981',
+                          color: 'white',
+                          borderRadius: spacing.radius.full,
+                          fontSize: '12px',
+                          fontWeight: '600',
+                        }}
+                      >
+                        ✓ Completado
+                      </span>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         )}
         {activeTab === 'onlineCanceladas' && (
           <TabContent titulo="Clases Canceladas" clases={clasesOnline.canceladas} esPresencial={false} />
