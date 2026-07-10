@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+// 🚀 NUEVO: Importamos el ícono Clock para ver los horarios
 import {
   Car,
   Plus,
@@ -8,6 +9,7 @@ import {
   XCircle,
   List,
   Activity,
+  Clock,
 } from "lucide-react";
 import { Card, Button } from "../../components/shared/index.js";
 import { colors, spacing } from "../../theme/index.js";
@@ -36,6 +38,11 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
   const [autosDisponiblesModal, setAutosDisponiblesModal] = useState([]);
   const [autoSeleccionadoId, setAutoSeleccionadoId] = useState("");
   const [cargandoAutos, setCargandoAutos] = useState(false);
+
+  // 🚀 NUEVOS ESTADOS: Para controlar el visor de horarios del auto
+  const [modalHorarios, setModalHorarios] = useState(null); // Almacena el objeto del auto seleccionado
+  const [horariosVehiculo, setHorariosVehiculo] = useState([]);
+  const [cargandoHorarios, setCargandoHorarios] = useState(false);
 
   // --- LÓGICA DE INVENTARIO (CRUD) ---
   const handleCrearAuto = async (e) => {
@@ -126,7 +133,7 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
       setSolicitudes([]);
       return;
     }
-    loadingSolicitudes(true);
+    setLoadingSolicitudes(true);
     try {
       const res = await fetch(
         `http://localhost:5000/api/solicitudes-auto/sede/${idSede}`,
@@ -135,9 +142,16 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
         },
       );
       const data = await res.json();
-      if (data.success) setSolicitudes(data.data);
+      const lista = data.data || data;
+      if (Array.isArray(lista)) {
+        setSolicitudes(lista);
+      } else if (data.success && Array.isArray(data.data)) {
+        setSolicitudes(data.data);
+      } else {
+        setSolicitudes([]);
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Error cargando solicitudes:", error);
     } finally {
       setLoadingSolicitudes(false);
     }
@@ -202,6 +216,52 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
       }
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const abrirModalHorarios = async (auto) => {
+    setModalHorarios(auto);
+    setHorariosVehiculo([]);
+
+    // Rescatamos el ID de la sede a la que pertenece el vehículo
+    const idSede = auto.id_sede || auto.sede?.id;
+
+    // Si el auto no tiene sede asignada, es imposible que tenga solicitudes
+    if (!idSede) return;
+
+    setCargandoHorarios(true);
+    try {
+      console.log(
+        `📡 Consultando agenda reutilizando el endpoint de la Sede: ${idSede}`,
+      );
+
+      // Llamamos al endpoint que SÍ está operativo y funcional en tu backend
+      const res = await fetch(
+        `http://localhost:5000/api/solicitudes-auto/sede/${idSede}`,
+        {
+          headers: { Authorization: `Bearer ${authService.getToken()}` },
+        },
+      );
+      const data = await res.json();
+      const lista = data.data || data;
+
+      if (Array.isArray(lista)) {
+        // 🎯 FILTRADO MAESTRO:
+        // 1. Que la solicitud esté 'aceptada'
+        // 2. Que el auto asignado coincida exactamente con el ID de este auto
+        const ocupados = lista.filter(
+          (sol) =>
+            sol.estado === "aceptado" &&
+            (Number(sol.id_auto) === Number(auto.id) ||
+              Number(sol.auto?.id) === Number(auto.id)),
+        );
+
+        setHorariosVehiculo(ocupados);
+      }
+    } catch (error) {
+      console.error("Error cargando la agenda del vehículo:", error);
+    } finally {
+      setCargandoHorarios(false);
     }
   };
 
@@ -282,7 +342,9 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
                 <th style={{ padding: "12px" }}>Año</th>
                 <th style={{ padding: "12px" }}>Estado</th>
                 <th style={{ padding: "12px" }}>Sede</th>
-                <th style={{ padding: "12px" }}>Acciones</th>
+                <th style={{ padding: "12px", textAlign: "right" }}>
+                  Acciones
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -322,13 +384,13 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
                           backgroundColor:
                             auto.estado === "disponible"
                               ? "#dcfce7"
-                              : auto.estado === "en_mantencion"
+                              : auto.estado === "mantenimiento"
                                 ? "#fef08a"
                                 : "#fee2e2",
                           color:
                             auto.estado === "disponible"
                               ? "#166534"
-                              : auto.estado === "en_mantencion"
+                              : auto.estado === "mantenimiento"
                                 ? "#854d0e"
                                 : "#991b1b",
                         }}
@@ -343,37 +405,57 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
                         <span style={{ color: colors.error }}>Sin sede</span>
                       )}
                     </td>
-                    <td style={{ padding: "12px" }}>
-                      <button
-                        onClick={() => {
-                          setAutoEditando(auto);
-                          setFormData({
-                            ...auto,
-                            id_sede: auto.sede?.id || "",
-                          });
-                          setSubTab("editar");
-                        }}
+                    <td style={{ padding: "12px", textAlign: "right" }}>
+                      <div
                         style={{
-                          cursor: "pointer",
-                          border: "none",
-                          background: "none",
-                          color: colors.secretaria,
-                          marginRight: "15px",
+                          display: "flex",
+                          gap: "10px",
+                          justifyContent: "flex-end",
                         }}
                       >
-                        <Edit size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleEliminarAuto(auto.id)}
-                        style={{
-                          cursor: "pointer",
-                          border: "none",
-                          background: "none",
-                          color: "#ef4444",
-                        }}
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                        {/* 🚀 NUEVO BOTÓN: Ver Horarios del Auto */}
+                        <button
+                          onClick={() => abrirModalHorarios(auto)}
+                          title="Ver Agenda / Horarios de Uso"
+                          style={{
+                            cursor: "pointer",
+                            border: "none",
+                            background: "none",
+                            color: "#ff6b35",
+                          }}
+                        >
+                          <Clock size={18} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setAutoEditando(auto);
+                            setFormData({
+                              ...auto,
+                              id_sede: auto.sede?.id || "",
+                            });
+                            setSubTab("editar");
+                          }}
+                          style={{
+                            cursor: "pointer",
+                            border: "none",
+                            background: "none",
+                            color: colors.secretaria,
+                          }}
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleEliminarAuto(auto.id)}
+                          style={{
+                            cursor: "pointer",
+                            border: "none",
+                            background: "none",
+                            color: "#ef4444",
+                          }}
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -483,7 +565,6 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
               />
             </div>
 
-            {/* 🔥 MODIFICADO: El Estado Técnico ahora sólo aparece en modo EDICIÓN */}
             {subTab === "editar" && (
               <div
                 style={{ display: "flex", flexDirection: "column", gap: "8px" }}
@@ -502,8 +583,7 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
                   }}
                 >
                   <option value="disponible">Disponible / Operativo</option>
-                  <option value="en_mantencion">En Mantención</option>
-                  <option value="fuera_de_servicio">Fuera de Servicio</option>
+                  <option value="mantenimiento">En Mantención</option>
                 </select>
               </div>
             )}
@@ -793,7 +873,7 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
                 horario (considerando 1 hora de holgura).
               </div>
             ) : (
-              <div style={{ Montenegro: "16px" }}>
+              <div style={{ marginBottom: "16px" }}>
                 <label
                   style={{
                     display: "block",
@@ -851,6 +931,178 @@ const VehiculosView = ({ autos, setAutos, sedesDisponibles, setStatsData }) => {
                 style={{ backgroundColor: colors.success }}
               >
                 Confirmar Asignación
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🚀 --- MODAL NUEVO: VISOR DE HORARIOS / AGENDA DE USO --- */}
+      {modalHorarios && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "24px",
+              borderRadius: "8px",
+              width: "500px",
+              maxWidth: "95%",
+            }}
+          >
+            <h3
+              style={{
+                marginTop: 0,
+                color: colors.textPrimary,
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <Clock size={20} color="#ff6b35" /> Agenda de Ocupación
+            </h3>
+            <p
+              style={{
+                fontSize: "14px",
+                color: "#4a5568",
+                marginBottom: "16px",
+                fontWeight: "600",
+              }}
+            >
+              Vehículo:{" "}
+              <span style={{ color: colors.secretaria }}>
+                {modalHorarios.marca} {modalHorarios.modelo}
+              </span>{" "}
+              | Patente:{" "}
+              <span
+                style={{
+                  fontFamily: "monospace",
+                  background: "#f1f5f9",
+                  padding: "2px 6px",
+                  borderRadius: "4px",
+                }}
+              >
+                {modalHorarios.patente}
+              </span>
+            </p>
+
+            <div
+              style={{
+                maxHeight: "250px",
+                overflowY: "auto",
+                marginBottom: "20px",
+                border: `1px solid ${colors.borderLight}`,
+                borderRadius: "6px",
+              }}
+            >
+              {cargandoHorarios ? (
+                <p
+                  style={{
+                    textAlign: "center",
+                    padding: "20px",
+                    color: colors.textTertiary,
+                  }}
+                >
+                  Consultando bitácora de rutas...
+                </p>
+              ) : horariosVehiculo.length === 0 ? (
+                <p
+                  style={{
+                    textAlign: "center",
+                    padding: "30px",
+                    color: "#94a3b8",
+                    fontSize: "14px",
+                  }}
+                >
+                  Este vehículo no registra horarios de uso asignados para los
+                  próximos días. ¡Flota libre!
+                </p>
+              ) : (
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    fontSize: "13px",
+                    textAlign: "left",
+                  }}
+                >
+                  <thead
+                    style={{
+                      backgroundColor: "#f8fafc",
+                      position: "sticky",
+                      top: 0,
+                    }}
+                  >
+                    <tr
+                      style={{
+                        borderBottom: `1px solid ${colors.borderLight}`,
+                        color: colors.textSecondary,
+                      }}
+                    >
+                      <th style={{ padding: "10px" }}>Fecha</th>
+                      <th style={{ padding: "10px" }}>Bloque Horario</th>
+                      <th style={{ padding: "10px" }}>Rol</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {horariosVehiculo.map((horario) => (
+                      <tr
+                        key={horario.id}
+                        style={{ borderBottom: "1px solid #f1f5f9" }}
+                      >
+                        <td style={{ padding: "10px", fontWeight: "bold" }}>
+                          {horario.fecha_uso}
+                        </td>
+                        <td style={{ padding: "10px", color: "#334155" }}>
+                          {horario.hora_uso} - {horario.hora_termino}
+                        </td>
+                        <td style={{ padding: "10px" }}>
+                          <span
+                            style={{
+                              fontSize: "11px",
+                              padding: "2px 6px",
+                              borderRadius: "4px",
+                              textTransform: "uppercase",
+                              fontWeight: "700",
+                              backgroundColor:
+                                horario.tipo_solicitante === "profesor"
+                                  ? "#e0f2fe"
+                                  : "#fef3c7",
+                              color:
+                                horario.tipo_solicitante === "profesor"
+                                  ? "#0369a1"
+                                  : "#b45309",
+                            }}
+                          >
+                            {horario.tipo_solicitante}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <Button
+                type="button"
+                onClick={() => setModalHorarios(null)}
+                style={{ backgroundColor: "#64748b", width: "100%" }}
+              >
+                Cerrar Agenda
               </Button>
             </div>
           </div>
