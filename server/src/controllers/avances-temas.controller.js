@@ -29,49 +29,45 @@ export const generar_avances_alumno = async (req, res) => {
 export const obtener_instancias_del_dia = async (req, res) => {
   try {
     const { fecha, id_profesor } = req.query;
-    const claseRepository = AppDataSource.getRepository(ClaseOnlineSchema);
-    const claseOnlineAlumnoRepository = AppDataSource.getRepository(
-      ClaseOnlineAlumnoSchema
+
+    if (!fecha || !id_profesor) {
+      return res.status(400).json({
+        success: false,
+        message: "Fecha e id_profesor son requeridos",
+      });
+    }
+
+    // Query SQL directo para obtener clases y sus inscritos en una sola consulta
+    const clases = await AppDataSource.query(
+      `SELECT
+        co.id,
+        co."numeroTema",
+        co."nombreTema",
+        co."horaInicio",
+        co."horaFin",
+        co."diaSemana",
+        co.fecha,
+        COUNT(coa.id) as cantidad_inscritos
+      FROM clases_online co
+      LEFT JOIN clase_online_alumno coa ON co.id = coa."claseOnlineId"
+      WHERE co."profesorId" = $1
+        AND co."tipoDisponibilidad" = 'teorica'
+        AND DATE(co.fecha) = DATE($2)
+      GROUP BY co.id, co."numeroTema", co."nombreTema", co."horaInicio", co."horaFin", co."diaSemana", co.fecha
+      ORDER BY co."horaInicio"`,
+      [parseInt(id_profesor), fecha]
     );
 
-    const clases = await claseRepository.find({
-      where: {
-        profesorId: parseInt(id_profesor),
-        tipoDisponibilidad: "teorica",
-      },
-    });
-
-    const clasesDelDia = clases
-      .filter(clase => {
-        // Normalizar la fecha de la clase a formato YYYY-MM-DD
-        let fechaClase;
-        if (typeof clase.fecha === 'string') {
-          fechaClase = clase.fecha.split('T')[0]; // Si es ISO 8601, tomar solo la fecha
-        } else if (clase.fecha instanceof Date) {
-          fechaClase = clase.fecha.toISOString().split('T')[0];
-        } else {
-          fechaClase = clase.fecha;
-        }
-        return fechaClase === fecha;
-      })
-      .map(clase => ({
-        id: clase.id,
-        numeroTema: clase.numeroTema,
-        nombreTema: clase.nombreTema,
-        horaInicio: clase.horaInicio,
-        horaFin: clase.horaFin,
-        diaSemana: clase.diaSemana,
-      }));
-
-    // Agregar cantidad de inscritos a cada clase
-    const clasesConInscritos = await Promise.all(
-      clasesDelDia.map(async (clase) => {
-        const inscritos = await claseOnlineAlumnoRepository.count({
-          where: { claseOnlineId: clase.id },
-        });
-        return { ...clase, cantidad_inscritos: inscritos };
-      })
-    );
+    // Convertir cantidad_inscritos a número
+    const clasesConInscritos = clases.map(clase => ({
+      id: clase.id,
+      numeroTema: clase.numeroTema,
+      nombreTema: clase.nombreTema,
+      horaInicio: clase.horaInicio,
+      horaFin: clase.horaFin,
+      diaSemana: clase.diaSemana,
+      cantidad_inscritos: parseInt(clase.cantidad_inscritos) || 0,
+    }));
 
     res.json({
       success: true,
